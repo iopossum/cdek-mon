@@ -10,6 +10,7 @@ var session = require('express-session');
 var mongoStore = require('connect-mongo')(session);
 var mongoose = require('mongoose');
 var cookieParser = require('cookie-parser');
+var server;
 
 // Connect to database
 //mongoose.connect(config.mongo.uri, {});
@@ -27,6 +28,27 @@ app.set('port', (process.env.PORT || 5000));
 app.use('/', express.static(__dirname + '/dist'));
 //app.use('/tariffs', express.static(__dirname + '/dist'));
 //app.use('/news', express.static(__dirname + '/dist'));
+
+process.on('uncaughtException', function (err) {
+  setTimeout(function(){
+    if (server && server.close) {
+      server.close(function () {
+        process.exit(1);
+      });
+    } else {
+      process.exit(1);
+    }
+  }, 1000)
+});
+process.on('SIGTERM', function () {
+  if (server && server.close) {
+    server.close(function () {
+      process.exit(0);
+    });
+  } else {
+    process.exit(0);
+  }
+});
 
 // Persist sessions with mongoStore
 app.use(['/api*'], session({
@@ -62,6 +84,6 @@ app.post('/api/tariff/news', cors(), require('./api/news'));
 //  {json: function () {}}
 //);
 
-app.listen(app.get('port'), function() {
+server = app.listen(app.get('port'), function() {
   console.log('Node app is running on port', app.get('port'));
 });
