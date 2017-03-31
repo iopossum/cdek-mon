@@ -1,0 +1,14 @@
+<header>
+	<div class="container">
+		<ul class="nav nav-pills">
+			<li role="presentation" ng-class="{active: $state.current.name === 'news'}" ui-sref="news"><a href="#">Новости</a></li>
+			<li role="presentation" ng-class="{active: $state.current.name === 'tariffs'}" ui-sref="tariffs"><a href="#">Тарифы</a></li>
+		</ul>
+	</div>
+</header>
+<main>
+	<div ui-view=""></div>
+</main>
+<footer>
+
+</footer>

@@ -1,0 +1,94 @@
+<div class="container" style="padding-top: 40px">
+	<div class="col-lg-6 col-md-8 col-sm-10 col-xs-12">
+		<div class="form-group">
+			<span>Направления</span>
+			<button type="button" class="btn btn-default" ng-click="tariffs.inputButtonClick($event)">Выбрать файл</button>
+			<input type="file" class="hide" ng-model="tariffs.filter.cityInput" name="cityInput" input-file ng-change="tariffs.chooseCities()" />
+			<span class="text-primary" ng-if="tariffs.filter.cities.length">Выбрано {{tariffs.filter.cities.length}} направлений</span>
+		</div>
+		<div class="form-group">
+			<label>Вес</label>
+			<ui-select multiple tagging tagging-label="false" on-select="tariffs.addWeight($item, $model)" ng-model="tariffs.filter.weights" theme="bootstrap" title="Вес">
+				<ui-select-match placeholder="Выберите вес...">{{$item}}</ui-select-match>
+				<ui-select-choices repeat="weight in tariffs.availableWeights | filter:$select.search">
+					{{weight}}
+				</ui-select-choices>
+			</ui-select>
+		</div>
+		<div class="form-group">
+			<button type="button" class="btn btn-success" ng-disabled="!tariffs.results.length">Скачать</button>
+			<button type="button" class="btn btn-warning" ng-click="tariffs.getTariffs()" ng-disabled="tariffs.loading.main">Получить</button>
+			<uib-progressbar class="cd-progress" max="tariffs.targets.length" value="tariffs.dynamic"><span style="color:white; white-space:nowrap;">{{tariffs.dynamic}} / {{tariffs.targets.length}}</span></uib-progressbar>
+		</div>
+	</div>
+	<div class="col-xs-12">
+		<div class="form-group" ng-if="tariffs.results.length">
+
+			<table class="table table-bordered">
+				<thead>
+				<tr>
+					<th>СД</th>
+					<th>Откуда</th>
+					<th>Куда</th>
+					<th>Услуга</th>
+					<th>Вес</th>
+					<th>Цена</th>
+					<th>Срок доставки</th>
+				</tr>
+				</thead>
+				<tbody>
+				<tr ng-repeat="item in tariffs.results track by $index">
+					<td>{{::item.delivery}}</td>
+					<td>{{::item.city.from || item.city.countryFrom}}</td>
+					<td>{{::item.city.to || item.city.countryTo}}</td>
+					<td>{{::item.service}}</td>
+					<td>{{::item.weight}}</td>
+					<td>{{::item.tariff.cost}}</td>
+					<td>{{::item.tariff.deliveryTime}}</td>
+				</tr>
+				</tbody>
+			</table>
+
+		</div>
+		<div class="form-group" ng-if="tariffs.errors.length">
+			<span class="text-danger">Не удалось получить информацию: </span>
+			<button type="button" class="btn btn-warning" ng-click="" ng-disabled="tariffs.loading.errors">
+				<span class="fa fa-refresh" aria-hidden="true"></span> Повторить все
+			</button>
+		</div>
+		<div class="form-group" ng-if="tariffs.errors.length">
+
+			<table class="table table-bordered">
+				<thead>
+				<tr>
+					<th>СД</th>
+					<th>Откуда</th>
+					<th>Куда</th>
+					<th>Вес</th>
+					<th>Ошибка</th>
+					<th></th>
+				</tr>
+				</thead>
+				<tbody>
+				<tr ng-repeat="item in tariffs.errors track by $index">
+					<td>{{::item.delivery}}</td>
+					<td>{{::item.city.from}}</td>
+					<td>{{::item.city.to}}</td>
+					<td>{{::item.weight}}</td>
+					<td>{{::item.error}}</td>
+					<td>
+						<button type="button" class="btn btn-warning" ng-click="" ng-disabled="tariffs.loading.errors" ng-if="item.req">
+							<span class="fa fa-refresh" aria-hidden="true"></span>
+						</button>
+						<button type="button" class="btn btn-danger" ng-click="tariffs.errors.splice($index, 1)">
+							<span class="fa fa-trash" aria-hidden="true"></span>
+						</button>
+					</td>
+				</tr>
+				</tbody>
+			</table>
+
+		</div>
+	</div>
+
+</div>

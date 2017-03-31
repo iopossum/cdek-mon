@@ -1,0 +1,62 @@
+<div class="container" style="padding-top: 40px">
+	<div class="col-lg-6 col-md-8 col-sm-10 col-xs-12">
+		<div class="row">
+			<div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
+				<div class="form-group">
+					<ui-select multiple on-select="tariffs.addWeight($item, $model)" ng-model="news.filter.targets" theme="bootstrap">
+						<ui-select-match placeholder="Все сд">{{$item.name}}</ui-select-match>
+						<ui-select-choices repeat="target in news.targets | filter:$select.search">
+							{{target.name}}
+						</ui-select-choices>
+					</ui-select>
+				</div>
+			</div>
+			<div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
+				<div class="form-group">
+					<div class="input-group">
+						<input type="text" class="form-control" readonly="readonly" clear-text="Очистить" close-text="Закрыть" current-text="Сегодня" uib-datepicker-popup="dd.MM.yyyy" ng-model="news.filter.date" is-open="news.dpOpened" datepicker-options="dateOptions" ng-required="false" alt-input-formats="altInputFormats" />
+						  <span class="input-group-btn">
+							<button type="button" class="btn btn-default" ng-click="news.dpOpened = true"><i class="glyphicon glyphicon-calendar"></i></button>
+						  </span>
+					</div>
+				</div>
+			</div>
+			<div class="col-xs-12">
+				<div class="form-group">
+					<button type="button" class="btn btn-success" ng-disabled="!news.results.length">Скачать</button>
+					<button type="button" class="btn btn-warning" ng-click="news.requestNews()" ng-disabled="news.loading">Получить</button>
+					<uib-progressbar class="cd-progress" max="news.filter.targets.length ? news.filter.targets.length : news.targets.length" value="news.dynamic"><span style="color:white; white-space:nowrap;">{{news.dynamic}} / {{!news.filter.targets.length ? news.targets.length : news.filter.targets.length}}</span></uib-progressbar>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="col-xs-12">
+		<div class="form-group" ng-if="news.results.length">
+			<table class="table table-bordered">
+				<thead>
+				<tr>
+					<th>Дата</th>
+					<th>Новость</th>
+					<th>СД</th>
+					<th>Описание</th>
+				</tr>
+				</thead>
+				<tbody>
+				<tr ng-repeat="item in news.results track by $index">
+					<td>{{::item.date}}</td>
+					<td>
+						<div ng-if="item.link">
+							<a href="{{item.link}}" target="_blank">{{::item.title}}</a>
+						</div>
+						<div ng-if="!item.link">
+							<span>{{::item.title}}</span>
+						</div>
+					</td>
+					<td>{{::item.delivery}}</td>
+					<td>{{::item.description}}</td>
+				</tr>
+				</tbody>
+			</table>
+		</div>
+	</div>
+</div>
