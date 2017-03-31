@@ -93,7 +93,6 @@ module.exports = function (req, res) {
   var tempRequests = [];
   var cityObj = {};
   var timestamp = global[delivery];
-  console.log('start');
   req.body.cities.forEach(function (item) {
     if (item.from) {
       if (typeof cityObj[item.from] === 'undefined') {
@@ -113,7 +112,6 @@ module.exports = function (req, res) {
   async.auto({
     getCountries: function (callback) {
 
-      console.log('countries');
       async.retry(config.retryOpts, function (callback) {
         var nightmare = commonHelper.getNightmare();
         nightmare.goto(deliveryData.calcUrl.uri)
@@ -155,7 +153,6 @@ module.exports = function (req, res) {
 
     },
     getCities: ['getCountries', function (results, callback) {
-      console.log('cities');
       async.mapLimit(_.keys(cityObj), 3, function (city, callback) {
         if (global[delivery] > timestamp) {
           return callback({abort: true});
@@ -248,7 +245,6 @@ module.exports = function (req, res) {
       }, callback);
     }],
     parseCities: ['getCities', function (results, callback) {
-      console.log('tariffs');
       //todo: save ids to mongo
       var tempArray = [];
       results.getCities.forEach(function (item) {
@@ -309,7 +305,6 @@ module.exports = function (req, res) {
         if (!item.req || item.error) {
           return callback(null, item);
         }
-        console.log('ego', requests.length);
         var nightmare = commonHelper.getNightmare();
         nightmare.goto(deliveryData.calcUrl.uri)
           .realMousedown('#ContentPlaceHolder1_cbProduct_B-1')
@@ -362,7 +357,6 @@ module.exports = function (req, res) {
     }]
 
   }, function (err, results) {
-    console.log(err, 'results', results.parseCities.length);
     if (err) {
       if (err.abort) {
         return false;
