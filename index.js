@@ -29,26 +29,24 @@ app.use('/', express.static(__dirname + '/dist'));
 //app.use('/tariffs', express.static(__dirname + '/dist'));
 //app.use('/news', express.static(__dirname + '/dist'));
 
-process.on('uncaughtException', function (err) {
+var exitHandler = function () {
   setTimeout(function(){
     if (server && server.close) {
       server.close(function () {
-        process.exit(1);
+        process.exit();
       });
     } else {
-      process.exit(1);
+      process.exit();
     }
   }, 1000)
-});
-process.on('SIGTERM', function () {
-  if (server && server.close) {
-    server.close(function () {
-      process.exit(0);
-    });
-  } else {
-    process.exit(0);
-  }
-});
+};
+
+process.on('uncaughtException', exitHandler);
+process.on('SIGTERM', exitHandler);
+//do something when app is closing
+process.on('exit', exitHandler);
+//catches ctrl+c event
+process.on('SIGINT', exitHandler);
 
 // Persist sessions with mongoStore
 app.use(['/api*'], session({
