@@ -4,6 +4,7 @@ var _ = require('underscore');
 
 var emspost = require('./emspost');
 var majorexpress = require('./majorexpress');
+var spsr = require('./spsr');
 
 module.exports = function (req, res) {
   if (!req.body.deliveries) {
@@ -14,15 +15,15 @@ module.exports = function (req, res) {
       {from: '', to: '', countryFrom: '', countryTo: 'Хорватия'}
     ];
     req.body.weights = [1, 2, 3];
-    req.body.deliveries = ['majorexpress'];
+    req.body.deliveries = ['spsr'];
   }
   if (!req.body.cities) {
     req.body.cities = [
       {from: 'Новосибирск', to: 'Москва'},
-      {from: 'Пушкино, Московская обл.', to: 'Москва'},
-      {from: 'Химки', to: 'Новосибирск'},
-      {from: '', to: '', countryFrom: '', countryTo: 'Хорватия'},
-      {from: 'Москва', to: 'Абай', countryFrom: '', countryTo: 'Казахстан'}
+      //{from: 'Пушкино, Московская обл.', to: 'Москва'},
+      //{from: 'Химки', to: 'Новосибирск'},
+      //{from: '', to: '', countryFrom: '', countryTo: 'Хорватия'},
+      //{from: 'Москва', to: 'Абай', countryFrom: '', countryTo: 'Казахстан'}
     ];
   }
   if (!req.body.weights) {
@@ -57,6 +58,11 @@ module.exports = function (req, res) {
         req.session.user.majorexpress = {complete: false, results: []};
         global.majorexpress = new Date().getTime();
         majorexpress(req, res);
+        break;
+      case 'spsr':
+        req.session.user.spsr = {complete: false, results: []};
+        global.spsr = new Date().getTime();
+        spsr(req, res);
         break;
     }
   });

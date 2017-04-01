@@ -21,6 +21,9 @@ module.exports = function (req, res) {
     case 'majorexpress':
       return ping('majorexpress', req, res);
       break;
+    case 'spsr':
+      return ping('spsr', req, res);
+      break;
     default:
       return responseHelper.createResponse(res, new Error("Delivery is required"));
   }

@@ -44,7 +44,7 @@ class TariffsCtrl {
         clearInterval(that.targetsObj[item.id].mainInterval);
         that.targetsObj[item.id].req.reject();
       }
-      if (['emspost', 'majorexpress'].indexOf(item.id) !== -1) {
+      if (['emspost', 'majorexpress', 'spsr'].indexOf(item.id) !== -1) {
         that.targetsObj[item.id].mainInterval = setInterval(function () {
           console.log('tick', item.id);
           that.targetsObj[item.id].req = that.tariffService.ping({delivery: item.id});
@@ -71,12 +71,12 @@ class TariffsCtrl {
     var that = this;
     res.forEach(function (item) {
       if (!item.error) {
-        item.tariffs.forEach(function (tariff) {
-          var obj = Object.assign(item);
-          obj.tariff = tariff;
-          delete obj.tariffs;
-          that.results.push(obj);
-        });
+        //item.tariffs.forEach(function (tariff) {
+        //  var obj = Object.assign(item);
+        //  obj.tariff = tariff;
+        //  delete obj.tariffs;
+          that.results.push(item);
+        //});
       } else {
         that.errors.push(item);
       }

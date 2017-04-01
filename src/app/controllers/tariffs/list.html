@@ -30,21 +30,26 @@
 					<th>СД</th>
 					<th>Откуда</th>
 					<th>Куда</th>
-					<th>Услуга</th>
 					<th>Вес</th>
+					<th>Услуга</th>
 					<th>Цена</th>
 					<th>Срок доставки</th>
 				</tr>
 				</thead>
-				<tbody>
-				<tr ng-repeat="item in tariffs.results track by $index">
-					<td>{{::item.delivery}}</td>
-					<td>{{::item.city.from || item.city.countryFrom}}</td>
-					<td>{{::item.city.to || item.city.countryTo}}</td>
-					<td>{{::item.service}}</td>
-					<td>{{::item.weight}}</td>
-					<td>{{::item.tariff.cost}}</td>
-					<td>{{::item.tariff.deliveryTime}}</td>
+				<tbody ng-repeat="item in tariffs.results track by $index">
+				<tr>
+					<td rowspan="{{item.tariffs.length || 1}}">{{::item.delivery}}</td>
+					<td rowspan="{{item.tariffs.length || 1}}">{{::item.city.from || item.city.countryFrom}}</td>
+					<td rowspan="{{item.tariffs.length || 1}}">{{::item.city.to || item.city.countryTo}}</td>
+					<td rowspan="{{item.tariffs.length || 1}}">{{::item.weight}}</td>
+					<td>{{::item.tariffs[0].service}}</td>
+					<td>{{::item.tariffs[0].cost}}</td>
+					<td>{{::item.tariffs[0].deliveryTime}}</td>
+				</tr>
+				<tr ng-repeat="tarf in item.tariffs" ng-if="$index > 0">
+					<td>{{::tarf.service}}</td>
+					<td>{{::tarf.cost}}</td>
+					<td>{{::tarf.deliveryTime}}</td>
 				</tr>
 				</tbody>
 			</table>

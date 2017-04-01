@@ -29,7 +29,8 @@ app.use('/', express.static(__dirname + '/dist'));
 //app.use('/tariffs', express.static(__dirname + '/dist'));
 //app.use('/news', express.static(__dirname + '/dist'));
 
-var exitHandler = function () {
+var exitHandler = function (err) {
+  if (err) console.log(err.stack);
   setTimeout(function(){
     if (server && server.close) {
       server.close(function () {
@@ -73,7 +74,7 @@ app.get('/api/tariff/ping', cors(), require('./api/tariff/ping'));
 app.post('/api/tariff/news', cors(), require('./api/news'));
 
 //require('./api/tariff')(
-//  {session: {user: {}}, body: {/*delivery: 'majorexpress', */date: require('moment')().add(-10, 'month')}},
+//  {session: {user: {}}, body: {deliveries: ['spsr'], date: require('moment')().add(-10, 'month')}},
 //  {json: function () {}}
 //);
 

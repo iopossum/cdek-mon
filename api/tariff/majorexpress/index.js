@@ -105,7 +105,7 @@ module.exports = function (req, res) {
       }
     }
     if (!item.from && !item.to) {
-      tempRequests.push({cityFrom: item.from, cityTo: item.to, delivery: delivery, tariffs: [], error: 'Должны быть оказаны оба города'});
+      tempRequests.push({cityFrom: item.from, cityTo: item.to, delivery: delivery, tariffs: [], error: 'Должны быть указаны оба города'});
     }
   });
 
@@ -158,7 +158,7 @@ module.exports = function (req, res) {
           return callback({abort: true});
         }
         var opts = deliveryData.citiesUrl;
-        var trim = city.split(',')[0].trim();
+        var trim = commonHelper.getCity(city);
         opts.form = Object.assign({}, formData);
         opts.form.ctl00$ContentPlaceHolder1$cbCityTo = trim;
         opts.form.__CALLBACKPARAM = 'c0:LBCRI|4;0:99;CBCF|' + trim.length + ';' + trim + ';';
@@ -215,13 +215,7 @@ module.exports = function (req, res) {
             result.ids = [array[0]];
             result.success = true;
           } else {
-            var splits = city.split(',');
-            var region = null;
-            if (splits.length === 2) {
-              region = splits[1].split(' ')[1];
-            } else if (splits.length > 3) {
-              region = splits[2].split(' ')[1];
-            }
+            var region = commonHelper.getRegionName(city);
             var foundIds = [];
             if (region) {
               array.forEach(function (item, index) {

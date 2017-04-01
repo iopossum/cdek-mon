@@ -16,7 +16,7 @@ var targets = [
   },
   {
     id: 'spsr',
-    calcUrl: {method: 'POST', uri: 'https://major-express.ru/calculator.aspx'},
+    calcUrl: {method: 'POST', uri: 'http://www.spsr.ru/ru/system/ajax'},
     citiesUrl: {method: 'GET', uri: 'http://www.spsr.ru/ru/service/calculator?q=/spsr/cc_autocomplete/'},
     newsUrl: {method: 'GET', uri: 'http://www.spsr.ru/ru/news'}
   },
