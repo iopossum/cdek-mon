@@ -191,11 +191,11 @@ module.exports = function (req, res) {
   var timestamp = global[delivery];
   req.body.cities.forEach(function (item) {
     if (!item.from && !item.to) {
-      requests = requests.concat(commonHelper.getResponseArray(req.body.weight, item, delivery, 'Должен быть указан хотя бы 1 город'));
+      requests = requests.concat(commonHelper.getResponseArray(req.body.weights, item, delivery, 'Должен быть указан хотя бы 1 город'));
     } else if (!item.from && !item.countryFrom) {
-      requests = requests.concat(commonHelper.getResponseArray(req.body.weight, item, delivery, 'В направлении "откуда" должен быть указан либо город, либо страна'));
+      requests = requests.concat(commonHelper.getResponseArray(req.body.weights, item, delivery, 'В направлении "откуда" должен быть указан либо город, либо страна'));
     } else if (!item.to && !item.countryTo) {
-      requests = requests.concat(commonHelper.getResponseArray(req.body.weight, item, delivery, 'В направлении "куда" должен быть указан либо город, либо страна'));
+      requests = requests.concat(commonHelper.getResponseArray(req.body.weights, item, delivery, 'В направлении "куда" должен быть указан либо город, либо страна'));
     } else if (item.from && item.countryTo) { //international
       cityInternationalObj[item.from] = true;
     } else if (item.to && item.countryFrom) { //international
