@@ -1,6 +1,7 @@
 var request = require('request');
 var Nightmare = require('nightmare');
 var realMouse = require('nightmare-real-mouse');
+var _ = require('underscore');
 
 // add the plugin
 realMouse(Nightmare);
@@ -37,6 +38,22 @@ exports.getRegionName = function (city) {
     region = splits[2].split(' ')[1] || splits[2].split(' ')[0];
   }
   return region;
+};
+
+exports.getResponseArray = function (weights, cityItem, delivery, error) {
+  return weights.map(function (weight) {
+    return exports.getResponseObject(cityItem, delivery, weight, error);
+  });
+};
+
+exports.getResponseObject = function (cityItem, delivery, weight, error) {
+  return {
+    city: _.clone(cityItem),
+    delivery: delivery,
+    weight: weight,
+    tariffs: [],
+    error: error
+  }
 };
 
 exports.request = request;

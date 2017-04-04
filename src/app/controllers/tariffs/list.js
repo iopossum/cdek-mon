@@ -21,6 +21,7 @@ class TariffsCtrl {
       main: false,
       errors: false
     };
+    this.mainInterval = null;
     this.availableWeights = array;
     this.$scope = $scope;
     this.notify = Notify;
@@ -39,7 +40,45 @@ class TariffsCtrl {
 
   pingTariffs() {
     var that = this;
-    this.targets.forEach(function (item, index) {
+    this.dynamic = 0;
+    clearInterval(this.mainInterval);
+    for (var key in this.targetsObj) {
+      delete this.targetsObj[key].error;
+      this.targetsObj[key].complete = false;
+    }
+    this.mainInterval = setInterval(function () {
+      console.log('tick');
+      that.tariffService.ping().then(function (res) {
+        var countCompleted = 0;
+        var errors = [];
+        var results = [];
+        for (var key in res.deliveries) {
+          if (res.deliveries[key].complete) {
+            countCompleted++;
+            if (!that.targetsObj[key].complete) {
+              results = results.concat(res.deliveries[key].results || []);
+            }
+            that.targetsObj[key].complete = true;
+            if (res.deliveries[key].error && !that.targetsObj[key].error) {
+              that.targetsObj[key].error = res.deliveries[key].error;
+              errors.push({delivery: key, error: res.deliveries[key].error});
+            }
+          }
+        }
+        that.dynamic = countCompleted;
+        that.receiveTariffs(results);
+        if (that.dynamic === that.targets.length) {
+          that.loading.main = false;
+          clearInterval(that.mainInterval);
+        }
+        if (errors.length) {
+          errors.forEach(function (item) {
+            that.notify.error(res.error);
+          });
+        }
+      });
+    }, 10000);
+    /*this.targets.forEach(function (item, index) {
       if (that.targetsObj[item.id].mainInterval) {
         clearInterval(that.targetsObj[item.id].mainInterval);
         that.targetsObj[item.id].req.reject();
@@ -64,7 +103,7 @@ class TariffsCtrl {
           })
         }, 10000);
       }
-    });
+    });*/
   }
 
   receiveTariffs(res) {

@@ -143,13 +143,13 @@ module.exports = function (req, res) {
       if (err.abort) {
         return false;
       }
-      req.session.user.emspost.complete = true;
-      req.session.user.emspost.error = err;
+      req.session.delivery[delivery].complete = true;
+      req.session.delivery[delivery].error = err;
       req.session.save(function () {});
       return false;
     }
-    req.session.user.emspost.complete = true;
-    req.session.user.emspost.results = results.parseCities;
+    req.session.delivery[delivery].complete = true;
+    req.session.delivery[delivery].results = results.parseCities;
     req.session.save(function () {});
   });
 };

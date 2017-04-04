@@ -105,7 +105,7 @@ module.exports = function (req, res) {
       }
     }
     if (!item.from && !item.to) {
-      tempRequests.push({cityFrom: item.from, cityTo: item.to, delivery: delivery, tariffs: [], error: 'Должны быть указаны оба города'});
+      tempRequests.push({cityFrom: item.from, cityTo: item.to, countryFrom: item.countryFrom, countryTo: item.countryTo, delivery: delivery, tariffs: [], error: 'Должны быть указаны оба города'});
     }
   });
 
@@ -181,7 +181,7 @@ module.exports = function (req, res) {
             success: false
           };
           if (err) {
-            result.message = "Не удалось получить города с сайта. " + err.message ? 'Ошибка: ' + err.message : '';
+            result.message = "Не удалось получить города с сайта. " + (err.message ? 'Ошибка: ' + err.message : '');
             return callback(null, result);
           }
           b = b.replace('0|/*DX*/(', '');
@@ -191,7 +191,7 @@ module.exports = function (req, res) {
           try {
             json = JSON.parse(b);
           } catch (e) {
-            result.message = "Не удалось получить города с сайта. Неверный ответ от сервера. " + e.message ? 'Ошибка: ' + e.message : '';
+            result.message = "Не удалось получить города с сайта. Неверный ответ от сервера. " + (e.message ? 'Ошибка: ' + e.message : '');
           }
           if (!json) {
             return callback(null, result);
@@ -204,7 +204,7 @@ module.exports = function (req, res) {
           try {
             array = JSON.parse(json.result);
           } catch (e) {
-            result.message = "Не удалось получить города с сайта. Неверный ответ от сервера. " + e.message ? 'Ошибка: ' + e.message : '';
+            result.message = "Не удалось получить города с сайта. Неверный ответ от сервера. " + (e.message ? 'Ошибка: ' + e.message : '');
           }
           if (!array) {
             return callback(null, result);
@@ -212,7 +212,7 @@ module.exports = function (req, res) {
           if (!array.length) {
             result.message = "Не удалось получить города с сайта. Такого города нет в БД сайта.";
           } else if (array.length === 2) {
-            result.ids = [array[0]];
+            result.ids = [{id: array[0], name: array[1]}];
             result.success = true;
           } else {
             var region = commonHelper.getRegionName(city);
@@ -221,16 +221,33 @@ module.exports = function (req, res) {
               array.forEach(function (item, index) {
                 if (typeof item === 'string') {
                   if (new RegExp(region, 'gi').test(item)) {
-                    foundIds.push(array[index-1]);
+                    foundIds.push({id: array[index-1], name: item});
                   }
                 }
               });
             }
             if (!region || !foundIds.length) {
-              foundIds = array.filter(function (item) {
-                return typeof item !== 'string';
+              //ищем по точному совпадению
+              array.forEach(function (item, index) {
+                if (typeof item !== 'string' && array[index+1] && commonHelper.getCity(array[index+1]).toUpperCase() === trim.toUpperCase()) {
+                  foundIds.push({id: item, name: array[index+1]});
+                }
               });
+              //ищем хоть что-то
+              if (!foundIds.length) {
+                array.forEach(function (item, index) {
+                  if (typeof item !== 'string') {
+                    foundIds.push({id: item, name: array[index+1]});
+                  }
+                });
+              }
             }
+            result.cities = [];
+            array.forEach(function (item, index) {
+              if (typeof item !== 'string') {
+                result.cities.push({id: item, name: array[index+1]});
+              }
+            });
             result.ids = foundIds;
             result.success = true;
           }
@@ -240,49 +257,46 @@ module.exports = function (req, res) {
     }],
     parseCities: ['getCities', function (results, callback) {
       //todo: save ids to mongo
-      var tempArray = [];
-      results.getCities.forEach(function (item) {
-        if (!item.success) {
-          tempArray.push(item);
-        } else {
-          item.ids.forEach(function (id) {
-            var obj = Object.assign({}, item);
-            obj.id = id;
-            tempArray.push(obj);
-          });
-        }
-      });
+      var respCityObj = _.indexBy(results.getCities, 'city');
       req.body.cities.forEach(function (item) {
         if (item.from && item.to) {
-          tempArray.forEach(function (respCity) {
-            if (respCity.city === item.from) {
-              item.trimFrom = respCity.trim || undefined;
-              item.cityFromId = respCity.id || undefined;
-              item.error = respCity.message || undefined;
-            }
-            if (respCity.city === item.to) {
-              item.trimTo = respCity.trim || undefined;
-              item.cityToId = respCity.id || undefined;
-              item.error = respCity.message || undefined;
-            }
-          });
-          tempRequests.push({
+          var obj = {
             city: {
+              initialCityFrom: item.from,
+              initialCityTo: item.to,
               from: item.from,
               to: item.to,
               countryFrom: item.countryFrom,
               countryTo: item.countryTo
             },
             delivery: delivery,
-            req: {
-              cityFromId: item.cityFromId || undefined,
-              cityToId: item.cityToId || undefined,
-              cityFrom: item.trimFrom || item.from,
-              cityTo: item.trimTo || item.to
-            },
-            tariffs: [],
-            error: item.error || undefined
-          });
+            tariffs: []
+          };
+          if (respCityObj[item.from].success && respCityObj[item.to].success) {
+            for (var i=0; i<respCityObj[item.from].ids.length; i++) {
+              for (var j=0; j<respCityObj[item.to].ids.length; j++) {
+                var copy = _.clone(obj);
+                copy.city = _.clone(obj.city);
+                copy.city.from = respCityObj[item.from].ids[i].name;
+                copy.city.to = respCityObj[item.to].ids[j].name;
+                copy.req = {
+                  cityFromId: respCityObj[item.from].ids[i].id || undefined,
+                  cityToId: respCityObj[item.to].ids[j].id || undefined,
+                  cityFrom: respCityObj[item.from].ids[i].name || item.from,
+                  cityTo: respCityObj[item.to].ids[j].name || item.to
+                };
+                tempRequests.push(copy);
+              }
+            }
+          } else if (!respCityObj[item.from].success) {
+            var copy = Object.assign({}, obj);
+            copy.error = respCityObj[item.from].message;
+            tempRequests.push(copy);
+          } else if (!respCityObj[item.to].success) {
+            var copy = Object.assign({}, obj);
+            copy.error = respCityObj[item.to].message;
+            tempRequests.push(copy);
+          }
         }
       });
       tempRequests.forEach(function (item) {
@@ -355,13 +369,13 @@ module.exports = function (req, res) {
       if (err.abort) {
         return false;
       }
-      req.session.user.majorexpress.complete = true;
-      req.session.user.majorexpress.error = err;
+      req.session.delivery[delivery].complete = true;
+      req.session.delivery[delivery].error = err;
       req.session.save(function () {});
       return false;
     }
-    req.session.user.majorexpress.complete = true;
-    req.session.user.majorexpress.results = results.parseCities;
+    req.session.delivery[delivery].complete = true;
+    req.session.delivery[delivery].results = results.parseCities;
     req.session.save(function () {});
   });
 };

@@ -10,6 +10,7 @@ var session = require('express-session');
 var mongoStore = require('connect-mongo')(session);
 var mongoose = require('mongoose');
 var cookieParser = require('cookie-parser');
+var logger = require('./api/helpers/logger');
 var server;
 
 // Connect to database
@@ -29,29 +30,34 @@ app.use('/', express.static(__dirname + '/dist'));
 //app.use('/tariffs', express.static(__dirname + '/dist'));
 //app.use('/news', express.static(__dirname + '/dist'));
 
-var exitHandler = function (err) {
-  if (err) console.log(err.stack);
-  setTimeout(function(){
-    if (server && server.close) {
-      server.close(function () {
+
+var exitHandler = function (options, err) {
+  if (err) {
+    console.error(err.stack);
+  }
+  if (options.exit) {
+    setTimeout(function () {
+      if (server && server.close) {
+        server.close(function () {
+          process.exit();
+        });
+      } else {
         process.exit();
-      });
-    } else {
-      process.exit();
-    }
-  }, 1000)
+      }
+    }, 1000);
+  }
 };
 
-process.on('uncaughtException', exitHandler);
-process.on('SIGTERM', exitHandler);
+process.on('uncaughtException', exitHandler.bind(null, {exit: false}));
+process.on('SIGTERM', exitHandler.bind(null, {exit: true}));
 //do something when app is closing
-process.on('exit', exitHandler);
+process.on('exit', exitHandler.bind(null, {exit: true}));
 //catches ctrl+c event
-process.on('SIGINT', exitHandler);
+process.on('SIGINT', exitHandler.bind(null, {exit: true}));
 
 // Persist sessions with mongoStore
 app.use(['/api*'], session({
-  secret: 'foo',
+  secret: 'cdek-secret',
   cookie: {path: '/', httpOnly: true, secure: false, maxAge: null },
   resave: true,
   saveUninitialized: true,
@@ -62,8 +68,13 @@ app.use(['/api*'], session({
 }));
 
 app.use('/api*', function (req, res, next) {
-  if (!req.session.user) {
-    req.session.user = {};
+  if (!req.session.delivery) {
+    var targets = require('./api/helpers/delivery').list();
+    var obj = {};
+    targets.forEach(function (item) {
+      obj[item.id] = {complete: false, results: []};
+    });
+    req.session.delivery = obj;
   }
   next();
 });
@@ -73,13 +84,20 @@ app.post('/api/tariff/request', cors(), require('./api/tariff'));
 app.get('/api/tariff/ping', cors(), require('./api/tariff/ping'));
 app.post('/api/tariff/news', cors(), require('./api/news'));
 
-//require('./api/tariff')(
-//  {session: {user: {}}, body: {deliveries: ['spsr'], date: require('moment')().add(-10, 'month')}},
-//  {json: function () {}}
-//);
+require('./api/tariff')(
+  {session: {delivery: {}}, body: {
+    deliveries: ['dpd'],
+    cities: [
+      {from: 'Челябинск', to: 'Владивосток'},
+      {from: 'Москва', to: '', countryTo: 'Азербайджан'}
+    ],
+    weights: [1]
+  }},
+  {json: function () {}}
+);
 
 //require('./api/news')(
-//  {session: {user: {}}, body: {delivery: 'spsr', date: require('moment')().add(-3, 'month')}},
+//  {session: {delivery: {}}, body: {delivery: 'spsr', date: require('moment')().add(-3, 'month')}},
 //  {json: function () {}}
 //);
 

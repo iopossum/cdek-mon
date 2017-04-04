@@ -7,12 +7,12 @@ var cheerio = require('cheerio');
 var config = require('../../../conf');
 var _ = require('underscore');
 
-var getReq = function (from, to, weight) {
+var getReq = function (from, to, weight, form_build_id) {
   from.foundCity = from.foundCity || {};
   to.foundCity = to.foundCity || {};
   return {
     from_ship_region_id: '',
-    form_build_id: 'form-sEipT5lmHTeXvHdjmPRbf_lAV0ezHbiZY7Nchxf42_8',
+    form_build_id: form_build_id,
     form_id: 'spsr_calculator_form',
     from_ship: from.foundCity.label,
     from_ship_id: from.foundCity.id,
@@ -43,7 +43,7 @@ module.exports = function (req, res) {
       }
     }
     if (!item.from || !item.to) {
-      requests.push({cityFrom: item.from, cityTo: item.to, delivery: delivery, tariffs: [], error: 'Должны быть указаны оба города'});
+      requests.push({cityFrom: item.from, cityTo: item.to, countryFrom: item.countryFrom, countryTo: item.countryTo, delivery: delivery, tariffs: [], error: 'Должен быть указан хотя бы 1 город'});
     }
   });
   async.auto({
@@ -65,7 +65,7 @@ module.exports = function (req, res) {
                 success: false
               };
               if (err) {
-                result.message = "Не удалось получить города с сайта. " + err.message ? 'Ошибка: ' + err.message : '';
+                result.message = "Не удалось получить города с сайта. " + (err.message ? 'Ошибка: ' + err.message : '');
                 cityObj[city] = result;
                 return callback(null, result);
               }
@@ -73,7 +73,7 @@ module.exports = function (req, res) {
               try {
                 array = JSON.parse(b);
               } catch (e) {
-                result.message = "Не удалось получить города с сайта. Неверный ответ от сервера. " + e.message ? 'Ошибка: ' + e.message : '';
+                result.message = "Не удалось получить города с сайта. Неверный ответ от сервера. " + (e.message ? 'Ошибка: ' + e.message : '');
               }
               if (!array) {
                 cityObj[city] = result;
@@ -104,11 +104,27 @@ module.exports = function (req, res) {
           }, commonHelper.randomInteger(500, 1000));
       }, callback);
     },
-    parseCities: ['getCities', function (results, callback) {
+    getFormBuildId: function (callback) {
+      var opts = deliveryData.calcGetUrl;
+      async.retry(config.retryOpts, function (callback) {
+        request(opts, callback)
+      }, function (err, r, b) {
+        if (err) {
+          return callback(e);
+        }
+        var $ = cheerio.load(b);
+        var formBuildId = $('input[name="form_build_id"]').val();
+        if (!formBuildId) {
+          return callback(new Error("Внутренняя ошибка сайта. Попробуйте позже. Отсутствует form_build_id"));
+        }
+        callback(null, formBuildId)
+      });
+    },
+    parseCities: ['getCities', 'getFormBuildId', function (results, callback) {
       req.body.cities.forEach(function (item) {
         if (item.from && item.to) {
           req.body.weights.forEach(function (weight) {
-            var spsrReq = getReq(cityObj[item.from], cityObj[item.to], weight);
+            var spsrReq = getReq(cityObj[item.from], cityObj[item.to], weight, results.getFormBuildId);
             requests.push({
               weight: weight,
               city: item,
@@ -141,7 +157,7 @@ module.exports = function (req, res) {
             try {
               json = JSON.parse(b);
             } catch (e) {
-              item.error = "Не удалось получить информацию с сайта, попробуйте позже. " + e.message ? 'Ошибка: ' + e.message : '';
+              item.error = "Не удалось получить информацию с сайта, попробуйте позже. " + (e.message ? 'Ошибка: ' + e.message : '');
             }
             if (!json) {
               return callback(null, item);
@@ -193,13 +209,13 @@ module.exports = function (req, res) {
       if (err.abort) {
         return false;
       }
-      req.session.user[delivery].complete = true;
-      req.session.user[delivery].error = err;
+      req.session.delivery[delivery].complete = true;
+      req.session.delivery[delivery].error = err;
       req.session.save(function () {});
       return false;
     }
-    req.session.user[delivery].complete = true;
-    req.session.user[delivery].results = results.parseCities;
+    req.session.delivery[delivery].complete = true;
+    req.session.delivery[delivery].results = results.parseCities;
     req.session.save(function () {});
   });
 };

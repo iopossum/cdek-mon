@@ -6,15 +6,15 @@ var emspost = require('./emspost');
 var majorexpress = require('./majorexpress');
 
 var ping = function (delivery, req, res) {
-  if (req.session.user[delivery] && req.session.user[delivery].complete) {
-    return res.json({complete: true, results: req.session.user[delivery].results});
+  if (req.session.delivery[delivery] && req.session.delivery[delivery].complete) {
+    return res.json({complete: true, results: req.session.delivery[delivery].results});
   } else {
     return res.json({complete: false, results: []});
   }
 };
 
 module.exports = function (req, res) {
-  switch (req.query.delivery) {
+  /*switch (req.query.delivery) {
     case 'emspost':
       return ping('emspost', req, res);
       break;
@@ -26,5 +26,6 @@ module.exports = function (req, res) {
       break;
     default:
       return responseHelper.createResponse(res, new Error("Delivery is required"));
-  }
+  }*/
+  return res.json({deliveries: req.session.delivery});
 };

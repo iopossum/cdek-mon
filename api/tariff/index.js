@@ -5,30 +5,9 @@ var _ = require('underscore');
 var emspost = require('./emspost');
 var majorexpress = require('./majorexpress');
 var spsr = require('./spsr');
+var dpd = require('./dpd');
 
 module.exports = function (req, res) {
-  if (!req.body.deliveries) {
-    req.body.cities = [
-      {from: 'Новосибирск', to: 'Москва'},
-      {from: 'Пушкино, Московская обл.', to: 'Москва'},
-      {from: 'Химки', to: 'Новосибирск'},
-      {from: '', to: '', countryFrom: '', countryTo: 'Хорватия'}
-    ];
-    req.body.weights = [1, 2, 3];
-    req.body.deliveries = ['spsr'];
-  }
-  if (!req.body.cities) {
-    req.body.cities = [
-      {from: 'Новосибирск', to: 'Москва'},
-      //{from: 'Пушкино, Московская обл.', to: 'Москва'},
-      //{from: 'Химки', to: 'Новосибирск'},
-      //{from: '', to: '', countryFrom: '', countryTo: 'Хорватия'},
-      //{from: 'Москва', to: 'Абай', countryFrom: '', countryTo: 'Казахстан'}
-    ];
-  }
-  if (!req.body.weights) {
-    req.body.weights = [1, 2, 3];
-  }
   if (!req.body.cities) {
     return responseHelper.createResponse(res, new Error("Cities is required"));
   }
@@ -50,19 +29,24 @@ module.exports = function (req, res) {
   req.body.deliveries.forEach(function (item) {
     switch (item) {
       case 'emspost':
-        req.session.user.emspost = {complete: false, results: []};
+        req.session.delivery.emspost = {complete: false, results: []};
         global.emspost = new Date().getTime();
         emspost(req, res);
         break;
       case 'majorexpress':
-        req.session.user.majorexpress = {complete: false, results: []};
+        req.session.delivery.majorexpress = {complete: false, results: []};
         global.majorexpress = new Date().getTime();
         majorexpress(req, res);
         break;
       case 'spsr':
-        req.session.user.spsr = {complete: false, results: []};
+        req.session.delivery.spsr = {complete: false, results: []};
         global.spsr = new Date().getTime();
         spsr(req, res);
+        break;
+      case 'dpd':
+        req.session.delivery.dpd = {complete: false, results: []};
+        global.dpd = new Date().getTime();
+        dpd(req, res);
         break;
     }
   });

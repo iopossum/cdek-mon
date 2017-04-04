@@ -18,10 +18,19 @@ var targets = [
     id: 'spsr',
     calcUrl: {method: 'POST', uri: 'http://www.spsr.ru/ru/system/ajax'},
     citiesUrl: {method: 'GET', uri: 'http://www.spsr.ru/ru/service/calculator?q=/spsr/cc_autocomplete/'},
-    newsUrl: {method: 'GET', uri: 'http://www.spsr.ru/ru/news'}
+    newsUrl: {method: 'GET', uri: 'http://www.spsr.ru/ru/news'},
+    calcGetUrl: {method: 'GET', uri: 'http://www.spsr.ru/ru/service/calculator'}
   },
-  /*{id: 'dpd', name: 'DPD'},
-  {id: 'dhl', name: 'DHL'},
+  {
+    id: 'dpd',
+    calcUrl: {method: 'POST', uri: 'http://www.dpd.ru/ols/calc/calc.do2'},
+    calcInternationalUrl: {method: 'POST', uri: 'http://www.dpd.ru/ols/calcint/offire.do2'},
+    citiesUrl: {method: 'POST', uri: 'http://www.dpd.ru/ols/calc/cities.do2'},
+    citiesInternationalUrl: {method: 'POST', uri: 'http://www.dpd.ru/ols/calcint/city_ru.do2'},
+    countriesUrl: {method: 'GET', uri: 'http://www.dpd.ru/ols/calcint/show.do2'},
+    newsUrl: {method: 'GET', uri: 'http://www.dpd.ru/dpd/o-dpd/informacionnyj-centr/novosti.do2'}
+  },
+  /*{id: 'dhl', name: 'DHL'},
   {id: 'dimex', name: 'Dimex'},
   {id: 'flippost', name: 'Flippost'},
   {id: 'ponyexpress', name: 'Ponyexpress'},
@@ -45,7 +54,9 @@ var targets = [
 
 var targetObj = _.indexBy(targets, 'id');
 
-
+exports.list = function () {
+  return targets;
+};
 
 exports.get = function (id) {
   return targetObj[id];
