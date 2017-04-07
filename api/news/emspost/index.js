@@ -7,6 +7,7 @@ var cheerio = require('cheerio');
 var config = require('../../../conf');
 var moment = require('moment');
 var _ = require('underscore');
+var logger = require('../../helpers/logger');
 
 
 module.exports = function (req, res) {
@@ -56,6 +57,7 @@ module.exports = function (req, res) {
     if (err) {
       return responseHelper.createResponse(res, err, 500);
     }
+    logger.newsInfoLog(req.body.delivery, results.getNews, 'news');
     res.json(results.getNews);
   });
 };

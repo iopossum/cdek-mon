@@ -5,6 +5,7 @@ var _ = require('underscore');
 var emspost = require('./emspost');
 var majorexpress = require('./majorexpress');
 var spsr = require('./spsr');
+var dpd = require('./dpd');
 
 module.exports = function (req, res) {
   if (!req.body.delivery) {
@@ -19,6 +20,12 @@ module.exports = function (req, res) {
       break;
     case 'spsr':
       return spsr(req, res);
+      break;
+    case 'dpd':
+      return dpd(req, res);
+      break;
+    case 'dimex':
+      return require('./dimex')(req, res);
       break;
     default:
       return res.json([]);

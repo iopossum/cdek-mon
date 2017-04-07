@@ -39,32 +39,6 @@ var getReq = function (from, to, weight) {
     'form.maxDeclaredCost': 30000000,
     'form.deliveryPeriodId': 191696130
   };
-  /*return {
-    'method:calc': '',
-    direction: '',
-    'form.cityPickupId': 49275227,
-    'form.cityDeliveryId': 49540167,
-    'form.cityPickupCountryCode': 'ru',
-    'form.cityDeliveryCountryCode': 'ru',
-    'form.cityPickupNameFull': 'г. Челябинск',
-    'form.cityDeliveryNameFull': 'г. Владивосток',
-    'form.cityPickupNameTotal': 'г. Челябинск, (Челябинская обл.)',
-    'form.cityDeliveryNameTotal': 'г. Владивосток, (Приморский край)',
-    'serverCountryCode': 'ru',
-    'form.cityPickupName': 'г. Челябинск, (Челябинская обл.)',
-    'form.cityPickupType': 0,
-    'form.cityDeliveryName': 'г. Владивосток, (Приморский край)',
-    'form.cityDeliveryType': 0,
-    'form.weightStr': 2,
-    'form.volumeStr': '',
-    'form.parcelLimits.maxLength': 350,
-    'form.parcelLimits.maxWidth': 160,
-    'form.parcelLimits.maxHeight': 180,
-    'form.parcelLimits.maxWeight': 1000,
-    'form.declaredCostStr': '',
-    'form.maxDeclaredCost': 30000000,
-    'form.deliveryPeriodId': 191696130
-  }*/
 };
 
 var getInternationalReq = function (from, to, weight) {

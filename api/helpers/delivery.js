@@ -35,11 +35,26 @@ var targets = [
     citiesUrl: {method: 'POST', uri: 'http://www.dpd.ru/ols/calc/cities.do2'},
     citiesInternationalUrl: {method: 'POST', uri: 'http://www.dpd.ru/ols/calcint/city_ru.do2'},
     countriesUrl: {method: 'GET', uri: 'http://www.dpd.ru/ols/calcint/show.do2'},
-    newsUrl: {method: 'GET', uri: 'http://www.dpd.ru/dpd/o-dpd/informacionnyj-centr/novosti.do2'}
+    newsUrl: {method: 'GET', uri: 'http://www.dpd.ru/dpd/o-dpd/informacionnyj-centr/novosti.do2'},
+    baseUrl: 'http://www.dpd.ru'
+  },
+  {
+    id: 'dimex',
+    calcUrl: {method: 'GET', uri: 'http://rus.tech-dimex.ru/calculator/calcestnew?'},
+    citiesUrl: {method: 'GET', uri: 'http://rus.tech-dimex.ru/calculator/autocompletecity?'},
+    countriesUrl: {method: 'POST', uri: 'http://rus.tech-dimex.ru/calculator/getajaxForm'},
+    newsUrl: {method: 'GET', uri: 'http://www.dimex.ws/novosti-kompanii/arhiv-novostey/'},
+    baseUrl: 'http://www.dimex.ws'
+  },
+  {
+    id: 'flippost',
+    calcFlipUrl: {method: 'GET', uri: 'http://flippost.com/proxy.php?dbAct=getTarif&'},
+    calcOtdoUrl: {method: 'GET', uri: 'http://otdo.ru/calc/delivery-russia/?'},
+    calcOtdoIntUrl: {method: 'GET', uri: 'http://otdo.ru/calc/world/?'},
+    citiesUrl: {method: 'GET', uri: 'http://flippost.com/proxy.php?dbAct=getCities&'},
+    //newsUrl: {method: 'GET', uri: 'http://www.dimex.ws/novosti-kompanii/arhiv-novostey/'}
   },
   /*{id: 'dhl', name: 'DHL'},
-  {id: 'dimex', name: 'Dimex'},
-  {id: 'flippost', name: 'Flippost'},
   {id: 'ponyexpress', name: 'Ponyexpress'},
   {id: 'tnt', name: 'TNT'},
   {id: 'ups', name: 'UPS'},

@@ -350,7 +350,7 @@ module.exports = function (req, res) {
       var tempRequests = [];
       results.getCities.forEach(function (item) {
         if (item.error) {
-          requests = requests.concat(commonHelper.getResponseArray(req.body.weights, item, delivery, 'Должен быть указан хотя бы 1 город'));
+          requests = requests.concat(commonHelper.getResponseArray(req.body.weights, item, delivery, item.error));
         } else if (!item.fromJson.success) {
           requests = requests.concat(commonHelper.getResponseArray(req.body.weights, item, delivery, item.fromJson.message));
         } else if (!item.toJson.success) {

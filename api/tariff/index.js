@@ -48,6 +48,16 @@ module.exports = function (req, res) {
         global.dpd = new Date().getTime();
         dpd(req, res);
         break;
+      case 'dimex':
+        req.session.delivery.dimex = {complete: false, results: []};
+        global.dimex = new Date().getTime();
+        require('./dimex')(req, res);
+        break;
+      case 'flippost':
+        req.session.delivery.flippost = {complete: false, results: []};
+        global.flippost = new Date().getTime();
+        require('./flippost')(req, res);
+        break;
     }
   });
   return res.json(responseHelper.success());

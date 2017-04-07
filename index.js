@@ -84,20 +84,23 @@ app.post('/api/tariff/request', cors(), require('./api/tariff'));
 app.get('/api/tariff/ping', cors(), require('./api/tariff/ping'));
 app.post('/api/tariff/news', cors(), require('./api/news'));
 
-//require('./api/tariff')(
-//  {session: {delivery: {}}, body: {
-//    deliveries: ['emspost'],
-//    cities: [
-//      {from: 'Челябинск', to: 'Владивосток'},
-//      {from: 'Москва', to: '', countryTo: 'Азербайджан'}
-//    ],
-//    weights: [1]
-//  }},
-//  {json: function () {}}
-//);
+require('./api/tariff')(
+  {session: {delivery: {}}, body: {
+    deliveries: ['flippost'],
+    cities: [
+      {from: 'Новосибирск', countryTo: 'Австралия'},
+      {from: 'Новосибирск', to: 'Москва'},
+      {from: 'Москва', to: 'Новосибирск'},
+      {from: 'Москва', to: 'Бангкок'},
+      //{from: 'Москва', to: '', countryTo: 'Азербайджан'}
+    ],
+    weights: [1]
+  }},
+  {json: function () {}}
+);
 
 //require('./api/news')(
-//  {session: {delivery: {}}, body: {delivery: 'spsr', date: require('moment')().add(-3, 'month')}},
+//  {session: {delivery: {}}, body: {delivery: 'dimex', date: require('moment')().add(-3, 'month')}},
 //  {json: function () {}}
 //);
 

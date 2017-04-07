@@ -56,4 +56,32 @@ exports.getResponseObject = function (cityItem, delivery, weight, error) {
   }
 };
 
+exports.CITYFROMREQUIRED = 'Должен быть указан город отправления';
+exports.CITYORCOUNTRYTOREQUIRED = 'Должен быть указан город или страна назначения';
+exports.COUNTRYLISTERROR = 'Не удалось получить список стран. Попробуйте позже.';
+exports.COUNTRYNOTFOUND = 'Страна назначения отстуствует в списке доступных';
+exports.CITYTONOTFOUND = 'Город назначения отстуствует в списке доступных';
+
+exports.DATEFORMATREG = /^\s*((0?[1-9]|[12][0-9]|3[01])\.(0?[1-9]|1[012])\.\d{4})([\d\D]*)/;
+
+exports.getResponseError = function (err) {
+  return "Не удалось получить города с сайта. " + (err.message ? 'Ошибка: ' + err.message : '');
+};
+
+exports.getCityJsonError = function (err) {
+  return "Не удалось получить города с сайта. Неверный ответ от сервера. " + (err.message ? 'Ошибка: ' + err.message : '');
+};
+
+exports.getResultJsonError = function (err) {
+  return "Не удалось получить информацию с сайта, попробуйте позже. " + (err.message ? 'Ошибка: ' + err.message : '');
+};
+
+exports.getCityNoResultError = function () {
+  return "Не удалось получить города с сайта. Такого города нет в БД сайта.";
+};
+
+exports.getNoResultError = function () {
+  return "По указанным направлениям ничего не найдено";
+};
+
 exports.request = request;

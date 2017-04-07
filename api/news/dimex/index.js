@@ -22,7 +22,9 @@ module.exports = function (req, res) {
       async.mapLimit(requests, 3, function (item, callback) {
         setTimeout(function () {
           var opts = _.extend({}, deliveryData.newsUrl);
-          opts.uri = opts.uri + '?year=' + item;
+          if (item !== moment().year()) {
+            opts.uri = opts.uri + '?year=' + item;
+          }
           async.retry(config.retryOpts, function (callback) {
             request(opts, callback)
           }, function (err, r, b) {
@@ -31,17 +33,19 @@ module.exports = function (req, res) {
             }
             var $ = cheerio.load(b);
             var news = [];
-            var tables = $('#ContentPlaceHolder1_gvNews').find('table');
-            tables.each(function (index, item) {
-              var date = $(item).find('.newsDate').text().trim();
-              if (date && moment(date, 'DD MMMM YYYY', 'ru').isAfter(moment(req.body.date))) {
-                news.push({
-                  title: $(item).find('.newsTitle').text().trim(),
-                  date: date,
-                  link: opts.uri,
-                  description: $(item).find('.newsText').text().trim(),
-                  delivery: req.body.delivery
-                })
+            var items = $('.primary-column').find('li');
+            items.each(function (index, item) {
+              var splits = $(item).text().split('\n');
+              if (splits[1]) {
+                var date = splits[0].replace(/\s/g, "");
+                if (date && moment(date, 'DD/MM/YYYY').isAfter(moment(req.body.date))) {
+                  news.push({
+                    title: splits[1].trim(),
+                    date: moment(date, 'DD/MM/YYYY').locale('ru').format('DD MMMM YYYY'),
+                    link: deliveryData.baseUrl + $(item).find('a').attr('href'),
+                    delivery: req.body.delivery
+                  })
+                }
               }
             });
             return callback(null, news);
