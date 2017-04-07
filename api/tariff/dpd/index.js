@@ -161,7 +161,7 @@ var getCity = function (city, opts, callback) {
 };
 
 var getCalcResult = function (requests, delivery, timestamp, opts, callback) {
-  async.mapLimit(requests, 3, function (item, callback) {
+  async.mapLimit(requests, 1, function (item, callback) {
     if (global[delivery] > timestamp) {
       return callback({abort: true});
     }
@@ -320,7 +320,7 @@ module.exports = function (req, res) {
       });
     },
     getCities: ['getCookie', function (results, callback) {
-      async.mapLimit(_.keys(cityObj), 2, function (city, callback) {
+      async.mapLimit(_.keys(cityObj), 1, function (city, callback) {
           setTimeout(function () {
             if (global[delivery] > timestamp) {
               return callback({abort: true});
