@@ -8,8 +8,11 @@ var config = require('../../../conf');
 var moment = require('moment');
 var _ = require('underscore');
 
+/*
+  Old version
+ */
 
-module.exports = function (req, res) {
+/*module.exports = function (req, res) {
   var deliveryData = deliveryHelper.get(req.body.delivery);
   var news = [];
   var page = 0;
@@ -49,6 +52,65 @@ module.exports = function (req, res) {
             }
           });
           if (count !== $('.news_wrap').find('.news_date').length || !$('.news_wrap').find('.news_date').length) {
+            complete = true;
+          }
+          callback(null);
+        });
+      }, commonHelper.randomInteger(500, 1000));
+    },
+    function (err, n) {
+      if (err) {
+        return responseHelper.createResponse(res, err, 500);
+      }
+      res.json(news);
+    }
+  );
+};*/
+
+module.exports = function (req, res) {
+  var deliveryData = deliveryHelper.get(req.body.delivery);
+  var news = [];
+  var page = 0;
+  var complete = false;
+  async.until(
+    function () { return complete; },
+    function (callback) {
+      setTimeout(function () {
+        var opts = Object.assign({}, deliveryData.newsUrl);
+        if (page > 0) {
+          opts.uri += '?page=' + page;
+        }
+        async.retry(config.retryOpts, function (callback) {
+          request(opts, callback)
+        }, function (err, r, b) {
+          page++;
+          if (err && !news.length) {
+            return callback(err);
+          }
+          var $ = cheerio.load(b);
+          var count = 0;
+          var wasOld = false;
+          $('.sonata-blog-post-container').each(function (index, item) {
+            var date = $(item).find('.sonata-blog-post-information').text().trim();
+            var momentDate = moment(date, "DD MMMM, HH:mm", 'ru');
+            if (date && momentDate.isAfter(moment(req.body.date)) && !wasOld) {
+              var title = $(item).find('.sonata-blog-post-title');
+              var desc = $(item).find('.sonata-blog-post-abtract').text().trim();
+              news.push(
+                {
+                  title: $(title).text().trim(),
+                  date: momentDate.locale("ru").format('DD MMMM YYYY'),
+                  link: $(title).find('a').attr('href').trim(),
+                  description: desc,
+                  delivery: req.body.delivery
+                }
+              );
+              count++;
+            } else {
+              wasOld = true;
+            }
+          });
+          if (count !== $('.sonata-blog-post-container').length || !$('.sonata-blog-post-container').length) {
             complete = true;
           }
           callback(null);

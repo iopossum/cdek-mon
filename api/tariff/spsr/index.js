@@ -6,6 +6,7 @@ var request = commonHelper.request;
 var cheerio = require('cheerio');
 var config = require('../../../conf');
 var _ = require('underscore');
+var logger = require('../../helpers/logger');
 
 var getReq = function (from, to, weight, form_build_id) {
   from.foundCity = from.foundCity || {};
@@ -25,6 +26,11 @@ var getReq = function (from, to, weight, form_build_id) {
   }
 };
 
+/*
+  Old version of site
+ */
+
+/*
 module.exports = function (req, res) {
   var delivery = 'spsr';
   var deliveryData = deliveryHelper.get(delivery);
@@ -32,19 +38,12 @@ module.exports = function (req, res) {
   var cityObj = {};
   var timestamp = global[delivery];
   req.body.cities.forEach(function (item) {
-    if (item.from) {
-      if (typeof cityObj[item.from] === 'undefined') {
-        cityObj[item.from] = true;
-      }
-    }
-    if (item.to) {
-      if (typeof cityObj[item.to] === 'undefined') {
-        cityObj[item.to] = true;
-      }
-    }
-    if (!item.from || !item.to) {
-      requests.push({cityFrom: item.from, cityTo: item.to, countryFrom: item.countryFrom, countryTo: item.countryTo, delivery: delivery, tariffs: [], error: 'Должен быть указан хотя бы 1 город'});
-    }
+   if (!item.from || !item.to) {
+    requests = requests.concat(commonHelper.getResponseArray(req.body.weights, item, delivery, 'Должен быть указан хотя бы 1 город'));
+   } else {
+     cityObj[item.from] = true;
+     cityObj[item.to] = true;
+   }
   });
   async.auto({
     getCities: function (callback) {
@@ -205,6 +204,245 @@ module.exports = function (req, res) {
       }, callback);
     }]
   }, function (err, results) {
+    if (err) {
+      if (err.abort) {
+        return false;
+      }
+      req.session.delivery[delivery].complete = true;
+      req.session.delivery[delivery].error = err.message || err.stack;
+      var array = [];
+      req.body.cities.forEach(function (item) {
+        array = array.concat(commonHelper.getResponseArray(req.body.weights, item, delivery, err.message || err.stack))
+      });
+      req.session.delivery[delivery].results = array;
+      req.session.save(function () {});
+      return false;
+    }
+    req.session.delivery[delivery].complete = true;
+    req.session.delivery[delivery].results = results.parseCities;
+    req.session.save(function () {});
+  });
+};*/
+
+var getCity = function (city, country, deliveryData, callback) {
+  var opts = Object.assign({}, deliveryData.citiesUrl);
+  var trim = commonHelper.getCity(city);
+  opts.uri += encodeURIComponent(trim);
+  async.retry(config.retryOpts, function (callback) {
+    request(opts, callback)
+  }, function (err, r, b) {
+    var result = {
+      city: city,
+      cityTrim: trim,
+      success: false
+    };
+    if (err) {
+      result.message = "Не удалось получить города с сайта. " + (err.message ? 'Ошибка: ' + err.message : '');
+      return callback(null, result);
+    }
+    var array = null;
+    try {
+      array = JSON.parse(b);
+    } catch (e) {
+      result.message = "Не удалось получить города с сайта. Неверный ответ от сервера. " + (e.message ? 'Ошибка: ' + e.message : '');
+    }
+    if (!array) {
+      return callback(null, result);
+    }
+    if (!array.length) {
+      result.message = "Не удалось получить города с сайта. Такого города нет в БД сайта.";
+    } else if (array.length === 1) {
+      result.foundCities = array;
+      result.success = true;
+    } else {
+      var region = commonHelper.getRegionName(city);
+      var founds = [];
+      if (region) {
+        array.forEach(function (item) {
+          if (new RegExp(region, 'gi').test(item.region)) {
+            founds.push(item);
+          }
+        });
+      }
+      array.forEach(function (item) {
+        if (country && item.region && country.toLowerCase() === item.region.toLowerCase()) {
+          founds.push(item);
+        }
+      });
+      result.foundCities = founds.length ? founds : [array[0]];
+      result.success = true;
+    }
+    result.cities = array;
+    callback(null, result);
+  });
+};
+
+module.exports = function (req, res) {
+  var delivery = 'spsr';
+  var deliveryData = deliveryHelper.get(delivery);
+  var requests = [];
+  var cityObj = {};
+  var timestamp = global[delivery];
+  /*req.body.cities.forEach(function (item) {
+    if (!item.from || !item.to) {
+      requests = requests.concat(commonHelper.getResponseArray(req.body.weights, item, delivery, 'Должен быть указан хотя бы 1 город'));
+    } else {
+      if (typeof cityObj[item.from] === 'undefined') {
+        var obj = {};
+        if (item.countryFrom) {
+          obj[item.countryFrom] = true;
+        }
+        cityObj[item.from] = obj;
+      } else if (item.countryFrom) {
+        cityObj[item.from][item.countryFrom] = true;
+      }
+      if (typeof cityObj[item.to] === 'undefined') {
+        var obj = {};
+        if (item.countryTo) {
+          obj[item.countryTo] = true;
+        }
+        cityObj[item.to] = obj;
+      } else if (item.countryTo) {
+        cityObj[item.to][item.countryTo] = true;
+      }
+    }
+  });*/
+  async.auto({
+    getCities: function (callback) {
+      async.mapSeries(req.body.cities, function (city, callback) {
+        if (!city.from || !city.to) {
+          city.error = 'Должен быть указан хотя бы 1 город';
+          callback(null, city);
+        }
+        setTimeout(function () {
+          if (global[delivery] > timestamp) {
+            return callback({abort: true});
+          }
+          async.parallel([
+            function (callback) {
+              if (typeof  cityObj[city.from + city.countryFrom] !== 'undefined') {
+                return callback(null);
+              }
+              getCity(city.from, city.countryFrom, deliveryData, callback);
+            },
+            function (callback) {
+              if (typeof  cityObj[city.to + city.countryTo] !== 'undefined') {
+                return callback(null);
+              }
+              getCity(city.to, city.countryTo, deliveryData, callback);
+            }
+          ], function (err, cities) { //ошибки быть не может
+            if (typeof  cityObj[city.from + city.countryFrom] === 'undefined') {
+              cityObj[city.from + city.countryFrom] = cities[0];
+            }
+            if (typeof  cityObj[city.to + city.countryTo] === 'undefined') {
+              cityObj[city.to + city.countryTo] = cities[1];
+            }
+            city.fromJson = cityObj[city.from + city.countryFrom];
+            city.toJson = cityObj[city.to + city.countryTo];
+            callback(null, city);
+          });
+        }, commonHelper.randomInteger(500, 1000));
+      }, callback);
+    },
+    parseCities: ['getCities', function (results, callback) {
+      logger.tariffsInfoLog(delivery, results.getCities, 'getCities');
+      var tempRequests = [];
+      results.getCities.forEach(function (item) {
+        console.log(item);
+        if (item.error) {
+          requests = requests.concat(commonHelper.getResponseArray(req.body.weights, item, delivery, 'Должен быть указан хотя бы 1 город'));
+        } else if (!item.fromJson.success) {
+          requests = requests.concat(commonHelper.getResponseArray(req.body.weights, item, delivery, item.fromJson.message));
+        } else if (!item.toJson.success) {
+          requests = requests.concat(commonHelper.getResponseArray(req.body.weights, item, delivery, item.toJson.message));
+        } else {
+          item.fromJson.foundCities.forEach(function (fromCity) {
+            item.toJson.foundCities.forEach(function (toCity) {
+              tempRequests.push({
+                city: {
+                  initialCityFrom: item.from,
+                  initialCityTo: item.to,
+                  from: fromCity.name,
+                  to: toCity.name,
+                  countryFrom: item.countryFrom,
+                  countryTo: item.countryTo
+                },
+                req: {
+                  city_from: fromCity.city_id + '|' + fromCity.city_owner_id,
+                  city_to: toCity.city_id + '|' + toCity.city_owner_id
+                },
+                delivery: delivery,
+                tariffs: []
+              });
+            });
+          });
+        }
+      });
+      tempRequests.forEach(function (item) {
+        req.body.weights.forEach(function (weight) {
+          var obj = Object.assign({}, item);
+          obj.weight = weight;
+          obj.req.weight = weight;
+          requests.push(obj);
+        });
+      });
+      async.mapLimit(requests, 3, function (item, callback) {
+        if (global[delivery] > timestamp) {
+          return callback({abort: true});
+        }
+        if (item.error) {
+          return callback(null, item);
+        }
+        setTimeout(function () {
+          var opts = _.extend({}, deliveryData.calcUrl);
+          for (var key in item.req) {
+            opts.uri += (key + '=' + encodeURIComponent(item.req[key]) + '&');
+          }
+          async.retry(config.retryOpts, function (callback) {
+            request(opts, callback)
+          }, function (err, r, b) {
+            logger.tariffsInfoLog(delivery, b, 'getTariffs');
+            if (err) {
+              item.error = "Не удалось получить информацию с сайта, попробуйте позже";
+              return callback(null, item);
+            }
+            var json = null;
+            try {
+              json = JSON.parse(b);
+            } catch (e) {
+              item.error = "Не удалось получить информацию с сайта, попробуйте позже. " + (e.message ? 'Ошибка: ' + e.message : '');
+            }
+            if (!json) {
+              return callback(null, item);
+            }
+            if (!json.Tariff) {
+              item.message = "Не удалось получить информацию с сайта, неверный ответ. Попробуйте позже.";
+              item.res = json;
+              return callback(null, item);
+            }
+            if (!Array.isArray(json.Tariff)) {
+              item.message = "Не удалось получить информацию с сайта, неверный ответ. Попробуйте позже.";
+              item.res = json;
+              return callback(null, item);
+            }
+            item.tariffs = json.Tariff.map(function (item) {
+              return {
+                service: item.TariffType,
+                cost: item.Total_Dost,
+                deliveryTime: item.DP
+              }
+            });
+            if (!item.tariffs.length) {
+              item.error = "По направлениям ничего не найдено";
+            }
+            return callback(null, item);
+          });
+        }, commonHelper.randomInteger(500, 1000));
+      }, callback);
+    }]
+  }, function (err, results) {
+    console.log(results.parseCities);
     if (err) {
       if (err.abort) {
         return false;

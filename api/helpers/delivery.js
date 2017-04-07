@@ -14,12 +14,18 @@ var targets = [
     citiesUrl: {method: 'POST', uri: 'https://major-express.ru/calculator.aspx'},
     newsUrl: {method: 'GET', uri: 'https://www.major-express.ru/News.aspx'}
   },
-  {
+  /*{
     id: 'spsr',
     calcUrl: {method: 'POST', uri: 'http://www.spsr.ru/ru/system/ajax'},
     citiesUrl: {method: 'GET', uri: 'http://www.spsr.ru/ru/service/calculator?q=/spsr/cc_autocomplete/'},
     newsUrl: {method: 'GET', uri: 'http://www.spsr.ru/ru/news'},
     calcGetUrl: {method: 'GET', uri: 'http://www.spsr.ru/ru/service/calculator'}
+  },*/
+  {
+    id: 'spsr',
+    calcUrl: {method: 'GET', uri: 'http://www.spsr.ru/webapi/calculator?'},
+    citiesUrl: {method: 'GET', uri: 'http://www.spsr.ru/webapi/autocomplete_city?city='},
+    newsUrl: {method: 'GET', uri: 'http://www.spsr.ru/ru/news/collection/novosti-i-press-relizy'}
   },
   {
     id: 'dpd',

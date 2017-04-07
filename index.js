@@ -86,7 +86,7 @@ app.post('/api/tariff/news', cors(), require('./api/news'));
 
 require('./api/tariff')(
   {session: {delivery: {}}, body: {
-    deliveries: ['dpd'],
+    deliveries: ['spsr'],
     cities: [
       {from: 'Челябинск', to: 'Владивосток'},
       {from: 'Москва', to: '', countryTo: 'Азербайджан'}

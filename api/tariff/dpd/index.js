@@ -14,7 +14,7 @@ var getReq = function (from, to, weight) {
   from.foundCity = from.foundCity || {};
   to.foundCity = to.foundCity || {};
   return {
-    method: 'calc:',
+    'method:calc': '',
     direction: '',
     'form.cityPickupId': from.foundCity.id,
     'form.cityDeliveryId': to.foundCity.id,
@@ -38,7 +38,33 @@ var getReq = function (from, to, weight) {
     'form.declaredCostStr': '',
     'form.maxDeclaredCost': 30000000,
     'form.deliveryPeriodId': 191696130
-  }
+  };
+  /*return {
+    'method:calc': '',
+    direction: '',
+    'form.cityPickupId': 49275227,
+    'form.cityDeliveryId': 49540167,
+    'form.cityPickupCountryCode': 'ru',
+    'form.cityDeliveryCountryCode': 'ru',
+    'form.cityPickupNameFull': 'г. Челябинск',
+    'form.cityDeliveryNameFull': 'г. Владивосток',
+    'form.cityPickupNameTotal': 'г. Челябинск, (Челябинская обл.)',
+    'form.cityDeliveryNameTotal': 'г. Владивосток, (Приморский край)',
+    'serverCountryCode': 'ru',
+    'form.cityPickupName': 'г. Челябинск, (Челябинская обл.)',
+    'form.cityPickupType': 0,
+    'form.cityDeliveryName': 'г. Владивосток, (Приморский край)',
+    'form.cityDeliveryType': 0,
+    'form.weightStr': 2,
+    'form.volumeStr': '',
+    'form.parcelLimits.maxLength': 350,
+    'form.parcelLimits.maxWidth': 160,
+    'form.parcelLimits.maxHeight': 180,
+    'form.parcelLimits.maxWeight': 1000,
+    'form.declaredCostStr': '',
+    'form.maxDeclaredCost': 30000000,
+    'form.deliveryPeriodId': 191696130
+  }*/
 };
 
 var getInternationalReq = function (from, to, weight) {
@@ -83,9 +109,9 @@ var getCity = function (city, opts, callback) {
   var trim = commonHelper.getCity(city);
   async.retry(config.retryOpts, function (callback) {
     opts.form = {
-      name_startsWith: trim,
+      name_startsWith: trim.toLowerCase(),
       country: 'RU',
-      selectedCountry: 'RU'
+      //selectedCountry: 'RU'
     };
     request(opts, callback)
   }, function (err, r, b) {
@@ -145,6 +171,7 @@ var getCalcResult = function (requests, delivery, timestamp, opts, callback) {
     setTimeout(function () {
       async.retry(config.retryOpts, function (callback) {
         opts.form = item.req;
+        opts.followAllRedirects = true;
         request(opts, callback)
       }, function (err, r, b) {
         if (err) {
@@ -152,7 +179,54 @@ var getCalcResult = function (requests, delivery, timestamp, opts, callback) {
           return callback(null, item);
         }
         var $ = cheerio.load(b);
-        if ($('#calc_noservices_message_container').length) {
+        if ($('#calc_noservices_message_container').length && $('#calc_noservices_message_container').css('display') !== 'none') {
+          item.error = "По указанным направлениям ничего не найдено";
+          return callback(null, item);
+        }
+        var trs = $('table#calc_result_table').find('tr');
+        var tariffs = [];
+        trs.each(function (index, tr) {
+          if (index !== 0 && index !== trs.length - 1) {
+            var tds = $(tr).find('td');
+            if (tds.length) {
+              tariffs.push({
+                service: $(tr).find('input[name="name"]').val(),
+                cost: $(tr).find('input[name="cost"]').val(),
+                deliveryTime: $(tr).find('input[name="days"]').val()
+              });
+            }
+          }
+        });
+        if (!tariffs.length) {
+          item.error = "По указанным направлениям ничего не найдено";
+        }
+        item.tariffs = tariffs;
+        return callback(null, item);
+      });
+    }, commonHelper.randomInteger(500, 1000));
+  }, callback);
+};
+
+var getIntCalcResult = function (requests, delivery, timestamp, opts, callback) {
+  async.mapLimit(requests, 3, function (item, callback) {
+    if (global[delivery] > timestamp) {
+      return callback({abort: true});
+    }
+    if (item.error) {
+      return callback(null, item);
+    }
+    setTimeout(function () {
+      async.retry(config.retryOpts, function (callback) {
+        opts.form = item.req;
+        opts.followAllRedirects = true;
+        request(opts, callback)
+      }, function (err, r, b) {
+        if (err) {
+          item.error = "Не удалось получить информацию с сайта, попробуйте позже";
+          return callback(null, item);
+        }
+        var $ = cheerio.load(b);
+        if ($('#calc_noservices_message_container').length && $('#calc_noservices_message_container').css('display') !== 'none') {
           item.error = "По указанным направлениям ничего не найдено";
           return callback(null, item);
         }
@@ -210,33 +284,29 @@ module.exports = function (req, res) {
     }
   });
   async.auto({
-    getCities: function (callback) {
-      async.mapLimit(_.keys(cityObj), 3, function (city, callback) {
-          setTimeout(function () {
-            if (global[delivery] > timestamp) {
-              return callback({abort: true});
-            }
-            var opts = Object.assign({}, deliveryData.citiesUrl);
-            getCity(city, opts, callback);
-          }, commonHelper.randomInteger(500, 1000));
-      }, callback);
-    },
-    getInternationalCities: function (callback) {
-      async.mapLimit(_.keys(cityInternationalObj), 3, function (city, callback) {
-        setTimeout(function () {
-          if (global[delivery] > timestamp) {
-            return callback({abort: true});
-          }
-          var opts = Object.assign({}, deliveryData.citiesInternationalUrl);
-          getCity(city, opts, callback);
-        }, commonHelper.randomInteger(500, 1000));
-      }, callback);
+    getCookie: function (callback) {
+      var opts = _.extend({}, deliveryData.calcUrl);
+      async.retry(config.retryOpts, function (callback) {
+        request(opts, callback)
+      }, function (err, r, b) {
+        if (err) {
+          return callback(err);
+        }
+        var cookie = '';
+        try {
+          cookie = r.headers['set-cookie'][0].split(';')[0];
+        } catch (e) {}
+        if (!cookie) {
+          return callback('Не удалось получить cookie.');
+        }
+        callback(null, cookie);
+      });
     },
     getCountries: function (callback) {
       var opts = _.extend({}, deliveryData.countriesUrl);
       async.retry(config.retryOpts, function (callback) {
-          request(opts, callback)
-        }, function (err, r, b) {
+        request(opts, callback)
+      }, function (err, r, b) {
         var countries = [];
         if (err) {
           return callback(null, countries);
@@ -249,6 +319,37 @@ module.exports = function (req, res) {
         callback(null, countries);
       });
     },
+    getCities: ['getCookie', function (results, callback) {
+      async.mapLimit(_.keys(cityObj), 3, function (city, callback) {
+          setTimeout(function () {
+            if (global[delivery] > timestamp) {
+              return callback({abort: true});
+            }
+            var opts = Object.assign({}, deliveryData.citiesUrl);
+            opts.headers = {
+              'Referer': 'http://www.dpd.ru/ols/calc/calc.do2',
+              'Origin': 'http://www.dpd.ru',
+              'Upgrade-Insecure-Requests': '1',
+              'Cookie': results.getCookie
+            };
+            getCity(city, opts, callback);
+          }, commonHelper.randomInteger(500, 1000));
+      }, callback);
+    }],
+    getInternationalCities: ['getCookie', function (results, callback) {
+      async.mapLimit(_.keys(cityInternationalObj), 3, function (city, callback) {
+        setTimeout(function () {
+          if (global[delivery] > timestamp) {
+            return callback({abort: true});
+          }
+          var opts = Object.assign({}, deliveryData.citiesInternationalUrl);
+          opts.headers = {
+            'Cookie': results.getCookie
+          };
+          getCity(city, opts, callback);
+        }, commonHelper.randomInteger(500, 1000));
+      }, callback);
+    }],
     parseCities: ['getCities', 'getInternationalCities', 'getCountries', function (results, callback) {
       logger.tariffsInfoLog(delivery, results.getCities, 'getCities');
       logger.tariffsInfoLog(delivery, results.getInternationalCities, 'getInternationalCities');
@@ -302,11 +403,17 @@ module.exports = function (req, res) {
     }],
     requests: ['parseCities', function (results, callback) {
       var opts = _.extend({}, deliveryData.calcUrl);
+      opts.headers = {
+        'Cookie': results.getCookie
+      };
       getCalcResult(requests, delivery, timestamp, opts, callback);
     }],
     internationalRequests: ['parseCities', function (results, callback) {
       var opts = _.extend({}, deliveryData.calcInternationalUrl);
-      getCalcResult(internationalRequests, delivery, timestamp, opts, callback);
+      opts.headers = {
+        'Cookie': results.getCookie
+      };
+      getIntCalcResult(internationalRequests, delivery, timestamp, opts, callback);
     }]
   }, function (err, results) {
     logger.tariffsInfoLog(delivery, results.requests, 'requests');
