@@ -6,6 +6,7 @@ var request = commonHelper.request;
 var cheerio = require('cheerio');
 var config = require('../../../conf');
 var _ = require('underscore');
+var logger = require('../../helpers/logger');
 
 var convertCityToEms = function (city) {
   var splits = city.split(',');
@@ -26,8 +27,33 @@ var convertCityToEms = function (city) {
   return result;
 };
 
-var parseEmsResponse = function (response) {
+//old
+/*var parseEmsResponse = function (response) {
   var splits = response.d.split('<br/>');
+  var cost = splits[0].replace(/[^0-9.]/g,'');
+  return {
+    message: cost === '0000' ? splits[0] : null,
+    cost: cost,
+    deliveryTime: splits[1] ? splits[1].replace(/[^0-9-]/g,'') : ''
+  };
+};*/
+
+var parseEmsResponse = function (response) {
+  var json;
+  var result = {};
+  try {
+    json = JSON.parse(response.d);
+  } catch (e) {
+    result.message = e.message || "Ошибка полуения данных, изменился ответ";
+  }
+  if (!json) {
+    return result;
+  }
+  if (!json.success) {
+    result.message = response.d;
+    return result;
+  }
+  var splits = json.conditions.split('<br/>');
   var cost = splits[0].replace(/[^0-9.]/g,'');
   return {
     message: cost === '0000' ? splits[0] : null,
@@ -38,7 +64,7 @@ var parseEmsResponse = function (response) {
 
 var getEMSReq = function (cities, countries, item) {
   var from = convertCityToEms(item.from),
-    emsReq = {contType: 0, value: ''},
+    emsReq = {contType: 0, value: '', declaredValue: '', mark: new Date().getTime()},
     to = convertCityToEms(item.to);
   emsReq.srcCountryID = "643";
   emsReq.targCountryID = null;
@@ -139,6 +165,7 @@ module.exports = function (req, res) {
       }, callback);
     }]
   }, function (err, results) {
+    logger.tariffsInfoLog(delivery, results.parseCities, 'parseCities');
     if (err) {
       if (err.abort) {
         return false;

@@ -3,7 +3,8 @@ var _ = require('underscore');
 var targets = [
   {
     id: 'emspost',
-    calcUrl: {method: 'POST', uri: 'http://www.emspost.ru/default.aspx/MakeCalculation'},
+    /*calcUrl: {method: 'POST', uri: 'http://www.emspost.ru/default.aspx/MakeCalculation'},*/ //old
+    calcUrl: {method: 'POST', uri: 'http://www.emspost.ru/default.aspx/getConditions'},
     citiesUrl: {method: 'GET', uri: 'http://www.emspost.ru/ru/'},
     newsUrl: {method: 'GET', uri: 'http://www.emspost.ru/ru/'},
     rssUrl: {method: 'GET', uri: 'http://www.emspost.ru'}

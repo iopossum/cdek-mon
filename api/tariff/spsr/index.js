@@ -349,7 +349,6 @@ module.exports = function (req, res) {
       logger.tariffsInfoLog(delivery, results.getCities, 'getCities');
       var tempRequests = [];
       results.getCities.forEach(function (item) {
-        console.log(item);
         if (item.error) {
           requests = requests.concat(commonHelper.getResponseArray(req.body.weights, item, delivery, 'Должен быть указан хотя бы 1 город'));
         } else if (!item.fromJson.success) {
@@ -442,7 +441,6 @@ module.exports = function (req, res) {
       }, callback);
     }]
   }, function (err, results) {
-    console.log(results.parseCities);
     if (err) {
       if (err.abort) {
         return false;
