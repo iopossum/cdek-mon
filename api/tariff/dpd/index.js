@@ -320,7 +320,7 @@ module.exports = function (req, res) {
       });
     },
     getCities: ['getCookie', function (results, callback) {
-      async.mapLimit(_.keys(cityObj), 3, function (city, callback) {
+      async.mapLimit(_.keys(cityObj), 2, function (city, callback) {
           setTimeout(function () {
             if (global[delivery] > timestamp) {
               return callback({abort: true});
