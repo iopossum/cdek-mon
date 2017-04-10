@@ -312,7 +312,7 @@ module.exports = function (req, res) {
       async.mapSeries(req.body.cities, function (city, callback) {
         if (!city.from || !city.to) {
           city.error = 'Должен быть указан хотя бы 1 город';
-          callback(null, city);
+          return callback(null, city);
         }
         setTimeout(function () {
           if (global[delivery] > timestamp) {

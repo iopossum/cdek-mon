@@ -27,22 +27,23 @@ var createLog = function (key) {
   };
 };
 
-var error = new winston.Logger({
-  levels: {
-    error: 3
-  },
-  maxFiles: 5,
-  maxsize: 30000,
-  prettyPrint: true,
-  transports: [
-    new (winston.transports.File)({ filename: conf.rootFolder + '/logs/error.log', level: 'error', json: true})
-  ]
-});
+var error = function () {
+  var error = new winston.Logger({
+    levels: {
+      error: 3
+    },
+    maxFiles: 5,
+    maxsize: 30000,
+    prettyPrint: true,
+    transports: [
+      new (winston.transports.File)({ filename: conf.rootFolder + '/logs/error.log', level: 'error', json: true})
+    ]
+  });
+  return error.error;
+};
 
 var exports = {
-  error: function(msg){
-    winston.loggers.get('error').error(msg);
-  }
+  error: error()
 };
 
 targets.forEach(function (item) {

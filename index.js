@@ -34,6 +34,7 @@ app.use('/', express.static(__dirname + '/dist'));
 var exitHandler = function (options, err) {
   if (err) {
     console.error(err.stack);
+    logger.error(err);
   }
   if (options.exit) {
     setTimeout(function () {
@@ -86,9 +87,9 @@ app.post('/api/tariff/news', cors(), require('./api/news'));
 
 require('./api/tariff')(
   {session: {delivery: {}}, body: {
-    deliveries: ['flippost'],
+    deliveries: ['dimex'],
     cities: [
-      {from: 'Новосибирск', countryTo: 'Австралия'},
+      {from: 'Новосибирск', to: '', countryTo: 'Австралия'},
       {from: 'Новосибирск', to: 'Москва'},
       {from: 'Москва', to: 'Новосибирск'},
       {from: 'Москва', to: 'Бангкок'},
