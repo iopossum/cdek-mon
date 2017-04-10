@@ -1,4 +1,5 @@
 var responseHelper = require('../helpers/response');
+var commonHelper = require('../helpers/common');
 var config = require('../../conf');
 var _ = require('underscore');
 
@@ -26,39 +27,41 @@ module.exports = function (req, res) {
   if (!req.body.deliveries.length) {
     return responseHelper.createResponse(res, new Error("Delivery is required"));
   }
-  req.body.deliveries.forEach(function (item) {
+  for (var i=0; i<req.body.deliveries.length; i++) {
+    var item = req.body.deliveries[i];
+    var cities = commonHelper.cloneArray(req.body.cities);
     switch (item) {
       case 'emspost':
         req.session.delivery.emspost = {complete: false, results: []};
         global.emspost = new Date().getTime();
-        emspost(req, res);
+        emspost(req, cities);
         break;
       case 'majorexpress':
         req.session.delivery.majorexpress = {complete: false, results: []};
         global.majorexpress = new Date().getTime();
-        majorexpress(req, res);
+        majorexpress(req, cities);
         break;
       case 'spsr':
         req.session.delivery.spsr = {complete: false, results: []};
         global.spsr = new Date().getTime();
-        spsr(req, res);
+        spsr(req, cities);
         break;
       case 'dpd':
         req.session.delivery.dpd = {complete: false, results: []};
         global.dpd = new Date().getTime();
-        dpd(req, res);
+        dpd(req, cities);
         break;
       case 'dimex':
         req.session.delivery.dimex = {complete: false, results: []};
         global.dimex = new Date().getTime();
-        require('./dimex')(req, res);
+        require('./dimex')(req, cities);
         break;
       case 'flippost':
         req.session.delivery.flippost = {complete: false, results: []};
         global.flippost = new Date().getTime();
-        require('./flippost')(req, res);
+        require('./flippost')(req, cities);
         break;
     }
-  });
+  }
   return res.json(responseHelper.success());
 };

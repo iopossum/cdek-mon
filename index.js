@@ -87,13 +87,13 @@ app.post('/api/tariff/news', cors(), require('./api/news'));
 
 //require('./api/tariff')(
 //  {session: {delivery: {}}, body: {
-//    deliveries: ['dimex'],
+//    deliveries: ['flippost'],
 //    cities: [
-//      {from: 'Новосибирск', to: '', countryTo: 'Австралия'},
+//      {from: 'Москва', to: '', countryTo: 'Австралия'},
 //      {from: 'Новосибирск', to: 'Москва'},
 //      {from: 'Москва', to: 'Новосибирск'},
 //      {from: 'Москва', to: 'Бангкок'},
-//      //{from: 'Москва', to: '', countryTo: 'Азербайджан'}
+//      {from: 'Москва', to: '', countryTo: 'Азербайджан'}
 //    ],
 //    weights: [1]
 //  }},

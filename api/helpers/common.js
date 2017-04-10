@@ -84,4 +84,8 @@ exports.getNoResultError = function () {
   return "По указанным направлениям ничего не найдено";
 };
 
+exports.cloneArray = function (array) {
+  return _.map(array, _.clone);
+};
+
 exports.request = request;

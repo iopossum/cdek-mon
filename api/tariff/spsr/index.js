@@ -277,13 +277,13 @@ var getCity = function (city, country, deliveryData, callback) {
   });
 };
 
-module.exports = function (req, res) {
+module.exports = function (req, cities) {
   var delivery = 'spsr';
   var deliveryData = deliveryHelper.get(delivery);
   var requests = [];
   var cityObj = {};
   var timestamp = global[delivery];
-  /*req.body.cities.forEach(function (item) {
+  /*cities.forEach(function (item) {
     if (!item.from || !item.to) {
       requests = requests.concat(commonHelper.getResponseArray(req.body.weights, item, delivery, 'Должен быть указан хотя бы 1 город'));
     } else {
@@ -309,10 +309,12 @@ module.exports = function (req, res) {
   });*/
   async.auto({
     getCities: function (callback) {
-      async.mapSeries(req.body.cities, function (city, callback) {
+      async.mapSeries(cities, function (city, callback) {
         if (!city.from || !city.to) {
           city.error = 'Должен быть указан хотя бы 1 город';
-          return callback(null, city);
+          return async.nextTick(function () {
+            callback(null, city);
+          });
         }
         setTimeout(function () {
           if (global[delivery] > timestamp) {
@@ -331,12 +333,12 @@ module.exports = function (req, res) {
               }
               getCity(city.to, city.countryTo, deliveryData, callback);
             }
-          ], function (err, cities) { //ошибки быть не может
+          ], function (err, foundCities) { //ошибки быть не может
             if (typeof  cityObj[city.from + city.countryFrom] === 'undefined') {
-              cityObj[city.from + city.countryFrom] = cities[0];
+              cityObj[city.from + city.countryFrom] = foundCities[0];
             }
             if (typeof  cityObj[city.to + city.countryTo] === 'undefined') {
-              cityObj[city.to + city.countryTo] = cities[1];
+              cityObj[city.to + city.countryTo] = foundCities[1];
             }
             city.fromJson = cityObj[city.from + city.countryFrom];
             city.toJson = cityObj[city.to + city.countryTo];
@@ -356,6 +358,7 @@ module.exports = function (req, res) {
         } else if (!item.toJson.success) {
           requests = requests.concat(commonHelper.getResponseArray(req.body.weights, item, delivery, item.toJson.message));
         } else {
+          //console.log(item.toJson);
           item.fromJson.foundCities.forEach(function (fromCity) {
             item.toJson.foundCities.forEach(function (toCity) {
               tempRequests.push({
@@ -391,7 +394,9 @@ module.exports = function (req, res) {
           return callback({abort: true});
         }
         if (item.error) {
-          return callback(null, item);
+          return async.nextTick(function () {
+            callback(null, item);
+          });
         }
         setTimeout(function () {
           var opts = _.extend({}, deliveryData.calcUrl);
@@ -448,7 +453,7 @@ module.exports = function (req, res) {
       req.session.delivery[delivery].complete = true;
       req.session.delivery[delivery].error = err.message || err.stack;
       var array = [];
-      req.body.cities.forEach(function (item) {
+      cities.forEach(function (item) {
         array = array.concat(commonHelper.getResponseArray(req.body.weights, item, delivery, err.message || err.stack))
       });
       req.session.delivery[delivery].results = array;

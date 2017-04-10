@@ -86,14 +86,14 @@ var formData = {
   __EVENTVALIDATION: '/wEdAAg+8a68xr3s0poGWclUeS1ujtVQLQrEnIbjmIO/ZtnanBURE9yPSvOSRjDl2QhdsmkuZdkoFpB4ESxdAtuiUVt8gl73xgw2NCSYTnx1Re6LhDcdrfIBD0KLYT9317mddRwD6Jh4KGw6EeOMB2EMx8q+sBBTJQXkxFp9HwpVVLmS7jW36QSP0vLTTzlJKqnaEajshG8aizhfmygvfQzYKi7N'
 };
 
-module.exports = function (req, res) {
+module.exports = function (req, cities) {
   var delivery = 'majorexpress';
   var deliveryData = deliveryHelper.get(delivery);
   var requests = [];
   var tempRequests = [];
   var cityObj = {};
   var timestamp = global[delivery];
-  req.body.cities.forEach(function (item) {
+  cities.forEach(function (item) {
     if (item.from) {
       if (typeof cityObj[item.from] === 'undefined') {
         cityObj[item.from] = item.countryFrom || '';
@@ -258,7 +258,7 @@ module.exports = function (req, res) {
     parseCities: ['getCities', function (results, callback) {
       //todo: save ids to mongo
       var respCityObj = _.indexBy(results.getCities, 'city');
-      req.body.cities.forEach(function (item) {
+      cities.forEach(function (item) {
         if (item.from && item.to) {
           var obj = {
             city: {
@@ -311,7 +311,9 @@ module.exports = function (req, res) {
           return callback({abort: true});
         }
         if (!item.req || item.error) {
-          return callback(null, item);
+          return async.nextTick(function () {
+            callback(null, item);
+          });
         }
         var nightmare = commonHelper.getNightmare();
         nightmare.goto(deliveryData.calcUrl.uri)
@@ -372,7 +374,7 @@ module.exports = function (req, res) {
       req.session.delivery[delivery].complete = true;
       req.session.delivery[delivery].error = err.message || err.stack;
       var array = [];
-      req.body.cities.forEach(function (item) {
+      cities.forEach(function (item) {
         array = array.concat(commonHelper.getResponseArray(req.body.weights, item, delivery, err.message || err.stack))
       });
       req.session.delivery[delivery].results = array;

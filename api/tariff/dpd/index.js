@@ -140,7 +140,9 @@ var getCalcResult = function (requests, delivery, timestamp, opts, callback) {
       return callback({abort: true});
     }
     if (item.error) {
-      return callback(null, item);
+      return async.nextTick(function () {
+        callback(null, item);
+      });
     }
     setTimeout(function () {
       async.retry(config.retryOpts, function (callback) {
@@ -187,7 +189,9 @@ var getIntCalcResult = function (requests, delivery, timestamp, opts, callback) 
       return callback({abort: true});
     }
     if (item.error) {
-      return callback(null, item);
+      return async.nextTick(function () {
+        callback(null, item);
+      });
     }
     setTimeout(function () {
       async.retry(config.retryOpts, function (callback) {
@@ -229,7 +233,7 @@ var getIntCalcResult = function (requests, delivery, timestamp, opts, callback) 
 };
 
 //logger.tariffsInfoLog(delivery, {asd: ['fdsfsf']}, 'asdsad');
-module.exports = function (req, res) {
+module.exports = function (req, cities) {
   var delivery = 'dpd';
   var deliveryData = deliveryHelper.get(delivery);
   var requests = [];
@@ -237,7 +241,7 @@ module.exports = function (req, res) {
   var cityObj = {};
   var cityInternationalObj = {};
   var timestamp = global[delivery];
-  req.body.cities.forEach(function (item) {
+  cities.forEach(function (item) {
     if (!item.from && !item.to) {
       requests = requests.concat(commonHelper.getResponseArray(req.body.weights, item, delivery, 'Должен быть указан хотя бы 1 город'));
     } else if (!item.from && !item.countryFrom) {
@@ -331,7 +335,7 @@ module.exports = function (req, res) {
       var countryObj = _.indexBy(results.getCountries, 'name');
       var cityObj = _.indexBy(results.getCities, 'city');
       var cityInternationalObj = _.indexBy(results.getInternationalCities, 'city');
-      req.body.cities.forEach(function (item) {
+      cities.forEach(function (item) {
         if (!item.from && !item.to) {
         } else if (!item.from && !item.countryFrom) {
         } else if (!item.to && !item.countryTo) {
@@ -399,7 +403,7 @@ module.exports = function (req, res) {
       req.session.delivery[delivery].complete = true;
       req.session.delivery[delivery].error = err.message || err.stack;
       var array = [];
-      req.body.cities.forEach(function (item) {
+      cities.forEach(function (item) {
         array = array.concat(commonHelper.getResponseArray(req.body.weights, item, delivery, err.message || err.stack))
       });
       req.session.delivery[delivery].results = array;

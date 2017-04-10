@@ -27,13 +27,13 @@ var getOtDoReq = function (to) {
 var getCity = function (city, callback) {
   var deliveryData = deliveryHelper.get(delivery);
   var opts = Object.assign({}, deliveryData.citiesUrl);
-  var trim = commonHelper.getCity(city.to);
+  var trim = commonHelper.getCity(city.to || city.countryTo);
   opts.uri += ('city=' + encodeURIComponent(trim));
   async.retry(config.retryOpts, function (callback) {
     request(opts, callback)
   }, function (err, r, b) {
     var result = {
-      city: city.to,
+      city: city.to || city.countryTo,
       cityTrim: trim,
       success: false
     };
@@ -102,7 +102,7 @@ var existsCountry = function (countries, country) {
   return found;
 };
 
-module.exports = function (req, res) {
+module.exports = function (req, cities) {
   var deliveryData = deliveryHelper.get(delivery);
   var requests = [];
   var otdoRequests = [];
@@ -136,41 +136,55 @@ module.exports = function (req, res) {
         }
         var $ = cheerio.load(b);
         var options = $('select[name="CityID"]').find('option');
-        var cities = [];
+        var foundCities = [];
         options.each(function (index, item) {
-          cities.push({id: $(item).attr('value'), name: $(item).text().trim().toUpperCase(), success: true});
+          foundCities.push({id: $(item).attr('value'), name: $(item).text().trim().toUpperCase(), success: true});
         });
-        callback(null, cities);
+        callback(null, foundCities);
       });
     },
     getCities: ['getOtDoCountries', 'getOtDoCities', function (results, callback) {
       var countryOtDoObj = _.indexBy(results.getOtDoCountries, 'name');
       var cityOtDoObj = _.indexBy(results.getOtDoCities, 'name');
-      async.mapSeries(req.body.cities, function (city, callback) {
+      async.mapSeries(cities, function (city, callback) {
         if (!city.from) {
           city.error = commonHelper.CITYFROMREQUIRED;
-          return callback(null, city);
+          return async.nextTick(function () {
+            callback(null, city);
+          });
         }
         if (["новосибирск", "москва"].indexOf(city.from.toLowerCase()) === -1) {
           city.error = "Отправления возможны только из г. Москва или г. Новосибирск";
-          return callback(null, city);
-        }
-        if (!city.to && city.countryTo && !results.getOtDoCountries.length) {
-          city.error = commonHelper.COUNTRYLISTERROR;
-          return callback(null, city);
+          return async.nextTick(function () {
+            callback(null, city);
+          });
         }
         var foundCountry = existsCountry(results.getOtDoCountries, city.countryTo);
-        if (!city.to && city.countryTo && !foundCountry) {
-          city.error = commonHelper.COUNTRYNOTFOUND;
-          return callback(null, city);
-        }
-        if (["новосибирск"].indexOf(city.from.toLowerCase()) !== -1 && city.countryTo && !foundCountry) {
-          city.error = commonHelper.COUNTRYNOTFOUND;
-          return callback(null, city);
-        }
-        if (["новосибирск"].indexOf(city.from.toLowerCase()) !== -1 && city.to && !city.countryTo && typeof cityOtDoObj[city.to.toUpperCase()] === 'undefined') {
-          city.error = commonHelper.CITYTONOTFOUND;
-          return callback(null, city);
+        if (["новосибирск"].indexOf(city.from.toLowerCase()) !== -1) {
+          if (!city.to && city.countryTo && !results.getOtDoCountries.length) {
+            city.error = commonHelper.COUNTRYLISTERROR;
+            return async.nextTick(function () {
+              callback(null, city);
+            });
+          }
+          if (!city.to && city.countryTo && !foundCountry) {
+            city.error = commonHelper.COUNTRYNOTFOUND;
+            return async.nextTick(function () {
+              callback(null, city);
+            });
+          }
+          if (city.countryTo && !foundCountry) { //страна в приоритете
+            city.error = commonHelper.COUNTRYNOTFOUND;
+            return async.nextTick(function () {
+              callback(null, city);
+            });
+          }
+          if (city.to && !city.countryTo && typeof cityOtDoObj[city.to.toUpperCase()] === 'undefined') {
+            city.error = commonHelper.CITYTONOTFOUND;
+            return async.nextTick(function () {
+              callback(null, city);
+            });
+          }
         }
         setTimeout(function () {
           if (global[delivery] > timestamp) {
@@ -182,7 +196,9 @@ module.exports = function (req, res) {
             } else {
               city.toJson = _.clone(cityOtDoObj[city.to.toUpperCase()]);
             }
-            return callback(null, city);
+            return async.nextTick(function () {
+              callback(null, city);
+            });
           } else {
             getCity(city, function (err, cityTo) {
               if (typeof  cityObj[city.to + city.countryTo] === 'undefined') {
@@ -222,6 +238,7 @@ module.exports = function (req, res) {
         } else if (!item.toJson.success) {
           requests = requests.concat(commonHelper.getResponseArray(req.body.weights, item, delivery, item.toJson.message));
         } else {
+          //console.log(item.toJson);
           item.toJson.foundCities.forEach(function (toCity) {
             tempRequests.push({
               city: {
@@ -263,7 +280,9 @@ module.exports = function (req, res) {
           return callback({abort: true});
         }
         if (item.error) {
-          return callback(null, item);
+          return async.nextTick(function () {
+            callback(null, item);
+          });
         }
         setTimeout(function () {
           var opts = _.extend({}, deliveryData.calcFlipUrl);
@@ -320,7 +339,9 @@ module.exports = function (req, res) {
           return callback({abort: true});
         }
         if (item.error) {
-          return callback(null, item);
+          return async.nextTick(function () {
+            callback(null, item);
+          });
         }
         setTimeout(function () {
           var opts = _.extend({}, deliveryData.calcOtdoUrl);
@@ -381,7 +402,7 @@ module.exports = function (req, res) {
       req.session.delivery[delivery].complete = true;
       req.session.delivery[delivery].error = err.message || err.stack;
       var array = [];
-      req.body.cities.forEach(function (item) {
+      cities.forEach(function (item) {
         array = array.concat(commonHelper.getResponseArray(req.body.weights, item, delivery, err.message || err.stack))
       });
       req.session.delivery[delivery].results = array;

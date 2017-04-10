@@ -112,7 +112,9 @@ var getCalcResult = function (requests, timestamp, inOpts, callback) {
       return callback({abort: true});
     }
     if (item.error) {
-      return callback(null, item);
+      return async.nextTick(function () {
+        callback(null, item);
+      });
     }
     setTimeout(function () {
       var opts = _.extend({}, inOpts);
@@ -158,7 +160,7 @@ var getCalcResult = function (requests, timestamp, inOpts, callback) {
   }, callback);
 };
 
-module.exports = function (req, res) {
+module.exports = function (req, cities) {
   var deliveryData = deliveryHelper.get(delivery);
   var requests = [];
   var intRequests = [];
@@ -185,22 +187,30 @@ module.exports = function (req, res) {
     },
     getCities: ['getCountries', function (results, callback) {
       var countryObj = _.indexBy(results.getCountries, 'name');
-      async.mapSeries(req.body.cities, function (city, callback) {
+      async.mapSeries(cities, function (city, callback) {
         if (!city.from) {
           city.error = commonHelper.CITYFROMREQUIRED;
-          return callback(null, city);
+          return async.nextTick(function () {
+            callback(null, city);
+          });
         }
         if (!city.to && !city.countryTo) {
           city.error = commonHelper.CITYORCOUNTRYTOREQUIRED;
-          return callback(null, city);
+          return async.nextTick(function () {
+            callback(null, city);
+          });
         }
         if (city.countryTo && !results.getCountries.length) {
           city.error = commonHelper.COUNTRYLISTERROR;
-          return callback(null, city);
+          return async.nextTick(function () {
+            callback(null, city);
+          });
         }
         if (city.countryTo && typeof countryObj[city.countryTo.toUpperCase()] === 'undefined') {
           city.error = commonHelper.COUNTRYNOTFOUND;
-          return callback(null, city);
+          return async.nextTick(function () {
+            callback(null, city);
+          });
         }
         setTimeout(function () {
           if (global[delivery] > timestamp) {
@@ -222,12 +232,12 @@ module.exports = function (req, res) {
               }
               getCity(city.to, 'cityp', callback);
             }
-          ], function (err, cities) { //ошибки быть не может
+          ], function (err, foundCities) { //ошибки быть не может
             if (typeof  cityObj[city.from + city.countryFrom] === 'undefined') {
-              cityObj[city.from + city.countryFrom] = cities[0];
+              cityObj[city.from + city.countryFrom] = foundCities[0];
             }
             if (typeof  cityObj[city.to + city.countryTo] === 'undefined') {
-              cityObj[city.to + city.countryTo] = cities[1];
+              cityObj[city.to + city.countryTo] = foundCities[1];
             }
             city.fromJson = cityObj[city.from + city.countryFrom];
             city.toJson = cityObj[city.to + city.countryTo];
@@ -253,8 +263,8 @@ module.exports = function (req, res) {
               city: {
                 initialCityFrom: item.from,
                 initialCityTo: item.to,
-                from: fromCity.name,
-                to: item.to,
+                from: fromCity.value,
+                to: item.to || item.countryTo,
                 countryFrom: item.countryFrom,
                 countryTo: item.countryTo
               },
@@ -270,8 +280,8 @@ module.exports = function (req, res) {
                 city: {
                   initialCityFrom: item.from,
                   initialCityTo: item.to,
-                  from: fromCity.name,
-                  to: toCity.name,
+                  from: fromCity.value,
+                  to: toCity.value,
                   countryFrom: item.countryFrom,
                   countryTo: item.countryTo
                 },
@@ -321,7 +331,7 @@ module.exports = function (req, res) {
       req.session.delivery[delivery].complete = true;
       req.session.delivery[delivery].error = err.message || err.stack;
       var array = [];
-      req.body.cities.forEach(function (item) {
+      cities.forEach(function (item) {
         array = array.concat(commonHelper.getResponseArray(req.body.weights, item, delivery, err.message || err.stack))
       });
       req.session.delivery[delivery].results = array;

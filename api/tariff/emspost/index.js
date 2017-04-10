@@ -99,7 +99,7 @@ var getEMSReq = function (cities, countries, item) {
   return null;
 };
 
-module.exports = function (req, res) {
+module.exports = function (req, cities) {
   var delivery = 'emspost';
   var deliveryData = deliveryHelper.get(delivery);
   var requests = [];
@@ -115,19 +115,19 @@ module.exports = function (req, res) {
       var $ = cheerio.load(results.getCities[1]);
       var options = $('#selFrom').find('option');
       var countryOptions = $('#countriesTo').find('option');
-      var cities = [];
+      var foundCities = [];
       var countries = [];
       options.each(function (iindex, item) {
-        cities.push({id: $(item).attr('value'), name: $(item).text()});
+        foundCities.push({id: $(item).attr('value'), name: $(item).text()});
       });
       countryOptions.each(function (index, item) {
         countries.push({id: $(item).attr('value'), name: $(item).text().trim()});
       });
-      if (!cities.length && !countries.length) {
+      if (!foundCities.length && !countries.length) {
         return callback(new Error("Ошибка парсинга городов"));
       }
-      req.body.cities.forEach(function (item) {
-        var emsReq = getEMSReq(cities, countries, item);
+      cities.forEach(function (item) {
+        var emsReq = getEMSReq(foundCities, countries, item);
         req.body.weights.forEach(function (weight) {
           requests.push({weight: weight, city: item, delivery: delivery, req: emsReq, error: emsReq ? null : 'Не найден город', tariffs: []});
         });
@@ -138,7 +138,9 @@ module.exports = function (req, res) {
           return callback({abort: true});
         }
         if (!item.req) {
-          return callback(null, item);
+          return async.nextTick(function () {
+            callback(null, item);
+          });
         }
         setTimeout(function () {
           async.retry(config.retryOpts, function (callback) {
@@ -173,7 +175,7 @@ module.exports = function (req, res) {
       req.session.delivery[delivery].complete = true;
       req.session.delivery[delivery].error = err.message || err.stack;
       var array = [];
-      req.body.cities.forEach(function (item) {
+      cities.forEach(function (item) {
         array = array.concat(commonHelper.getResponseArray(req.body.weights, item, delivery, err.message || err.stack))
       });
       req.session.delivery[delivery].results = array;
