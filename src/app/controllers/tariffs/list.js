@@ -47,7 +47,6 @@ class TariffsCtrl {
       this.targetsObj[key].complete = false;
     }
     this.mainInterval = setInterval(function () {
-      console.log('tick');
       that.tariffService.ping().then(function (res) {
         var countCompleted = 0;
         var errors = [];
@@ -73,7 +72,7 @@ class TariffsCtrl {
         }
         if (errors.length) {
           errors.forEach(function (item) {
-            that.notify.error(res.error);
+            that.notify.error(item.error);
           });
         }
       });

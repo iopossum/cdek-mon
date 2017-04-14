@@ -61,6 +61,21 @@ module.exports = function (req, res) {
         global.flippost = new Date().getTime();
         require('./flippost')(req, cities);
         break;
+      case 'ponyexpress':
+        req.session.delivery.ponyexpress = {complete: false, results: []};
+        global.ponyexpress = new Date().getTime();
+        require('./ponyexpress')(req, cities);
+        break;
+      case 'cse':
+        req.session.delivery.cse = {complete: false, results: []};
+        global.cse = new Date().getTime();
+        require('./cse')(req, cities);
+        break;
+      case 'garantpost':
+        req.session.delivery.garantpost = {complete: false, results: []};
+        global.garantpost = new Date().getTime();
+        require('./garantpost')(req, cities);
+        break;
     }
   }
   return res.json(responseHelper.success());

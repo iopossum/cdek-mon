@@ -2,7 +2,7 @@ class Tariff {
   constructor($resource, $location) {
     var hostName = $location.$$protocol + '://' + $location.$$host;
     if ($location.$$port) {
-      hostName += ':' + $location.$$port;
+      hostName += ':' + ($location.$$port === 8080 ? 5000 : $location.$$port);
     }
     var url = [hostName, 'api', 'tariff', ':action'];
     this.resource = $resource(url.join('/'), {}, {

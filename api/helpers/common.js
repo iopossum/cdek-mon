@@ -18,7 +18,9 @@ exports.getNightmare = function () {
     executionTimeout: 30000,
     loadTimeout: 30000,
     gotoTimeout: 30000,
-    waitTimeout: 30000
+    waitTimeout: 30000,
+    //show: true,
+    //openDevTools: true
   });
   nightmare.viewport(1000, 1000)
     .useragent("Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/38.0.2125.111 Safari/537.36");
@@ -56,13 +58,34 @@ exports.getResponseObject = function (cityItem, delivery, weight, error) {
   }
 };
 
+exports.findInArray = function (array, value, key) {
+  key = key || 'name';
+  array = array || [];
+  return array.filter(function (item) {
+    return new RegExp(value, 'gi').test(item[key]);
+  });
+};
+
+exports.CITIESREQUIRED = 'Должен быть указан город отправления и город назначения';
+exports.CITYORCOUNTRYREQUIRED = 'Должен быть указан город отправления и назначения или страна отправления и назначения';
 exports.CITYFROMREQUIRED = 'Должен быть указан город отправления';
+exports.CITYORCOUNTRYFROMREQUIRED = 'Должен быть указан город или страна отправления';
 exports.CITYORCOUNTRYTOREQUIRED = 'Должен быть указан город или страна назначения';
 exports.COUNTRYLISTERROR = 'Не удалось получить список стран. Попробуйте позже.';
+exports.COUNTRYFROMNOTFOUND = 'Страна отправления отстуствует в списке доступных';
 exports.COUNTRYNOTFOUND = 'Страна назначения отстуствует в списке доступных';
+exports.CITYFROMNOTFOUND = 'Город назначения отстуствует в списке доступных';
 exports.CITYTONOTFOUND = 'Город назначения отстуствует в списке доступных';
+exports.COUNTRYFROMRUSSIA = 'Отправления возможны только из России';
 
 exports.DATEFORMATREG = /^\s*((0?[1-9]|[12][0-9]|3[01])\.(0?[1-9]|1[012])\.\d{4})([\d\D]*)/;
+exports.COSTREG = /[^0-9]/g;
+exports.DELIVERYTIMEREG = /[^0-9-]/g;
+
+exports.getServicesError = function (err) {
+  err = err || {};
+  return "Не удалось получить услуги с сайта. " + (err.message ? 'Ошибка: ' + err.message : '');
+};
 
 exports.getResponseError = function (err) {
   return "Не удалось получить города с сайта. " + (err.message ? 'Ошибка: ' + err.message : '');
@@ -72,12 +95,20 @@ exports.getCityJsonError = function (err) {
   return "Не удалось получить города с сайта. Неверный ответ от сервера. " + (err.message ? 'Ошибка: ' + err.message : '');
 };
 
+exports.getCountriesError = function (err) {
+  return "Не удалось получить страны с сайта. " + (err.message ? 'Ошибка: ' + err.message : '');
+};
+
 exports.getResultJsonError = function (err) {
   return "Не удалось получить информацию с сайта, попробуйте позже. " + (err.message ? 'Ошибка: ' + err.message : '');
 };
 
 exports.getCityNoResultError = function () {
   return "Не удалось получить города с сайта. Такого города нет в БД сайта.";
+};
+
+exports.getCountryNoResultError = function () {
+  return "Не удалось получить страны с сайта. Такой страны нет в БД сайта.";
 };
 
 exports.getNoResultError = function () {

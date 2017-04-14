@@ -54,12 +54,33 @@ var targets = [
     citiesUrl: {method: 'GET', uri: 'http://flippost.com/proxy.php?dbAct=getCities&'},
     //newsUrl: {method: 'GET', uri: 'http://www.dimex.ws/novosti-kompanii/arhiv-novostey/'}
   },
+  {
+    id: 'ponyexpress',
+    calcUrl: {method: 'POST', uri: 'http://www.ponyexpress.ru/local/ajax/tariff.php'},
+    citiesUrl: {method: 'GET', uri: 'http://www.ponyexpress.ru/autocomplete/city?term='},
+    countriesUrl: {method: 'GET', uri: 'http://www.ponyexpress.ru/autocomplete/country?term='},
+    newsUrl: {method: 'GET', uri: 'http://www.ponyexpress.ru/about/press-center/news/'}, /*year_2017/?ajax=Y&PAGEN_1=2*/
+  },
+  {
+    id: 'cse',
+    calcUrl: {method: 'POST', uri: 'http://web.cse.ru:5000/External/CSETest/Calc.aspx?city=%u041c%u043e%u0441%u043a%u0432%u0430'},
+    citiesUrl: {method: 'GET', uri: 'http://web.cse.ru:5000/Scripts/Autocomplete.ashx?'},
+    countriesUrl: {method: 'GET', uri: 'http://web.cse.ru:5000/External/CSETest/Calc.aspx?city=%D0%9C%D0%BE%D1%81%D0%BA%D0%B2%D0%B0'},
+    newsUrl: {method: 'GET', uri: 'http://cse.ru/sitecontent/city-mosrus/lang-rus/news/#'}
+  },
+  {
+    id: 'garantpost',
+    calcUrl1: {method: 'GET', uri: 'http://garantpost.ru/calc/test.php?url=http://api.garantpost.ru/cgi-bin/termCGI?'},
+    calcUrl2: {method: 'GET', uri: 'http://garantpost.ru/calc/test.php?url=http://api.garantpost.ru/cgi-bin/tarZonesCGI?'},
+    calcIntUrl: {method: 'GET', uri: 'http://garantpost.ru/calc/test.php?url=http://api.garantpost.ru/cgi-bin/tarCGI?calc=w&'},
+    servicesUrl: {method: 'GET', uri: 'http://garantpost.ru/calc/test.php?url=http://api.garantpost.ru/cgi-bin/tarCGI?service=show&calc='},
+    citiesUrl: {method: 'GET', uri: 'http://garantpost.ru/calc/test.php?url=http://api.garantpost.ru/cgi-bin/tarZonesCGI?okato='},
+    countriesUrl: {method: 'GET', uri: 'http://garantpost.ru/calc/test.php?url=http://api.garantpost.ru/cgi-bin/tarCGI?calc=w&okato=show'},
+    newsUrl: {method: 'GET', uri: 'http://garantpost.ru/news'},
+  },
   /*{id: 'dhl', name: 'DHL'},
-  {id: 'ponyexpress', name: 'Ponyexpress'},
   {id: 'tnt', name: 'TNT'},
   {id: 'ups', name: 'UPS'},
-  {id: 'cse', name: 'CSE'},
-  {id: 'garantpost', name: 'Garantpost'},
   {id: 'cityexpress', name: 'Cityexpress'},
   {id: 'fedex', name: 'Fedex'},
   {id: 'dellin', name: 'Dellin'},
