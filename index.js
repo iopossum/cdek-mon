@@ -87,7 +87,7 @@ app.post('/api/tariff/news', cors(), require('./api/news'));
 
 //require('./api/tariff')(
 //  {session: {delivery: {}}, body: {
-//    deliveries: ['iml'],
+//    deliveries: ['cityexpress'],
 //    cities: [
 //      {from: 'Москва', to: 'Москва'},
 //      {from: 'Москва', to: '', countryTo: 'Австралия'},
@@ -96,11 +96,7 @@ app.post('/api/tariff/news', cors(), require('./api/news'));
 //      {from: 'Москва', to: 'Новосибирск'},
 //      {from: 'Москва', to: 'Бангкок'},
 //      {from: 'Москва', to: 'Абай', countryTo: 'Казахстан'},
-//      {from: 'Москва', to: '', countryTo: 'Азербайджан'},
-//      {from: 'Новосибирск', to: 'Курган'},
-//      {from: 'Новосибирск', to: 'Новосибирск'},
-//      {from: 'Ангарск', to: 'Москва'},
-//      {from: 'Москва', to: 'Ангарск'}
+//      {from: 'Москва', to: '', countryTo: 'Азербайджан'}
 //    ],
 //    weights: [1]
 //  }},

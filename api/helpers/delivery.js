@@ -84,6 +84,12 @@ var targets = [
     citiesUrl: {method: 'GET', uri: 'http://iml.ru/wats/calc2.php'},
     newsUrl: {method: 'GET', uri: 'http://iml.ru/news/#'}
   },
+  {
+    id: 'cityexpress',
+    calcUrl: {method: 'POST', uri: 'http://clients.cityexpress.ru/Customers/Calc.aspx'},
+    citiesUrl: {method: 'POST', uri: 'http://clients.cityexpress.ru/Customers/GEstAutoComplete.asmx/GetFullCompletionList'},
+    newsUrl: {method: 'GET', uri: 'http://www.cityexpress.ru/news'}
+  },
   /*{id: 'dhl', name: 'DHL'},
   {id: 'tnt', name: 'TNT'},
   {id: 'ups', name: 'UPS'},

@@ -322,11 +322,11 @@ module.exports = function (req, cities) {
         array = array.concat(commonHelper.getResponseArray(req.body.weights, item, delivery, err.message || err.stack))
       });
       req.session.delivery[delivery].results = array;
-//      req.session.save(function () {});
+      req.session.save(function () {});
       return false;
     }
     req.session.delivery[delivery].complete = true;
     req.session.delivery[delivery].results = results.requests;
-//    req.session.save(function () {});
+    req.session.save(function () {});
   });
 };
