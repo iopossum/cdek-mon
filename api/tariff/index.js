@@ -76,6 +76,11 @@ module.exports = function (req, res) {
         global.garantpost = new Date().getTime();
         require('./garantpost')(req, cities);
         break;
+      case 'iml':
+        req.session.delivery.iml = {complete: false, results: []};
+        global.iml = new Date().getTime();
+        require('./iml')(req, cities);
+        break;
     }
   }
   return res.json(responseHelper.success());

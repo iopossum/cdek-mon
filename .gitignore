@@ -1,4 +1,5 @@
 .idea
 node_modules
-./logs/news/
-./logs/tariffs/
+/logs/news/
+/logs/tariffs/
+/logs/

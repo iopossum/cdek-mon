@@ -76,7 +76,13 @@ var targets = [
     servicesUrl: {method: 'GET', uri: 'http://garantpost.ru/calc/test.php?url=http://api.garantpost.ru/cgi-bin/tarCGI?service=show&calc='},
     citiesUrl: {method: 'GET', uri: 'http://garantpost.ru/calc/test.php?url=http://api.garantpost.ru/cgi-bin/tarZonesCGI?okato='},
     countriesUrl: {method: 'GET', uri: 'http://garantpost.ru/calc/test.php?url=http://api.garantpost.ru/cgi-bin/tarCGI?calc=w&okato=show'},
-    newsUrl: {method: 'GET', uri: 'http://garantpost.ru/news'},
+    newsUrl: {method: 'GET', uri: 'http://garantpost.ru/news'}
+  },
+  {
+    id: 'iml',
+    calcUrl: {method: 'POST', uri: 'http://iml.ru/wats/calc2.php'},
+    citiesUrl: {method: 'GET', uri: 'http://iml.ru/wats/calc2.php'},
+    newsUrl: {method: 'GET', uri: 'http://iml.ru/news/#'}
   },
   /*{id: 'dhl', name: 'DHL'},
   {id: 'tnt', name: 'TNT'},
@@ -91,8 +97,7 @@ var targets = [
   {id: 'rateksib', name: 'Rateksib'},
   {id: 'expressauto', name: 'Expressauto'},
   {id: 'jde', name: 'Jde'},
-  {id: 'ems', name: 'EMS'},
-  {id: 'iml', name: 'Iml'}*/
+  {id: 'ems', name: 'EMS'}*/
 ];
 
 var targetObj = _.indexBy(targets, 'id');
