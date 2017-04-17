@@ -289,21 +289,44 @@ module.exports = function (req, cities) {
               item.error = commonHelper.getResponseError(err);
               return callback(null, item);
             }
-            var result = JSON.parse(body);
-            if(result.error) {
-                item.error = commonHelper.getResponseError({message : item.error});
+            var result = {};
+            try {
+                result = JSON.parse(body);
+            } catch (err) {
+                item.error = commonHelper.getResponseError(err);
                 return callback(null, item);
             }
-            var delivTime = new Date(result.date);
-            var timeDiff = Math.abs(delivTime.getTime() - (new Date()).getTime());
+            if(result.error) {
+                item.error = commonHelper.getResponseError({message : result.error});
+                return callback(null, item);
+            }
+            if(!result.date || !result.sum) {
+                item.error = commonHelper.getResponseError({message : 'response is incorrect'});
+                return callback(null, item);
+            }
+            var delivTime;
+            try {
+                delivTime = new Date(result.date);
+            } catch (err) {
+                item.error = commonHelper.getResponseError({message : 'cannot get date from response'});
+                return callback(null, item);
+            }
+            if(!delivTime) {
+                item.error = commonHelper.getCityJsonError({message : 'cannot get date from response'});
+                return callback(null, item);
+            }
+            var time = delivTime.getTime();
+            if(!time) {
+                item.error = commonHelper.getCityJsonError({message : 'cannot get date from response'});
+                return callback(null, item);
+            }
+            var timeDiff = Math.abs(time - (new Date()).getTime());
             var diffDays = Math.ceil(timeDiff / (1000 * 3600 * 24));
             item.tariffs.push({
                 service: 'доставка',
                 cost: result.sum,
                 deliveryTime: diffDays
             });
-            console.log('result request:');
-            console.log(item.tariffs);
             return callback(null, item);
           });
         }, commonHelper.randomInteger(500, 1000));
