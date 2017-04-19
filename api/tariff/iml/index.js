@@ -133,13 +133,12 @@ var fillAllCitiesFromIml = function (callback) {
 };
 /** смотрим есть ли в выгруженных из iml городах получателя или отправителя интересующий нас город.
  * isCityTo - показывает в каком списке искать город. 0-отправителя, иначе получателя  */
-var getCity = function (city, isCityTo, callback) {
+var getCity = function (city, cities, callback) {
     var result = {
         city: city,
         success: false
     };
 
-    var cities = isCityTo === 0 ? c2cRegions : openRegionsTo;
     var foundCity = cities.find(function (item) {
         return item.toUpperCase() === city.toUpperCase();
     });
@@ -165,7 +164,8 @@ var getCity = function (city, isCityTo, callback) {
 module.exports = function (req, cities) {
   var deliveryData = deliveryHelper.get(delivery);
   var requests = [];
-  var cityObj = {};
+  var cityObjFrom = {};
+  var cityObjTo = {};
   var timestamp = global[delivery];
   async.auto({
     getCitiesFromIml : function (callback) {
@@ -206,26 +206,26 @@ module.exports = function (req, cities) {
           }
           async.parallel([
             function (callback) {
-              if (typeof cityObj[city.from] !== 'undefined') {
+              if (typeof cityObjFrom[city.from] !== 'undefined') {
                 return callback(null);
               }
-              getCity(city.from, 0, callback);
+              getCity(city.from, results.getCitiesFromIml.c2cRegions, callback);
             },
             function (callback) {
-              if (typeof  cityObj[city.to] !== 'undefined') {
+              if (typeof  cityObjTo[city.to] !== 'undefined') {
                 return callback(null);
               }
-              getCity(city.to, 1, callback);
+              getCity(city.to, results.getCitiesFromIml.openRegionsTo, callback);
             }
           ], function (err, foundCities) { //ошибки быть не может
-            if (typeof  cityObj[city.to] === 'undefined') {
-              cityObj[city.to] = foundCities[1];
+            if (typeof  cityObjFrom[city.from] === 'undefined') {
+              cityObjFrom[city.from] = foundCities[0];
             }
-            if (typeof  cityObj[city.from] === 'undefined') {
-              cityObj[city.from] = foundCities[0];
+            if (typeof  cityObjTo[city.to] === 'undefined') {
+              cityObjTo[city.to] = foundCities[1];
             }
-            city.fromJson = cityObj[city.from];
-            city.toJson = cityObj[city.to];
+            city.fromJson = cityObjFrom[city.from];
+            city.toJson = cityObjTo[city.to];
             callback(null, city);
           });
         }, commonHelper.randomInteger(500, 1000));
@@ -238,9 +238,9 @@ module.exports = function (req, cities) {
         if (item.error) {
           requests = requests.concat(commonHelper.getResponseArray(req.body.weights, item, delivery, item.error));
         } else if (!item.fromJson.success) {
-          requests = requests.concat(commonHelper.getResponseArray(req.body.weights, item, delivery, item.fromJson.message));
+          requests = requests.concat(commonHelper.getResponseArray(req.body.weights, item, delivery, 'Город отправления не найден. ' + item.fromJson.message));
         } else if (!item.toJson.success) {
-          requests = requests.concat(commonHelper.getResponseArray(req.body.weights, item, delivery, item.toJson.message));
+          requests = requests.concat(commonHelper.getResponseArray(req.body.weights, item, delivery, 'Город получения не найден. ' + item.toJson.message));
         } else {
           item.fromJson.foundCities.forEach(function (fromCity) {
             item.toJson.foundCities.forEach(function (toCity) {
