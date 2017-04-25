@@ -5,6 +5,7 @@ var targets = [
     id: 'emspost',
     /*calcUrl: {method: 'POST', uri: 'http://www.emspost.ru/default.aspx/MakeCalculation'},*/ //old
     calcUrl: {method: 'POST', uri: 'http://www.emspost.ru/default.aspx/getConditions'},
+    calcInternationalUrl: {method: 'POST', uri: 'http://www.emspost.ru/default.aspx/getForeignPrice'},
     citiesUrl: {method: 'GET', uri: 'http://www.emspost.ru/ru/'},
     newsUrl: {method: 'GET', uri: 'http://www.emspost.ru/ru/'},
     rssUrl: {method: 'GET', uri: 'http://www.emspost.ru'}
@@ -90,12 +91,23 @@ var targets = [
     citiesUrl: {method: 'POST', uri: 'http://clients.cityexpress.ru/Customers/GEstAutoComplete.asmx/GetFullCompletionList'},
     newsUrl: {method: 'GET', uri: 'http://www.cityexpress.ru/news'}
   },
+  {
+    id: 'dellin',
+    calcUrl: {method: 'GET', uri: 'https://www.dellin.ru/api/calculation.json?'},
+    citiesUrl: {method: 'GET', uri: 'https://www.dellin.ru/api/cities/search.json?q='},
+    terminalsUrl: {method: 'GET', uri: 'https://www.dellin.ru/api/get_terminal_data.json?'},
+    newsUrl: {method: 'GET', uri: 'https://www.dellin.ru/news/'}
+  },
+  {
+    id: 'pecom',
+    calcUrl: {method: 'GET', uri: 'https://pecom.ru/ajax/calc.php?requrl=%2Fbitrix%2Fcomponents%2Fpecom%2Fcalc%2Fajax.php%3Fpage_type%3Dcalc%26'},
+    citiesUrl: {method: 'GET', uri: 'https://pecom.ru/services-are/the-calculation-of-the-cost/'},
+    newsUrl: {method: 'GET', uri: 'https://pecom.ru/news/'}
+  },
   /*{id: 'dhl', name: 'DHL'},
   {id: 'tnt', name: 'TNT'},
   {id: 'ups', name: 'UPS'},
-  {id: 'cityexpress', name: 'Cityexpress'},
   {id: 'fedex', name: 'Fedex'},
-  {id: 'dellin', name: 'Dellin'},
   {id: 'pecom', name: 'Pecom'},
   {id: 'vozovoz', name: 'Vozovoz'},
   {id: 'baikalsr', name: 'Baikalsr'},

@@ -7,10 +7,46 @@ var _ = require('underscore');
 realMouse(Nightmare);
 request.defaults({ timeout : 5000 });
 
+exports.CITIESREQUIRED = 'Должен быть указан город отправления и город назначения';
+exports.CITYORCOUNTRYREQUIRED = 'Должен быть указан город отправления и назначения или страна отправления и назначения';
+exports.CITYFROMREQUIRED = 'Должен быть указан город отправления';
+exports.CITYORCOUNTRYFROMREQUIRED = 'Должен быть указан город или страна отправления';
+exports.CITYORCOUNTRYTOREQUIRED = 'Должен быть указан город или страна назначения';
+exports.COUNTRYLISTERROR = 'Не удалось получить список стран. Попробуйте позже.';
+exports.COUNTRYFROMNOTFOUND = 'Страна отправления отстуствует в списке доступных';
+exports.COUNTRYNOTFOUND = 'Страна назначения отстуствует в списке доступных';
+exports.CITYFROMNOTFOUND = 'Город назначения отстуствует в списке доступных';
+exports.CITYTONOTFOUND = 'Город назначения отстуствует в списке доступных';
+exports.COUNTRYFROMRUSSIA = 'Отправления возможны только из России';
+
+exports.DATEFORMATREG = /^\s*((0?[1-9]|[12][0-9]|3[01])\.(0?[1-9]|1[012])\.\d{4})([\d\D]*)/;
+exports.COSTREG = /[^0-9,]/g;
+exports.DELIVERYTIMEREG = /[^0-9-]/g;
+
+exports.SNG = ['Казахстан'];
+
 exports.randomInteger = function (min, max) {
   var rand = min - 0.5 + Math.random() * (max - min + 1);
   rand = Math.round(rand);
   return rand;
+};
+
+exports.parseFloat = function (value) {
+  value = value || 0;
+  value = parseFloat(value);
+  if (isNaN(value)) {
+    value = 0;
+  }
+  return value;
+};
+
+exports.parseInt = function (value) {
+  value = value || 0;
+  value = parseInt(value, 10);
+  if (isNaN(value)) {
+    value = 0;
+  }
+  return value;
 };
 
 exports.getNightmare = function () {
@@ -58,29 +94,22 @@ exports.getResponseObject = function (cityItem, delivery, weight, error) {
   }
 };
 
-exports.findInArray = function (array, value, key) {
+exports.findInArray = function (array, value, key, exactly) {
   key = key || 'name';
   array = array || [];
+  var reg = new RegExp(value, 'gi');
   return array.filter(function (item) {
-    return new RegExp(value, 'gi').test(item[key]);
+    if (!item[key]) {
+      return false;
+    }
+    if (exactly) {
+      var match = item[key].match(reg);
+      return match ? true : false;
+    } else {
+      return reg.test(item[key]);
+    }
   });
 };
-
-exports.CITIESREQUIRED = 'Должен быть указан город отправления и город назначения';
-exports.CITYORCOUNTRYREQUIRED = 'Должен быть указан город отправления и назначения или страна отправления и назначения';
-exports.CITYFROMREQUIRED = 'Должен быть указан город отправления';
-exports.CITYORCOUNTRYFROMREQUIRED = 'Должен быть указан город или страна отправления';
-exports.CITYORCOUNTRYTOREQUIRED = 'Должен быть указан город или страна назначения';
-exports.COUNTRYLISTERROR = 'Не удалось получить список стран. Попробуйте позже.';
-exports.COUNTRYFROMNOTFOUND = 'Страна отправления отстуствует в списке доступных';
-exports.COUNTRYNOTFOUND = 'Страна назначения отстуствует в списке доступных';
-exports.CITYFROMNOTFOUND = 'Город назначения отстуствует в списке доступных';
-exports.CITYTONOTFOUND = 'Город назначения отстуствует в списке доступных';
-exports.COUNTRYFROMRUSSIA = 'Отправления возможны только из России';
-
-exports.DATEFORMATREG = /^\s*((0?[1-9]|[12][0-9]|3[01])\.(0?[1-9]|1[012])\.\d{4})([\d\D]*)/;
-exports.COSTREG = /[^0-9]/g;
-exports.DELIVERYTIMEREG = /[^0-9-]/g;
 
 exports.getServicesError = function (err) {
   err = err || {};
@@ -88,6 +117,7 @@ exports.getServicesError = function (err) {
 };
 
 exports.getResponseError = function (err) {
+  err = err || {};
   return "Не удалось получить города с сайта. " + (err.message ? 'Ошибка: ' + err.message : '');
 };
 
@@ -117,6 +147,32 @@ exports.getNoResultError = function () {
 
 exports.cloneArray = function (array) {
   return _.map(array, _.clone);
+};
+
+exports.cloneArray = function (array) {
+  return _.map(array, _.clone);
+};
+
+exports.saveResults = function (req, err, opts) {
+  if (global[opts.delivery] > opts.timestamp) {
+    return false;
+  }
+  if (err) {
+    if (err.abort) {
+      return false;
+    }
+    req.session.delivery[opts.delivery].complete = true;
+    req.session.delivery[opts.delivery].error = err.message || err.stack;
+    var array = [];
+    opts.cities.forEach(function (item) {
+      array = array.concat(exports.getResponseArray(req.body.weights, item, delivery, err.message || err.stack))
+    });
+    req.session.delivery[opts.delivery].results = array;
+  } else {
+    req.session.delivery[opts.delivery].complete = true;
+    req.session.delivery[opts.delivery].results = opts.items;
+  }
+  req.session.save(function () {});
 };
 
 exports.request = request;

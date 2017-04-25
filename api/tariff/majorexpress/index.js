@@ -5,6 +5,7 @@ var async = require('async');
 var request = commonHelper.request;
 var cheerio = require('cheerio');
 var config = require('../../../conf');
+var logger = require('../../helpers/logger');
 var _ = require('underscore');
 
 var formData = {
@@ -367,22 +368,12 @@ module.exports = function (req, cities) {
     }]
 
   }, function (err, results) {
-    if (err) {
-      if (err.abort) {
-        return false;
-      }
-      req.session.delivery[delivery].complete = true;
-      req.session.delivery[delivery].error = err.message || err.stack;
-      var array = [];
-      cities.forEach(function (item) {
-        array = array.concat(commonHelper.getResponseArray(req.body.weights, item, delivery, err.message || err.stack))
-      });
-      req.session.delivery[delivery].results = array;
-      req.session.save(function () {});
-      return false;
-    }
-    req.session.delivery[delivery].complete = true;
-    req.session.delivery[delivery].results = results.parseCities;
-    req.session.save(function () {});
+    logger.tariffsInfoLog(delivery, results.parseCities, 'getTariffs');
+    commonHelper.saveResults(req, err, {
+      delivery: delivery,
+      timestamp: timestamp,
+      cities: cities,
+      items: results.parseCities || []
+    });
   });
 };

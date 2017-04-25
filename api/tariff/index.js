@@ -27,64 +27,55 @@ module.exports = function (req, res) {
   if (!req.body.deliveries.length) {
     return responseHelper.createResponse(res, new Error("Delivery is required"));
   }
+  var targets = require('../helpers/delivery').list();
+  var obj = {};
+  targets.forEach(function (item) {
+    obj[item.id] = {complete: false, results: []};
+    global[item.id] = new Date().getTime();
+  });
+  req.session.delivery = obj;
   for (var i=0; i<req.body.deliveries.length; i++) {
     var item = req.body.deliveries[i];
     var cities = commonHelper.cloneArray(req.body.cities);
     switch (item) {
       case 'emspost':
-        req.session.delivery.emspost = {complete: false, results: []};
-        global.emspost = new Date().getTime();
         emspost(req, cities);
         break;
       case 'majorexpress':
-        req.session.delivery.majorexpress = {complete: false, results: []};
-        global.majorexpress = new Date().getTime();
         majorexpress(req, cities);
         break;
       case 'spsr':
-        req.session.delivery.spsr = {complete: false, results: []};
-        global.spsr = new Date().getTime();
         spsr(req, cities);
         break;
       case 'dpd':
-        req.session.delivery.dpd = {complete: false, results: []};
-        global.dpd = new Date().getTime();
         dpd(req, cities);
         break;
       case 'dimex':
-        req.session.delivery.dimex = {complete: false, results: []};
-        global.dimex = new Date().getTime();
         require('./dimex')(req, cities);
         break;
       case 'flippost':
-        req.session.delivery.flippost = {complete: false, results: []};
-        global.flippost = new Date().getTime();
         require('./flippost')(req, cities);
         break;
       case 'ponyexpress':
-        req.session.delivery.ponyexpress = {complete: false, results: []};
-        global.ponyexpress = new Date().getTime();
         require('./ponyexpress')(req, cities);
         break;
       case 'cse':
-        req.session.delivery.cse = {complete: false, results: []};
-        global.cse = new Date().getTime();
         require('./cse')(req, cities);
         break;
       case 'garantpost':
-        req.session.delivery.garantpost = {complete: false, results: []};
-        global.garantpost = new Date().getTime();
         require('./garantpost')(req, cities);
         break;
       case 'cityexpress':
-        req.session.delivery.cityexpress = {complete: false, results: []};
-        global.cityexpress = new Date().getTime();
         require('./cityexpress')(req, cities);
         break;
       case 'iml':
-        req.session.delivery.iml = {complete: false, results: []};
-        global.iml = new Date().getTime();
         require('./iml')(req, cities);
+        break;
+      case 'dellin':
+        require('./dellin')(req, cities);
+        break;
+      case 'pecom':
+        require('./pecom')(req, cities);
         break;
     }
   }

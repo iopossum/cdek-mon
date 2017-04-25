@@ -87,7 +87,7 @@ app.post('/api/tariff/news', cors(), require('./api/news'));
 
 //require('./api/tariff')(
 //  {session: {delivery: {}}, body: {
-//    deliveries: ['cityexpress'],
+//    deliveries: ['pecom'],
 //    cities: [
 //      {from: 'Москва', to: 'Москва'},
 //      {from: 'Москва', to: '', countryTo: 'Австралия'},

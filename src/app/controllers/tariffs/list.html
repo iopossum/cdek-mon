@@ -1,6 +1,14 @@
 <div class="container" style="padding-top: 40px">
 	<div class="col-lg-6 col-md-8 col-sm-10 col-xs-12">
 		<div class="form-group">
+			<ui-select multiple ng-model="tariffs.filter.targets" theme="bootstrap">
+				<ui-select-match placeholder="Все сд">{{$item.name}}</ui-select-match>
+				<ui-select-choices repeat="target in tariffs.targets | filter:$select.search">
+					{{target.name}}
+				</ui-select-choices>
+			</ui-select>
+		</div>
+		<div class="form-group">
 			<span>Направления</span>
 			<button type="button" class="btn btn-default" ng-click="tariffs.inputButtonClick($event)">Выбрать файл</button>
 			<input type="file" class="hide" ng-model="tariffs.filter.cityInput" name="cityInput" input-file ng-change="tariffs.chooseCities()" />
@@ -16,15 +24,15 @@
 			</ui-select>
 		</div>
 		<div class="form-group">
-			<button type="button" class="btn btn-success" ng-disabled="!tariffs.results.length">Скачать</button>
+			<button type="button" class="btn btn-success" ng-disabled="!tariffs.results.length" ng-click="tariffs.downloadFile()">Скачать</button>
 			<button type="button" class="btn btn-warning" ng-click="tariffs.getTariffs()" ng-disabled="tariffs.loading.main">Получить</button>
-			<uib-progressbar class="cd-progress" max="tariffs.targets.length" value="tariffs.dynamic"><span style="color:white; white-space:nowrap;">{{tariffs.dynamic}} / {{tariffs.targets.length}}</span></uib-progressbar>
+			<uib-progressbar ng-show="tariffs.requestedTargets.length" class="cd-progress" max="tariffs.requestedTargets.length" value="tariffs.dynamic"><span style="color:white; white-space:nowrap;">{{tariffs.dynamic}} / {{tariffs.requestedTargets.length}}</span></uib-progressbar>
 		</div>
 	</div>
 	<div class="col-xs-12">
 		<div class="form-group" ng-if="tariffs.results.length">
 
-			<table class="table table-bordered">
+			<table class="table table-bordered" id="tariffs">
 				<thead>
 				<tr>
 					<th>СД</th>
@@ -34,9 +42,10 @@
 					<th>Услуга</th>
 					<th>Цена</th>
 					<th>Срок доставки</th>
+					<th></th>
 				</tr>
 				</thead>
-				<tbody ng-repeat="item in tariffs.results track by $index">
+				<!--<tbody ng-repeat="item in tariffs.results track by $index">
 				<tr>
 					<td rowspan="{{item.tariffs.length || 1}}">{{::item.delivery}}</td>
 					<td rowspan="{{item.tariffs.length || 1}}">{{::item.city.from || item.city.countryFrom}}</td>
@@ -50,6 +59,22 @@
 					<td>{{::tarf.service}}</td>
 					<td>{{::tarf.cost}}</td>
 					<td>{{::tarf.deliveryTime}}</td>
+				</tr>
+				</tbody>-->
+				<tbody ng-repeat="item in tariffs.results">
+				<tr ng-repeat="srv in item.tariffs">
+					<td>{{::item.delivery}}</td>
+					<td>{{::item.city.from || item.city.countryFrom}}</td>
+					<td>{{::item.city.to || item.city.countryTo}}</td>
+					<td>{{::item.weight}}</td>
+					<td>{{::srv.service}}</td>
+					<td>{{::srv.cost}}</td>
+					<td>{{::srv.deliveryTime}}</td>
+					<td>
+						<button type="button" class="btn btn-danger" ng-click="tariffs.deleteTariff($parent.$index, $index)">
+							<span class="fa fa-trash" aria-hidden="true"></span>
+						</button>
+					</td>
 				</tr>
 				</tbody>
 			</table>
@@ -75,7 +100,7 @@
 				</tr>
 				</thead>
 				<tbody>
-				<tr ng-repeat="item in tariffs.errors track by $index">
+				<tr ng-repeat="item in tariffs.errors">
 					<td>{{::item.delivery}}</td>
 					<td>{{::item.city.from}}</td>
 					<td>{{::item.city.to}}</td>

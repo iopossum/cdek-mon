@@ -55,6 +55,7 @@ var parseEmsResponse = function (response) {
   }
   var splits = json.conditions.split('<br/>');
   var cost = splits[0].replace(/[^0-9.]/g,'');
+  cost = commonHelper.parseFloat(cost);
   return {
     message: cost === '0000' ? splits[0] : null,
     cost: cost,
@@ -73,6 +74,7 @@ var getEMSReq = function (cities, countries, item) {
   });
   if (filtered.length && item.countryTo && item.countryTo.length) {
     emsReq.targCountryID = filtered[0].id;
+    emsReq.targID = filtered[0].id;
   }
   if (emsReq.targCountryID) {
     emsReq.indexFrom = "101700";
@@ -132,7 +134,6 @@ module.exports = function (req, cities) {
           requests.push({weight: weight, city: item, delivery: delivery, req: emsReq, error: emsReq ? null : 'Не найден город', tariffs: []});
         });
       });
-      var opts = _.extend({}, deliveryData.calcUrl);
       async.mapSeries(requests, function (item, callback) {
         if (global[delivery] > timestamp) {
           return callback({abort: true});
@@ -142,6 +143,7 @@ module.exports = function (req, cities) {
             callback(null, item);
           });
         }
+        var opts = _.extend({}, item.req.targID ? deliveryData.calcInternationalUrl : deliveryData.calcUrl);
         setTimeout(function () {
           async.retry(config.retryOpts, function (callback) {
             opts.json = item.req;
@@ -168,22 +170,11 @@ module.exports = function (req, cities) {
     }]
   }, function (err, results) {
     logger.tariffsInfoLog(delivery, results.parseCities, 'parseCities');
-    if (err) {
-      if (err.abort) {
-        return false;
-      }
-      req.session.delivery[delivery].complete = true;
-      req.session.delivery[delivery].error = err.message || err.stack;
-      var array = [];
-      cities.forEach(function (item) {
-        array = array.concat(commonHelper.getResponseArray(req.body.weights, item, delivery, err.message || err.stack))
-      });
-      req.session.delivery[delivery].results = array;
-      req.session.save(function () {});
-      return false;
-    }
-    req.session.delivery[delivery].complete = true;
-    req.session.delivery[delivery].results = results.parseCities;
-    req.session.save(function () {});
+    commonHelper.saveResults(req, err, {
+      delivery: delivery,
+      timestamp: timestamp,
+      cities: cities,
+      items: results.parseCities || []
+    });
   });
 };

@@ -1,11 +1,11 @@
-import xlsx from 'xlsx';
 
 class TariffsCtrl {
 
-  constructor($scope, $rootScope, Tariff, Notify) {
+  constructor($scope, $rootScope, Tariff, Notify, Xls) {
     this.filter = {
       cities: [],
-      weights: []
+      weights: [],
+      targets: []
     };
     var array = [];
     var that = this;
@@ -25,9 +25,11 @@ class TariffsCtrl {
     this.availableWeights = array;
     this.$scope = $scope;
     this.notify = Notify;
+    this.xls = Xls;
     this.tariffService = Tariff;
     this.dynamic = 0;
     this.targets = Tariff.getTargets();
+    this.requestedTargets = [];
     this.targetsObj = Tariff.getTargetsObj();
 
     //that.tariffService.request({deliveries: ['emspost', 'majorexpress']}).then(function (res) {
@@ -66,7 +68,7 @@ class TariffsCtrl {
         }
         that.dynamic = countCompleted;
         that.receiveTariffs(results);
-        if (that.dynamic === that.targets.length) {
+        if (that.dynamic === that.requestedTargets.length) {
           that.loading.main = false;
           clearInterval(that.mainInterval);
         }
@@ -103,6 +105,14 @@ class TariffsCtrl {
         }, 10000);
       }
     });*/
+  }
+
+  deleteTariff(parentIndex, index) {
+    if (this.results[parentIndex].tariffs.length > 1) {
+      this.results[parentIndex].tariffs.splice(index, 1);
+    } else {
+      this.results.splice(parentIndex, 1);
+    }
   }
 
   receiveTariffs(res) {
@@ -148,12 +158,16 @@ class TariffsCtrl {
     }
     this.loading.main = true;
     this.dynamic = 0;
+    var targets = this.filter.targets.length ? this.filter.targets : this.targets;
     var obj = {
       cities: this.filter.cities,
       weights: this.filter.weights,
-      deliveries: this.targets.map(function (item) {return item.id;})
+      deliveries: targets.map(function (item) {return item.id;})
     };
     var that = this;
+    this.requestedTargets = targets;
+    this.results = [];
+    this.errors = [];
     this.tariffService.request(obj).then(function (res) {
       that.pingTariffs();
     }, function (err) {
@@ -161,21 +175,16 @@ class TariffsCtrl {
     });
   }
 
+  downloadFile () {
+    this.xls.download('Тарифы.xlsx', document.getElementById('tariffs'));
+  }
+
   handleFile (f) {
     var reader = new FileReader();
     var that = this;
     reader.onload = function(e) {
-      var data = e.target.result;
-
-      var workbook = xlsx.read(data, {type: 'binary'});
-      var data = xlsx.utils.sheet_to_row_object_array(workbook.Sheets[workbook.SheetNames[0]], {header: 1});
-      var array = [];
-      data.forEach(function (item) {
-        if (item[0] && item[1] || item[3])
-        array.push({from: item[0] || '', to: item[1] || '', countryFrom: item[2] || '', countryTo: item[3] || ''});
-      });
       that.$scope.$apply(function () {
-        that.filter.cities = array;
+        that.filter.cities = that.xls.readCities(e.target.result);
       });
     };
     reader.readAsBinaryString(f);
@@ -185,4 +194,4 @@ class TariffsCtrl {
 
 export default TariffsCtrl;
 
-TariffsCtrl.$inject = ['$scope', '$rootScope', 'Tariff', 'Notify'];
+TariffsCtrl.$inject = ['$scope', '$rootScope', 'Tariff', 'Notify', 'Xls'];

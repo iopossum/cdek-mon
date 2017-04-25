@@ -396,22 +396,11 @@ module.exports = function (req, cities) {
   }, function (err, results) {
     logger.tariffsInfoLog(delivery, results.requests, 'requests');
     logger.tariffsInfoLog(delivery, results.internationalRequests, 'internationalRequests');
-    if (err) {
-      if (err.abort) {
-        return false;
-      }
-      req.session.delivery[delivery].complete = true;
-      req.session.delivery[delivery].error = err.message || err.stack;
-      var array = [];
-      cities.forEach(function (item) {
-        array = array.concat(commonHelper.getResponseArray(req.body.weights, item, delivery, err.message || err.stack))
-      });
-      req.session.delivery[delivery].results = array;
-      req.session.save(function () {});
-      return false;
-    }
-    req.session.delivery[delivery].complete = true;
-    req.session.delivery[delivery].results = results.requests.concat(results.internationalRequests);
-    req.session.save(function () {});
+    commonHelper.saveResults(req, err, {
+      delivery: delivery,
+      timestamp: timestamp,
+      cities: cities,
+      items: err ? [] : results.requests.concat(results.internationalRequests)
+    });
   });
 };

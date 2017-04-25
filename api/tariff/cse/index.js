@@ -321,22 +321,11 @@ module.exports = function (req, cities) {
     }]
   }, function (err, results) {
     logger.tariffsInfoLog(delivery, results.requests, 'getTariffs');
-    if (err) {
-      if (err.abort) {
-        return false;
-      }
-      req.session.delivery[delivery].complete = true;
-      req.session.delivery[delivery].error = err.message || err.stack;
-      var array = [];
-      cities.forEach(function (item) {
-        array = array.concat(commonHelper.getResponseArray(req.body.weights, item, delivery, err.message || err.stack))
-      });
-      req.session.delivery[delivery].results = array;
-      req.session.save(function () {});
-      return false;
-    }
-    req.session.delivery[delivery].complete = true;
-    req.session.delivery[delivery].results = results.requests;
-    req.session.save(function () {});
+    commonHelper.saveResults(req, err, {
+      delivery: delivery,
+      timestamp: timestamp,
+      cities: cities,
+      items: results.requests || []
+    });
   });
 };
