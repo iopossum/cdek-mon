@@ -159,6 +159,7 @@ module.exports = function (req, cities) {
       async.retry(config.retryOpts, function (callback) {
         request(opts, callback)
       }, function (err, r, b) {
+        console.log(b);
         if (err) {
           return callback(commonHelper.getResponseError(new Error("Сайт не загружается, попробуйте позже")));
         }
@@ -247,6 +248,7 @@ module.exports = function (req, cities) {
       logger.tariffsInfoLog(delivery, results.getCities, 'getCities');
       var tempRequests = [];
       results.getCities.forEach(function (item) {
+        console.log(item.error);
         if (item.error) {
           requests = requests.concat(commonHelper.getResponseArray(req.body.weights, item, delivery, item.error));
         } else if (!item.fromJson.success) {

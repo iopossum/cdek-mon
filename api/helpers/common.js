@@ -39,10 +39,10 @@ exports.saveResults = function (req, err, opts) {
       return false;
     }
     req.session.delivery[opts.delivery].complete = true;
-    req.session.delivery[opts.delivery].error = err.message || err.stack;
+    req.session.delivery[opts.delivery].error = err.message || err.stack || err;
     var array = [];
     opts.cities.forEach(function (item) {
-      array = array.concat(exports.getResponseArray(req.body.weights, item, opts.delivery, err.message || err.stack))
+      array = array.concat(exports.getResponseArray(req.body.weights, item, opts.delivery, err.message || err.stack || err))
     });
     req.session.delivery[opts.delivery].results = array;
   } else {
