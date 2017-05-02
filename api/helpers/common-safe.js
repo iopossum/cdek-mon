@@ -8,7 +8,7 @@ exports.CITYORCOUNTRYTOREQUIRED = 'Должен быть указан город
 exports.COUNTRYLISTERROR = 'Не удалось получить список стран. Попробуйте позже.';
 exports.COUNTRYFROMNOTFOUND = 'Страна отправления отстуствует в списке доступных';
 exports.COUNTRYNOTFOUND = 'Страна назначения отстуствует в списке доступных';
-exports.CITYFROMNOTFOUND = 'Город назначения отстуствует в списке доступных';
+exports.CITYFROMNOTFOUND = 'Город отправления отстуствует в списке доступных';
 exports.CITYTONOTFOUND = 'Город назначения отстуствует в списке доступных';
 exports.COUNTRYFROMRUSSIA = 'Отправления возможны только из России';
 

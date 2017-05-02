@@ -182,6 +182,18 @@ module.exports = function (req, cities) {
             callback(null, city);
           });
         }
+        if (city.fromGooglePlaceId) {
+          city.error = commonHelper.CITYFROMNOTFOUND;
+          return async.nextTick(function () {
+            callback(null, city);
+          });
+        }
+        if (city.toGooglePlaceId) {
+          city.error = commonHelper.CITYTONOTFOUND;
+          return async.nextTick(function () {
+            callback(null, city);
+          });
+        }
         if (city.countryFrom) {
           city.error = commonHelper.COUNTRYFROMRUSSIA;
           return async.nextTick(function () {
