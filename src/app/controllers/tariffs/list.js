@@ -1,4 +1,5 @@
-
+var async = require('async');
+var commonHelper = require('../../../../api/helpers/common-safe');
 class TariffsCtrl {
 
   constructor($scope, $rootScope, Tariff, Notify, Xls) {
@@ -38,6 +39,15 @@ class TariffsCtrl {
     //  console.log(err);
     //  that.notify.error(err);
     //});
+
+    this.acService;
+    this.placeService;
+    try {
+      this.acService = new google.maps.places.AutocompleteService();
+      this.placeService = new google.maps.places.PlacesService(document.createElement('div'));
+    } catch (e) {
+      console.error(e);
+    }
   }
 
   pingTariffs() {
@@ -168,15 +178,109 @@ class TariffsCtrl {
     this.requestedTargets = targets;
     this.results = [];
     this.errors = [];
-    this.tariffService.request(obj).then(function (res) {
-      that.pingTariffs();
-    }, function (err) {
-      that.notify.error(err);
+    this.getGoogleIds(function () {
+      that.tariffService.request(obj).then(function (res) {
+        that.pingTariffs();
+      }, function (err) {
+        that.notify.error(err);
+      });
     });
   }
 
   downloadFile () {
     this.xls.download('Тарифы.xlsx', document.getElementById('tariffs'));
+  }
+
+  getGoogleIds (callback) {
+    var that = this;
+    if (!this.acService || !this.placeService) {
+      try {
+        this.acService = new google.maps.places.AutocompleteService();
+        this.placeService = new google.maps.places.PlacesService(document.createElement('div'));
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    var getCity = function (city, country, callback) {
+      var query = city;
+      country = country || 'Россия';
+      query += ', ' + country;
+      that.acService.getPlacePredictions({
+        input: query,
+        language: 'en-US',
+        types:['(cities)']
+      }, function(places, status) {
+        places = places || [];
+        var _places = [];
+        for (var i = 0; i < places.length; ++i) {
+          _places.push({
+            google_city_id: places[i].place_id,
+            city_label: places[i].description
+          });
+        }
+
+        if (!_places[0]) {
+          return callback(null, null);
+        }
+
+        var request = {
+          placeId: _places[0].google_city_id
+        };
+        that.placeService.getDetails(request, function (place, status) {
+          if (status == google.maps.places.PlacesServiceStatus.OK) {
+            _places[0].engName = place.name;
+            _places[0].engFullName = place.formatted_address;
+          }
+          callback(null, _places[0]);
+        });
+      });
+    };
+    var cityObj = {};
+    async.eachSeries(this.filter.cities, function (city, callback) {
+      if (!city.from && !city.to) {
+        return callback(null);
+      }
+      async.parallel([
+        function (callback) {
+          if (typeof  cityObj[city.from + city.countryFrom] !== 'undefined') {
+            return callback(null);
+          }
+          if (!city.from) {
+            return callback(null);
+          }
+          getCity(city.from, city.countryFrom, callback);
+        },
+        function (callback) {
+          if (typeof  cityObj[city.to + city.countryTo] !== 'undefined') {
+            return callback(null);
+          }
+          if (!city.to) {
+            return callback(null);
+          }
+          getCity(city.to, city.countryTo, callback);
+        }
+      ], function (err, foundCities) { //ошибки быть не может
+        if (typeof  cityObj[city.from + city.countryFrom] === 'undefined') {
+          cityObj[city.from + city.countryFrom] = foundCities[0];
+        }
+        if (typeof  cityObj[city.to + city.countryTo] === 'undefined') {
+          cityObj[city.to + city.countryTo] = foundCities[1];
+        }
+        if (cityObj[city.from + city.countryFrom]) {
+          city.fromGooglePlaceId = cityObj[city.from + city.countryFrom].google_city_id;
+          city.fromGooglePlaceDsc = cityObj[city.from + city.countryFrom].city_label;
+          city.fromEngName = cityObj[city.from + city.countryFrom].engName;
+          city.fromEngFullName = cityObj[city.from + city.countryFrom].engFullName;
+        }
+        if (cityObj[city.to + city.countryTo]) {
+          city.toGooglePlaceId = cityObj[city.to + city.countryTo].google_city_id;
+          city.toGooglePlaceDsc = cityObj[city.to + city.countryTo].city_label;
+          city.toEngName = cityObj[city.to + city.countryTo].engName;
+          city.toEngFullName = cityObj[city.to + city.countryTo].engFullName;
+        }
+        callback(null, city);
+      });
+    }, callback);
   }
 
   handleFile (f) {

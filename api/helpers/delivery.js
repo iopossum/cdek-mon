@@ -104,18 +104,57 @@ var targets = [
     citiesUrl: {method: 'GET', uri: 'https://pecom.ru/services-are/the-calculation-of-the-cost/'},
     newsUrl: {method: 'GET', uri: 'https://pecom.ru/news/'}
   },
-  /*{id: 'dhl', name: 'DHL'},
-  {id: 'tnt', name: 'TNT'},
+  {
+    id: 'vozovoz',
+    tokenUrl: {method: 'GET', uri: 'https://vozovoz.ru/order/create/'},
+    calcUrl: {method: 'POST', uri: 'https://vozovoz.ru/order/get-price/'},
+    calcUrlAdditional: {method: 'POST', uri: 'https://vozovoz.ru/shipping-term/change-dispatch/'},
+    citiesUrl: {method: 'POST', uri: 'https://vozovoz.ru/location/get/'},
+    newsUrl: {method: 'GET', uri: 'https://vozovoz.ru/news/'}
+  },
+  {
+    id: 'kit',
+    calcUrl: {method: 'GET', uri: 'http://tk-kit.ru/calculate/get_form_hash.php?'},
+    calcUrlAdditional: {method: 'GET', uri: 'http://tk-kit.ru/calculate/rx_gocalc_multi.php?'},
+    citiesUrl: {method: 'GET', uri: 'http://tk-kit.ru/calculate/ajax/get_city_list.php'},
+    newsUrl: {method: 'GET', uri: 'http://tk-kit.ru/about/news/'}
+  },
+  {
+    id: 'rateksib',
+    calcUrl: {method: 'POST', uri: 'http://rateksib.ru/ajax/calc'},
+    citiesUrl: {method: 'POST', uri: 'http://rateksib.ru/ajax/calccity'},
+    newsUrl: {method: 'GET', uri: 'http://rateksib.ru/novosti'}
+  },
+  {
+    id: 'expressauto',
+    calcUrl: {method: 'POST', uri: 'http://expressauto.ru/ajax/'},
+    citiesUrl: {method: 'POST', uri: 'http://expressauto.ru/ajax/'},
+    newsUrl: {method: 'GET', uri: 'http://expressauto.ru/news'}
+  },
+  {
+    id: 'dhl',
+    authorizeUrl: {method: 'POST', uri: 'http://zakaz.dhl.ru/api/authorize'},
+    calcUrl: {method: 'POST', uri: 'http://zakaz.dhl.ru/api/calculatePrice'},
+    calcUrlAdditional: {method: 'POST', uri: 'http://zakaz.dhl.ru/api/getServicePoints'},
+    citiesUrl: {method: 'POST', uri: 'http://zakaz.dhl.ru/api/GetPlaceDetails'},
+    newsUrl: {method: 'GET', uri: 'http://www.dhl.ru/ru/press/releases.html'}
+  },
+  {
+    id: 'tnt',
+    calcUrl: {method: 'POST', uri: 'https://www.tnt.com/publicapis/v1/quotes'},
+    citiesUrl: {method: 'GET', uri: 'https://mytnt.tnt.com/service/address-search-v2/location?limit=30&locale=ru_RU&q='},
+    newsUrl: {method: 'GET', uri: 'https://www.tnt.com/express/ru_ru/site/home/the-company/press/press_releases.html'}
+  }
+  /*{
+    id: 'jde',
+    calcUrl: {method: 'POST', uri: 'http://www.jde.ru/ajax/calculator.html'},
+    citiesUrl: {method: 'POST', uri: 'http://www.jde.ru/ajax/branch.html'},
+    newsUrl: {method: 'GET', uri: 'http://www.jde.ru/company/news.html'}
+  }*/
+  /*
   {id: 'ups', name: 'UPS'},
   {id: 'fedex', name: 'Fedex'},
-  {id: 'pecom', name: 'Pecom'},
-  {id: 'vozovoz', name: 'Vozovoz'},
-  {id: 'baikalsr', name: 'Baikalsr'},
-  {id: 'kit', name: 'TK-kit'},
-  {id: 'rateksib', name: 'Rateksib'},
-  {id: 'expressauto', name: 'Expressauto'},
-  {id: 'jde', name: 'Jde'},
-  {id: 'ems', name: 'EMS'}*/
+  {id: 'baikalsr', name: 'Baikalsr'}*/
 ];
 
 var targetObj = _.indexBy(targets, 'id');
@@ -125,5 +164,14 @@ exports.list = function () {
 };
 
 exports.get = function (id) {
+  if (targetObj[id]) {
+    for (var key in targetObj[id]) {
+      if (targetObj[id][key] instanceof Object) {
+        targetObj[id][key].headers = {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.81 Safari/537.36'
+        }
+      }
+    }
+  }
   return targetObj[id];
 };

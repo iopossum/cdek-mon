@@ -214,7 +214,7 @@ module.exports = function (req, cities) {
             item.error = commonHelper.CITYFROMNOTFOUND;
             requests = requests.concat(commonHelper.getResponseArray(req.body.weights, item, delivery, item.error));
           } else if (!resultsTo.length) {
-            item.error = commonHelper.CITYFROMNOTFOUND;
+            item.error = commonHelper.CITYTONOTFOUND;
             requests = requests.concat(commonHelper.getResponseArray(req.body.weights, item, delivery, item.error));
           } else {
             resultsFrom.forEach(function (fromCity) {
@@ -274,7 +274,7 @@ module.exports = function (req, cities) {
             try {
               json = JSON.parse(b);
             } catch (e) {
-              item.error = commonHelper.getCityJsonError(e);
+              item.error = commonHelper.getResponseError(e);
             }
             if (!json) {
               return callback(null, item);

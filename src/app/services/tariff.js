@@ -45,7 +45,6 @@ class Tariff {
       {id: 'rateksib', name: 'Rateksib'},
       {id: 'expressauto', name: 'Expressauto'},
       {id: 'jde', name: 'Jde'},
-      {id: 'ems', name: 'EMS'},
       {id: 'iml', name: 'Iml'}
     ];
   }

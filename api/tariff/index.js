@@ -77,6 +77,24 @@ module.exports = function (req, res) {
       case 'pecom':
         require('./pecom')(req, cities);
         break;
+      case 'vozovoz':
+        require('./vozovoz')(req, cities);
+        break;
+      case 'kit':
+        require('./kit')(req, cities);
+        break;
+      case 'rateksib':
+        require('./rateksib')(req, cities);
+        break;
+      case 'expressauto':
+        require('./expressauto')(req, cities);
+        break;
+      case 'dhl':
+        require('./dhl')(req, cities);
+        break;
+      case 'tnt':
+        require('./tnt')(req, cities);
+        break;
     }
   }
   return res.json(responseHelper.success());

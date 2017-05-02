@@ -85,23 +85,23 @@ app.post('/api/tariff/request', cors(), require('./api/tariff'));
 app.get('/api/tariff/ping', cors(), require('./api/tariff/ping'));
 app.post('/api/tariff/news', cors(), require('./api/news'));
 
-//require('./api/tariff')(
-//  {session: {delivery: {}}, body: {
-//    deliveries: ['pecom'],
-//    cities: [
-//      {from: 'Москва', to: 'Москва'},
-//      {from: 'Москва', to: '', countryTo: 'Австралия'},
-//      {from: 'Новосибирск', to: 'Москва'},
-//      {from: 'Пушкино, Московская обл.', to: 'Москва'},
-//      {from: 'Москва', to: 'Новосибирск'},
-//      {from: 'Москва', to: 'Бангкок'},
-//      {from: 'Москва', to: 'Абай', countryTo: 'Казахстан'},
-//      {from: 'Москва', to: '', countryTo: 'Азербайджан'}
-//    ],
-//    weights: [1]
-//  }},
-//  {json: function () {}}
-//);
+require('./api/tariff')(
+  {session: {delivery: {}}, body: {
+    deliveries: ['tnt'],
+    cities: [
+      //{from: 'Москва', to: 'Москва'},
+      //{from: 'Москва', to: '', countryTo: 'Австралия'},
+      {from: 'Новосибирск', to: 'Москва', fromGooglePlaceId: 'ChIJl03MkOHl30IRhenT4XMGOps', toGooglePlaceId: 'ChIJybDUc_xKtUYRTM9XV8zWRD0', fromEngName: "Novosibirsk", fromEngFullName: "Novosibirsk, Novosibirsk Oblast, Russia", toEngName: "Moscow", toEngFullName: "Moscow, Russia"},
+      //{from: 'Пушкино, Московская обл.', to: 'Москва'},
+      //{from: 'Москва', to: 'Новосибирск'},
+      //{from: 'Москва', to: 'Бангкок'},
+      //{from: 'Москва', to: 'Абай', countryTo: 'Казахстан'},
+      //{from: 'Москва', to: '', countryTo: 'Азербайджан'}
+    ],
+    weights: [1]
+  }},
+  {json: function () {}}
+);
 
 //require('./api/news')(
 //  {session: {delivery: {}}, body: {delivery: 'dimex', date: require('moment')().add(-3, 'month')}},
