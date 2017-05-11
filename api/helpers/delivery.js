@@ -60,7 +60,8 @@ var targets = [
     calcUrl: {method: 'POST', uri: 'http://www.ponyexpress.ru/local/ajax/tariff.php'},
     citiesUrl: {method: 'GET', uri: 'http://www.ponyexpress.ru/autocomplete/city?term='},
     countriesUrl: {method: 'GET', uri: 'http://www.ponyexpress.ru/autocomplete/country?term='},
-    newsUrl: {method: 'GET', uri: 'http://www.ponyexpress.ru/about/press-center/news/'}, /*year_2017/?ajax=Y&PAGEN_1=2*/
+    newsUrl: {method: 'GET', uri: 'http://www.ponyexpress.ru/about/press-center/news/'},
+    baseUrl: 'http://www.ponyexpress.ru'
   },
   {
     id: 'cse',
@@ -77,13 +78,15 @@ var targets = [
     servicesUrl: {method: 'GET', uri: 'http://garantpost.ru/calc/test.php?url=http://api.garantpost.ru/cgi-bin/tarCGI?service=show&calc='},
     citiesUrl: {method: 'GET', uri: 'http://garantpost.ru/calc/test.php?url=http://api.garantpost.ru/cgi-bin/tarZonesCGI?okato='},
     countriesUrl: {method: 'GET', uri: 'http://garantpost.ru/calc/test.php?url=http://api.garantpost.ru/cgi-bin/tarCGI?calc=w&okato=show'},
-    newsUrl: {method: 'GET', uri: 'http://garantpost.ru/news'}
+    newsUrl: {method: 'GET', uri: 'http://garantpost.ru/news'},
+    baseUrl: 'http://garantpost.ru'
   },
   {
     id: 'iml',
     calcUrl: {method: 'POST', uri: 'http://iml.ru/wats/calc2.php'},
     citiesUrl: {method: 'GET', uri: 'http://iml.ru/wats/calc2.php'},
-    newsUrl: {method: 'GET', uri: 'http://iml.ru/news/#'}
+    newsUrl: {method: 'GET', uri: 'http://iml.ru/news'},
+    baseUrl: 'http://iml.ru'
   },
   {
     id: 'cityexpress',
@@ -144,17 +147,32 @@ var targets = [
     calcUrl: {method: 'POST', uri: 'https://www.tnt.com/publicapis/v1/quotes'},
     citiesUrl: {method: 'GET', uri: 'https://mytnt.tnt.com/service/address-search-v2/location?limit=30&locale=ru_RU&q='},
     newsUrl: {method: 'GET', uri: 'https://www.tnt.com/express/ru_ru/site/home/the-company/press/press_releases.html'}
-  }
-  /*{
+  },
+  {
     id: 'jde',
     calcUrl: {method: 'POST', uri: 'http://www.jde.ru/ajax/calculator.html'},
     citiesUrl: {method: 'POST', uri: 'http://www.jde.ru/ajax/branch.html'},
     newsUrl: {method: 'GET', uri: 'http://www.jde.ru/company/news.html'}
-  }*/
-  /*
-  {id: 'ups', name: 'UPS'},
-  {id: 'fedex', name: 'Fedex'},
-  {id: 'baikalsr', name: 'Baikalsr'}*/
+  },
+  {
+    id: 'fedex',
+    calcUrl: {method: 'POST', uri: 'https://www.fedex.com/ratefinder/standalone?method=getQuickQuote'},
+    countriesUrl: {method: 'GET', uri: 'https://www.fedex.com/ratefinder/home?cc=ru&language=ru'},
+    newsUrl: {method: 'GET', uri: 'http://about.van.fedex.com/newsroom/global-english/'}
+  },
+  {
+    id: 'ups',
+    calcUrl: {method: 'POST', uri: 'https://wwwapps.ups.com/ctc/results'},
+    countriesUrl: {method: 'GET', uri: 'https://wwwapps.ups.com/calTimeCost?loc=ru_RU&WT.svl=PNRO_L1'},
+    citiesUrl: {method: 'GET', uri: 'https://wwwapps.ups.com/rifservice/CityValue.json?'},
+    newsUrl: {method: 'GET', uri: 'https://www.pressroom.ups.com/pressroom/news-assets/new-assets-subpage-landing.page?ConceptType=PressReleases'}
+  },
+  {
+    id: 'baikalsr',
+    calcUrl: {method: 'POST', uri: 'https://www.baikalsr.ru/json/api_calculator.json'},
+    citiesUrl: {method: 'GET', uri: 'https://www.baikalsr.ru/json/api_fias_cities.json?text='},
+    newsUrl: {method: 'GET', uri: 'https://www.baikalsr.ru/company/news/'}
+  }
 ];
 
 var targetObj = _.indexBy(targets, 'id');

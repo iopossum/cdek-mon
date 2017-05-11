@@ -11,6 +11,8 @@ exports.COUNTRYNOTFOUND = 'Страна назначения отстуству�
 exports.CITYFROMNOTFOUND = 'Город отправления отстуствует в списке доступных';
 exports.CITYTONOTFOUND = 'Город назначения отстуствует в списке доступных';
 exports.COUNTRYFROMRUSSIA = 'Отправления возможны только из России';
+exports.POSTCODEFROMNOTFOUND = 'Не удалось получить индекс города отправления';
+exports.POSTCODETONOTFOUND = 'Не удалось получить индекс города получения';
 
 exports.DATEFORMATREG = /^\s*((0?[1-9]|[12][0-9]|3[01])\.(0?[1-9]|1[012])\.\d{4})([\d\D]*)/;
 exports.COSTREG = /[^0-9,]/g;
@@ -136,6 +138,11 @@ exports.getNoResultError = function () {
   return "По указанным направлениям ничего не найдено";
 };
 
+exports.getUnavailableError = function (err) {
+  err = err || {};
+  return "Калькулятор недоступен, попробуйте позже. " + (err.message ? 'Ошибка: ' + err.message : '');
+};
+
 exports.cloneArray = function (array) {
   return _.map(array, _.clone);
 };
@@ -157,5 +164,15 @@ exports.createTariff = function (service, cost, deliveryTime) {
     cost: cost,
     service: service,
     deliveryTime: deliveryTime
+  };
+};
+
+exports.createNews = function (title, date, link, delivery, description) {
+  return {
+    title: title,
+    date: date,
+    link: link,
+    description: description,
+    delivery: delivery
   };
 };

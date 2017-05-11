@@ -1,4 +1,6 @@
 var async = require('async');
+var _ = require('underscore');
+var async = require('async');
 var commonHelper = require('../../../../api/helpers/common-safe');
 class TariffsCtrl {
 
@@ -42,9 +44,11 @@ class TariffsCtrl {
 
     this.acService;
     this.placeService;
+    this.geocoder;
     try {
       this.acService = new google.maps.places.AutocompleteService();
       this.placeService = new google.maps.places.PlacesService(document.createElement('div'));
+      this.geocoder = new google.maps.Geocoder();
     } catch (e) {
       console.error(e);
     }
@@ -170,7 +174,6 @@ class TariffsCtrl {
     this.dynamic = 0;
     var targets = this.filter.targets.length ? this.filter.targets : this.targets;
     var obj = {
-      cities: this.filter.cities,
       weights: this.filter.weights,
       deliveries: targets.map(function (item) {return item.id;})
     };
@@ -178,25 +181,51 @@ class TariffsCtrl {
     this.requestedTargets = targets;
     this.results = [];
     this.errors = [];
-    this.getGoogleIds(function () {
+    async.series([
+      function (callback) {
+        var intersection = _.intersection(obj.deliveries, ['dhl', 'tnt', 'fedex', 'ups']);
+        if (intersection && intersection.length) {
+          return that.getGoogleIds(callback);
+        }
+        callback(null);
+      },
+      function (callback) {
+        var intersection = _.intersection(obj.deliveries, ['fedex', 'ups', 'baikalsr']);
+        //if (intersection && intersection.length) {
+        //  return that.getCdekIds(callback);
+        //}
+        callback(null, that.filter.cities);
+      }
+    ], function (err, cities) {
+      obj.cities = cities[1];
       that.tariffService.request(obj).then(function (res) {
         that.pingTariffs();
       }, function (err) {
         that.notify.error(err);
       });
     });
+
   }
 
   downloadFile () {
     this.xls.download('Тарифы.xlsx', document.getElementById('tariffs'));
   }
 
+  getCdekIds (callback) {
+    var that = this;
+    this.tariffService.cities({cities: this.filter.cities}).then(function (res) {
+      callback(null, res);
+    });
+  }
+
   getGoogleIds (callback) {
+
     var that = this;
     if (!this.acService || !this.placeService) {
       try {
         this.acService = new google.maps.places.AutocompleteService();
         this.placeService = new google.maps.places.PlacesService(document.createElement('div'));
+        this.geocoder = new google.maps.Geocoder();
       } catch (e) {
         console.error(e);
       }
@@ -205,7 +234,63 @@ class TariffsCtrl {
       var query = city;
       country = country || 'Россия';
       query += ', ' + country;
-      that.acService.getPlacePredictions({
+      async.retry({times: 5, interval: 1000}, function (callback) {
+        that.geocoder.geocode({ 'address': query}, function(results, status) {
+          if (status !== 'OK') {
+            return callback('err', []);
+          }
+          callback(null, results, status);
+        });
+      }, function (err, results, status) {
+          results = results || [];
+          if (!results.length) {
+            return callback(null, null);
+          }
+          var json = {
+            google_city_id: results[0].place_id,
+            engName: results[0].formatted_address.split(',')[0],
+            engFullName: results[0].formatted_address
+          };
+          var latlng = null;
+          try {
+            latlng = {lat: results[0].geometry.location.lat(), lng: results[0].geometry.location.lng()};
+          } catch (e) {
+            console.log(e);
+          }
+          if (!latlng) {
+            return callback(null, json);
+          }
+          async.retry({times: 5, interval: 1000}, function (callback) {
+            that.geocoder.geocode({'location': latlng}, function (lResults, status) {
+              if (status !== 'OK') {
+                return callback('err', []);
+              }
+              callback(null, lResults, status);
+            });
+          }, function (err, lResults, status) {
+            lResults = lResults || [];
+            if (!lResults.length) {
+              return callback(null, json);
+            }
+            if (lResults[0].address_components && lResults[0].address_components.length) {
+              lResults[0].address_components.forEach(function (item) {
+                if (item.types && item.types.length) {
+                  item.types.forEach(function (type) {
+                    if (type === 'postal_code') {
+                      json.postal_code = item.long_name;
+                    }
+                    if (type === 'country') {
+                      json.countryShort = item.short_name;
+                      json.countryLong = item.long_name;
+                    }
+                  });
+                }
+              });
+            }
+            callback(null, json);
+          });
+      });
+      /*that.acService.getPlacePredictions({
         input: query,
         language: 'en-US',
         types:['(cities)']
@@ -230,17 +315,32 @@ class TariffsCtrl {
           if (status == google.maps.places.PlacesServiceStatus.OK) {
             _places[0].engName = place.name;
             _places[0].engFullName = place.formatted_address;
+            if (place.address_components && place.address_components.length) {
+              place.address_components.forEach(function (item) {
+                if (item.types && item.types.length) {
+                  item.types.forEach(function (type) {
+                    if (type === 'postal_code') {
+                      _places[0].postal_code = item.long_name;
+                    }
+                    if (type === 'country') {
+                      _places[0].countryShort = item.short_name;
+                      _places[0].countryLong = item.long_name;
+                    }
+                  });
+                }
+              });
+            }
           }
           callback(null, _places[0]);
         });
-      });
+      });*/
     };
     var cityObj = {};
     async.eachSeries(this.filter.cities, function (city, callback) {
       if (!city.from && !city.to) {
         return callback(null);
       }
-      async.parallel([
+      async.series([
         function (callback) {
           if (typeof  cityObj[city.from + city.countryFrom] !== 'undefined') {
             return callback(null);
@@ -271,12 +371,18 @@ class TariffsCtrl {
           city.fromGooglePlaceDsc = cityObj[city.from + city.countryFrom].city_label;
           city.fromEngName = cityObj[city.from + city.countryFrom].engName;
           city.fromEngFullName = cityObj[city.from + city.countryFrom].engFullName;
+          city.countryFromEng = cityObj[city.from + city.countryFrom].countryLong;
+          city.countryFromEngShort = cityObj[city.from + city.countryFrom].countryShort;
+          city.postcodeFrom = cityObj[city.from + city.countryFrom].postal_code;
         }
         if (cityObj[city.to + city.countryTo]) {
           city.toGooglePlaceId = cityObj[city.to + city.countryTo].google_city_id;
           city.toGooglePlaceDsc = cityObj[city.to + city.countryTo].city_label;
           city.toEngName = cityObj[city.to + city.countryTo].engName;
           city.toEngFullName = cityObj[city.to + city.countryTo].engFullName;
+          city.countryToEng = cityObj[city.to + city.countryTo].countryLong;
+          city.countryToEngShort = cityObj[city.to + city.countryTo].countryShort;
+          city.postcodeTo = cityObj[city.to + city.countryTo].postal_code;
         }
         callback(null, city);
       });

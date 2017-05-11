@@ -144,7 +144,7 @@ var getCity = function (city, cities, callback) {
     });
     var currPickPoint = '';
     if (typeof foundCity === 'undefined') {
-      result.message = commonHelper.getCityNoResultError();
+      result.message = commonHelper.getCityNoResultError(city);
     } else {
       result.foundCities = [foundCity];
       result.success = true;
@@ -159,6 +159,98 @@ var getCity = function (city, cities, callback) {
     result.pickpoint = currPickPoint;
     result.cities = [foundCity];
     callback(null, result);
+};
+
+var calcResult = function (req, type, callback) {
+  var deliveryData = deliveryHelper.get(delivery);
+  var opts = _.extend({}, deliveryData.calcUrl);
+  opts.form = req;
+  setTimeout(function () {
+    async.retry(config.retryOpts, function (callback) {
+      request(opts, callback)
+    }, function (err, r, body) {
+      var response = {};
+      if (err) {
+        response.error = commonHelper.getResponseError(err);
+        return callback(null, response);
+      }
+      var result = {};
+      try {
+        result = JSON.parse(body);
+      } catch (err) {
+        response.error = commonHelper.getResponseError(err);
+        return callback(null, response);
+      }
+      if (result.error) {
+        response.error = commonHelper.getResponseError(new Error(result.error));
+        return callback(null, response);
+      }
+      if (!result.sum) {
+        response.error = commonHelper.getResponseError(new Error("Отсутствует sum в ответе"));
+        return callback(null, response);
+      }
+      if (!result.date) {
+        response.error = commonHelper.getResponseError(new Error("Отсутствует date в ответе"));
+        return callback(null, response);
+      }
+      var delivTime;
+      try {
+        delivTime = new Date(result.date);
+      } catch (err) {
+        response.error = commonHelper.getResponseError(new Error("Неверный формат date в ответе"));
+      }
+      if (!delivTime) {
+        return callback(null, response);
+      }
+      var time = delivTime.getTime();
+      if (!time) {
+        response.error = commonHelper.getResponseError(new Error("Неверный формат date в ответе"));
+        return callback(null, response);
+      }
+      var timeDiff = Math.abs(time - (new Date()).getTime());
+      var diffDays = Math.ceil(timeDiff / (1000 * 3600 * 24));
+      response.tariff = commonHelper.createTariff(type, result.sum, diffDays);
+      return callback(null, response);
+    });
+  }, commonHelper.randomInteger(200, 500));
+};
+
+var calcRequests = function (item, callback) {
+  setTimeout(function () {
+    async.series([
+      function (callback) {
+        var copy = _.clone(item.req);
+        copy.delivery = 1;
+        copy.payment = 1;
+        calcResult(copy, "Курьерская доставка (для юр. лиц)", callback);
+      },
+      function (callback) {
+        var copy = _.clone(item.req);
+        copy.delivery = 2;
+        copy.payment = 1;
+        calcResult(copy, "Самовывоз (для юр. лиц)", callback);
+      },
+      function (callback) {
+        var copy = _.clone(item.req);
+        copy.delivery = 3;
+        calcResult(copy, "Отправления физических лиц", callback);
+      }
+    ], function (err, results) {
+      if (!results[0].error) {
+        item.tariffs.push(results[0].tariff);
+      }
+      if (!results[1].error) {
+        item.tariffs.push(results[1].tariff);
+      }
+      if (!results[2].error) {
+        item.tariffs.push(results[2].tariff);
+      }
+      if (!item.tariffs.length) {
+        item.error = commonHelper.getNoResultError();
+      }
+      callback(null, item);
+    });
+  }, commonHelper.randomInteger(500, 1000));
 };
 
 module.exports = function (req, cities) {
@@ -187,13 +279,13 @@ module.exports = function (req, cities) {
         if (!city.countryTo) {
             city.countryTo = "россия";
         }
-        if(city.countryFrom != "россия") {
+        if (city.countryFrom != "россия") {
             city.error = commonHelper.COUNTRYFROMNOTFOUND;
             return async.nextTick(function () {
                 callback(null, city);
             });
         }
-        if(city.countryTo != "россия") {
+        if (city.countryTo != "россия") {
             city.error = commonHelper.COUNTRYNOTFOUND;
             return async.nextTick(function () {
                 callback(null, city);
@@ -279,57 +371,7 @@ module.exports = function (req, cities) {
             callback(null, item);
           });
         }
-        var opts = _.extend({}, deliveryData.calcUrl);
-        opts.form = item.req;
-        setTimeout(function () {
-          async.retry(config.retryOpts, function (callback) {
-            request(opts, callback)
-          }, function (err, r, body) {
-            if (err) {
-              item.error = commonHelper.getResponseError(err);
-              return callback(null, item);
-            }
-            var result = {};
-            try {
-                result = JSON.parse(body);
-            } catch (err) {
-                item.error = commonHelper.getResponseError(err);
-                return callback(null, item);
-            }
-            if(result.error) {
-                item.error = commonHelper.getResponseError({message : result.error});
-                return callback(null, item);
-            }
-            if(!result.date || !result.sum) {
-                item.error = commonHelper.getResponseError({message : 'response is incorrect'});
-                return callback(null, item);
-            }
-            var delivTime;
-            try {
-                delivTime = new Date(result.date);
-            } catch (err) {
-                item.error = commonHelper.getResponseError({message : 'cannot get date from response'});
-                return callback(null, item);
-            }
-            if(!delivTime) {
-                item.error = commonHelper.getCityJsonError({message : 'cannot get date from response'});
-                return callback(null, item);
-            }
-            var time = delivTime.getTime();
-            if(!time) {
-                item.error = commonHelper.getCityJsonError({message : 'cannot get date from response'});
-                return callback(null, item);
-            }
-            var timeDiff = Math.abs(time - (new Date()).getTime());
-            var diffDays = Math.ceil(timeDiff / (1000 * 3600 * 24));
-            item.tariffs.push({
-                service: 'доставка',
-                cost: result.sum,
-                deliveryTime: diffDays
-            });
-            return callback(null, item);
-          });
-        }, commonHelper.randomInteger(500, 1000));
+        calcRequests(item, callback);
       }, callback);
     }]
   }, function (err, results) {

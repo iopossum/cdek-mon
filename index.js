@@ -83,30 +83,32 @@ app.use('/api*', function (req, res, next) {
 app.options('/api/*', cors());
 app.post('/api/tariff/request', cors(), require('./api/tariff'));
 app.get('/api/tariff/ping', cors(), require('./api/tariff/ping'));
+app.post('/api/tariff/cities', cors(), require('./api/tariff/city'));
 app.post('/api/tariff/news', cors(), require('./api/news'));
 
 //require('./api/tariff')(
 //  {session: {delivery: {}}, body: {
-//    deliveries: ['tnt'],
+//    deliveries: ['iml'],
 //    cities: [
       //{from: 'Москва', to: 'Москва'},
       //{from: 'Москва', to: '', countryTo: 'Австралия'},
-      //{from: 'Новосибирск', to: 'Москва', fromGooglePlaceId: 'ChIJl03MkOHl30IRhenT4XMGOps', toGooglePlaceId: 'ChIJybDUc_xKtUYRTM9XV8zWRD0', fromEngName: "Novosibirsk", fromEngFullName: "Novosibirsk, Novosibirsk Oblast, Russia", toEngName: "Moscow", toEngFullName: "Moscow, Russia"},
-      //{from: 'Пушкино, Московская обл.', to: 'Москва'},
+      //{from: 'Новосибирск', to: 'Москва', postcodeFrom: '630000', countryFromEngShort: 'RU', countryToEngShort: 'RU', postcodeTo: '119002', fromGooglePlaceId: 'ChIJl03MkOHl30IRhenT4XMGOps', toGooglePlaceId: 'ChIJybDUc_xKtUYRTM9XV8zWRD0', fromEngName: "Novosibirsk", fromEngFullName: "Novosibirsk, Novosibirsk Oblast, Russia", toEngName: "Moscow", toEngFullName: "Moscow, Russia"},
+      //{from: 'Новосибирск', to: 'Москва', postcodeFrom: '119002', countryFromEngShort: 'RU', countryToEngShort: 'RU', postcodeTo: '630000', fromGooglePlaceId: 'ChIJl03MkOHl30IRhenT4XMGOps', toGooglePlaceId: 'ChIJybDUc_xKtUYRTM9XV8zWRD0', fromEngName: "Novosibirsk", fromEngFullName: "Novosibirsk, Novosibirsk Oblast, Russia", toEngName: "Moscow", toEngFullName: "Moscow, Russia"},
+      //{from: 'Пушкино, Московская обл.', to: 'Новосибирск'},
       //{from: 'Москва', to: 'Новосибирск'},
       //{from: 'Москва', to: 'Бангкок'},
       //{from: 'Москва', to: 'Абай', countryTo: 'Казахстан'},
       //{from: 'Москва', to: '', countryTo: 'Азербайджан'}
-    //],
+//    ],
 //    weights: [1]
 //  }},
 //  {json: function () {}}
 //);
 
-//require('./api/news')(
-//  {session: {delivery: {}}, body: {delivery: 'dimex', date: require('moment')().add(-3, 'month')}},
-//  {json: function () {}}
-//);
+require('./api/news')(
+  {session: {delivery: {}}, body: {delivery: 'iml', date: require('moment')().add(-3, 'month')}},
+  {json: function () {}}
+);
 
 server = app.listen(app.get('port'), function() {
   console.log('Node app is running on port', app.get('port'));

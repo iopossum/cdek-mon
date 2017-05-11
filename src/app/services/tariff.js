@@ -20,6 +20,11 @@ class Tariff {
         params: {action: 'news'},
         method: 'POST',
         isArray: true
+      },
+      cities: {
+        params: {action: 'cities'},
+        method: 'POST',
+        isArray: true
       }
     });
     this.targets = [
@@ -59,6 +64,10 @@ class Tariff {
 
   news(data) {
     return this.resource.news(data).$promise;
+  }
+
+  cities(data) {
+    return this.resource.cities(data).$promise;
   }
 
   getTargets() {

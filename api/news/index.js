@@ -27,6 +27,18 @@ module.exports = function (req, res) {
     case 'dimex':
       return require('./dimex')(req, res);
       break;
+    case 'ponyexpress':
+      return require('./ponyexpress')(req, res);
+      break;
+    case 'cse':
+      return require('./cse')(req, res);
+      break;
+    case 'garantpost':
+      return require('./garantpost')(req, res);
+      break;
+    case 'iml':
+      return require('./iml')(req, res);
+      break;
     default:
       return res.json([]);
   }

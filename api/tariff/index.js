@@ -95,6 +95,18 @@ module.exports = function (req, res) {
       case 'tnt':
         require('./tnt')(req, cities);
         break;
+      case 'jde':
+        require('./jde')(req, cities);
+        break;
+      case 'fedex':
+        require('./fedex')(req, cities);
+        break;
+      case 'ups':
+        require('./ups')(req, cities);
+        break;
+      case 'baikalsr':
+        require('./baikalsr')(req, cities);
+        break;
     }
   }
   return res.json(responseHelper.success());
