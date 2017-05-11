@@ -81,7 +81,7 @@ module.exports = function (req, res) {
     items = _.sortBy(items, function (item) {
       return item.date;
     });
-    console.log(items);
+
     res.json(items);
   });
 

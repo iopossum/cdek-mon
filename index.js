@@ -105,10 +105,10 @@ app.post('/api/tariff/news', cors(), require('./api/news'));
 //  {json: function () {}}
 //);
 
-require('./api/news')(
-  {session: {delivery: {}}, body: {delivery: 'iml', date: require('moment')().add(-3, 'month')}},
-  {json: function () {}}
-);
+//require('./api/news')(
+//  {session: {delivery: {}}, body: {delivery: 'iml', date: require('moment')().add(-3, 'month')}},
+//  {json: function () {}}
+//);
 
 server = app.listen(app.get('port'), function() {
   console.log('Node app is running on port', app.get('port'));
