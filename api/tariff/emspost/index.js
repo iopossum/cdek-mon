@@ -44,7 +44,7 @@ var parseEmsResponse = function (response) {
   try {
     json = JSON.parse(response.d);
   } catch (e) {
-    result.message = e.message || "Ошибка полуения данных, изменился ответ";
+    result.message = commonHelper.getResultJsonError(e);
   }
   if (!json) {
     return result;
@@ -79,6 +79,8 @@ var getEMSReq = function (cities, countries, item) {
   if (emsReq.targCountryID) {
     emsReq.indexFrom = "101700";
     emsReq.indexTo = "101700";
+    emsReq.fromName = "Россия";
+    emsReq.toName = filtered[0].name;
     return emsReq;
   }
   var filtered = cities.filter(function (f) {
@@ -88,12 +90,14 @@ var getEMSReq = function (cities, countries, item) {
     emsReq.srcCountryID = "643";
     emsReq.targCountryID = "643";
     emsReq.indexFrom = filtered[0].id;
+    emsReq.fromName = filtered[0].name;
   }
   filtered = cities.filter(function (f) {
     return new RegExp(to, 'gi').test(f.name);
   });
   if (filtered.length && to.length) {
     emsReq.indexTo = filtered[0].id;
+    emsReq.toName = filtered[0].name;
   }
   if (emsReq.indexFrom && emsReq.indexTo) {
     return emsReq;
@@ -126,12 +130,25 @@ module.exports = function (req, cities) {
         countries.push({id: $(item).attr('value'), name: $(item).text().trim()});
       });
       if (!foundCities.length && !countries.length) {
-        return callback(new Error("Ошибка парсинга городов"));
+        return callback(commonHelper.getCityJsonError(new Error("Не удалось получить список городов")));
       }
       cities.forEach(function (item) {
         var emsReq = getEMSReq(foundCities, countries, item);
+        item.initialCityFrom = item.from;
+        item.initialCityTo = item.to;
+        if (emsReq) {
+          item.from = emsReq.fromName;
+          item.to = emsReq.toName;
+        }
         req.body.weights.forEach(function (weight) {
-          requests.push({weight: weight, city: item, delivery: delivery, req: emsReq, error: emsReq ? null : 'Не найден город', tariffs: []});
+          requests.push({
+            weight: weight,
+            city: item,
+            delivery: delivery,
+            req: emsReq,
+            error: emsReq ? null : 'Не найден город',
+            tariffs: []
+          });
         });
       });
       async.mapSeries(requests, function (item, callback) {
@@ -152,16 +169,16 @@ module.exports = function (req, cities) {
           }, function (err, r, b) {
             item.res = b;
             if (err) {
-              item.error = "Не удалось получить информацию с сайта, попробуйте позже";
+              item.error = commonHelper.getResultJsonError(err);
             } else if (b && b.d) {
               var resp = parseEmsResponse(b);
               if (resp.message) {
-                item.error = resp.message;
+                item.error = commonHelper.getResultJsonError(new Error(resp.message));
               } else {
                 item.tariffs.push(resp);
               }
             } else {
-              item.error = b.Message || "Неверные параметры запроса";
+              item.error = commonHelper.getResultJsonError(new Error(b.Message || "Неверные параметры запроса"));
             }
             return callback(null, item);
           });

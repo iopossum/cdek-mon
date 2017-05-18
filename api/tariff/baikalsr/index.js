@@ -79,6 +79,17 @@ var getReq = function (from, to) {
   };
 };
 
+var getCityName = function (city) {
+  var result = '';
+  if (city.title) {
+    result += city.title;
+  }
+  if (city.parents) {
+    result +=  ', ' + city.parents;
+  }
+  return result;
+};
+
 var getCity = function (city, country, callback) {
   var deliveryData = deliveryHelper.get(delivery);
   var opts = Object.assign({}, deliveryData.citiesUrl);
@@ -297,8 +308,8 @@ module.exports = function (req, cities) {
                 city: {
                   initialCityFrom: item.from,
                   initialCityTo: item.to,
-                  from: fromCity.name + ', ' + fromCity.parents,
-                  to: toCity.name + ', ' + toCity.parents,
+                  from: getCityName(fromCity),
+                  to: getCityName(toCity),
                   countryFrom: item.countryFrom,
                   countryTo: item.countryTo
                 },
@@ -312,7 +323,7 @@ module.exports = function (req, cities) {
       });
       tempRequests.forEach(function (item) {
         req.body.weights.forEach(function (weight) {
-          var obj = Object.assign({}, item);
+          var obj = commonHelper.deepClone(item);
           obj.weight = weight;
           obj.req['cargo[0][weight]'] = weight;
           requests.push(obj);

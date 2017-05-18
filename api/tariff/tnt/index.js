@@ -145,6 +145,41 @@ var getFullCity = function (tntCity) {
   return city;
 };
 
+var hackCity = function (eng, trim) {
+  eng = eng.replace(/shch/gi, 'sch');
+  eng = eng.replace(/Ye/gi, 'e');
+  eng = eng.replace(/^r-n /i, '');
+  eng = eng.replace(/yo/gi, 'e');
+  eng = eng.replace(/x/gi, 'ks');
+
+  if (/рьи/.test(trim)) {
+    eng = eng.replace(/ri/i, 'rji');
+  }
+  if (/рье/.test(trim)) {
+    eng = eng.replace(/rye/i, 'rje');
+  }
+  if (/льск/.test(trim)) {
+    eng = eng.replace(/lsk/i, "l'sk");
+  }
+  if (/ой/.test(trim)) {
+    eng = eng.replace(/oy/i, 'oj');
+  }
+  if (/рьск/.test(trim)) {
+    eng = eng.replace(/rsk/i, "r'sk");
+  }
+  if (/ий/.test(trim)) {
+    eng = eng.replace(/y$/i, "ij");
+    eng = eng.replace(/y /i, "ij ");
+  }
+  if (trim.split(' ').length < 2) {
+    var splits = eng.split(' ');
+    if (splits.length > 1) {
+      eng = splits[0];
+    }
+  }
+  return eng;
+};
+
 module.exports = function (req, cities) {
   var deliveryData = deliveryHelper.get(delivery);
   var requests = [];
@@ -176,6 +211,12 @@ module.exports = function (req, cities) {
           return async.nextTick(function () {
             callback(null, city);
           });
+        }
+        if (city.fromEngName) {
+          city.fromEngName = hackCity(city.fromEngName, commonHelper.getCity(city.from));
+        }
+        if (city.toEngName) {
+          city.toEngName = hackCity(city.toEngName, commonHelper.getCity(city.to));
         }
         setTimeout(function () {
           if (global[delivery] > timestamp) {
@@ -215,8 +256,16 @@ module.exports = function (req, cities) {
         if (item.error) {
           requests = requests.concat(commonHelper.getResponseArray(req.body.weights, item, delivery, item.error));
         } else if (!item.fromJson.success) {
+          item.initialCityFrom = item.from;
+          item.initialCityTo = item.to;
+          item.from = item.fromEngName;
+          item.to = item.toEngName;
           requests = requests.concat(commonHelper.getResponseArray(req.body.weights, item, delivery, item.fromJson.message));
         } else if (!item.toJson.success) {
+          item.initialCityFrom = item.from;
+          item.initialCityTo = item.to;
+          item.from = item.fromEngName;
+          item.to = item.toEngName;
           requests = requests.concat(commonHelper.getResponseArray(req.body.weights, item, delivery, item.toJson.message));
         } else {
           item.fromJson.foundCities.forEach(function (fromCity) {
@@ -240,7 +289,7 @@ module.exports = function (req, cities) {
       });
       tempRequests.forEach(function (item) {
         req.body.weights.forEach(function (weight) {
-          var obj = Object.assign({}, item);
+          var obj = commonHelper.deepClone(item);
           obj.weight = weight;
           obj.req.quote.totalweight = weight;
           obj.req.quote.packagetype = getPackageType(weight);

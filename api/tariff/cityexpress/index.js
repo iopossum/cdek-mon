@@ -76,11 +76,11 @@ var getCity = function (city, country, callback) {
       success: false
     };
     if (err) {
-      result.message = commonHelper.getResponseError(err);
+      result.message = commonHelper.getCityJsonError(err);
       return callback(null, result);
     }
     if (!b) {
-      result.message = commonHelper.getResponseError(new Error("Неверный тип данных в ответе"));
+      result.message = commonHelper.getCityJsonError(new Error("Неверный тип данных в ответе"));
       return callback(null, result);
     }
     if (!b.d) {
@@ -96,6 +96,7 @@ var getCity = function (city, country, callback) {
     }).filter(function (item) {
       return item !== null;
     });
+    b.d = commonHelper.findInArray(b.d, trim, 'name', true);
     if (!b.d.length) {
       result.message = commonHelper.getCityNoResultError();
     } else if (b.d.length === 1) {
@@ -225,7 +226,7 @@ module.exports = function (req, cities) {
       });
       tempRequests.forEach(function (item) {
         req.body.weights.forEach(function (weight) {
-          var obj = Object.assign({}, item);
+          var obj = commonHelper.deepClone(item);
           obj.weight = weight;
           obj.req['ctl00$Content$weight'] = weight;
           requests.push(obj);

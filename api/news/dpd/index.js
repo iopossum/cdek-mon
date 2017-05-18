@@ -11,6 +11,7 @@ var logger = require('../../helpers/logger');
 
 module.exports = function (req, res) {
   var deliveryData = deliveryHelper.get(req.body.delivery);
+  var warning = null;
   async.auto({
     getNewsList: function (callback) {
       var opts = _.extend({}, deliveryData.newsUrl);
@@ -42,6 +43,7 @@ module.exports = function (req, res) {
             request(opts, callback)
           }, function (err, r, b) {
             if (err) {
+              warning = commonHelper.getNewsPartError(req.body.delivery);
               return callback(null, null);
             }
             var $ = cheerio.load(b);
@@ -60,6 +62,7 @@ module.exports = function (req, res) {
     }]
   }, function (err, results) {
     if (err) {
+      err.message = commonHelper.getNewsError(req.body.delivery, err);
       return responseHelper.createResponse(res, err, 500);
     }
     logger.newsInfoLog(req.body.delivery, results.getNewsItem, 'news');
@@ -72,9 +75,7 @@ module.exports = function (req, res) {
     items = items.filter(function (item) {
       return moment(item.date, 'DD MMMM YYYY', 'ru').isAfter(req.body.date);
     });
-    items = _.sortBy(items, function (item) {
-      return item.date;
-    });
-    res.json(items);
+    items = commonHelper.sortNews(items);
+    res.json(commonHelper.newsResponse(items, warning));
   });
 };

@@ -152,6 +152,22 @@ var getTariffs = function (type, json) {
   return tariffs;
 };
 
+var filterCities = function (array, value) {
+  return array.filter(function (item) {
+    return item.value.indexOf('(' + value + ')') === -1;
+  });
+};
+
+var filterCitiesByRegion = function (array, value, trim) {
+  return array.filter(function (item) {
+    if (/ обл./gi.test(item.value) && / обл./gi.test(value)) {
+      return new RegExp(trim, 'gi').test(item.value);
+    } else {
+      return true;
+    }
+  });
+};
+
 module.exports = function (req, cities) {
   var deliveryData = deliveryHelper.get(delivery);
   var requests = [];
@@ -190,23 +206,31 @@ module.exports = function (req, cities) {
         } else if (item.countryFrom && ['казахстан'].indexOf(item.countryFrom.toLowerCase()) === -1) {
           item.error = commonHelper.COUNTRYFROMRUSSIA;
           requests = requests.concat(commonHelper.getResponseArray(req.body.weights, item, delivery, item.error));
-        } if (item.countryTo && ['казахстан'].indexOf(item.countryTo.toLowerCase()) === -1) {
-          item.error = commonHelper.COUNTRYFROMRUSSIA;
+        } else if (item.countryTo && ['казахстан'].indexOf(item.countryTo.toLowerCase()) === -1) {
+          item.error = commonHelper.COUNTRYNOTFOUND;
           requests = requests.concat(commonHelper.getResponseArray(req.body.weights, item, delivery, item.error));
         } else {
           var trimFrom = commonHelper.getCity(item.from);
           var foundsFrom = commonHelper.findInArray(results.getCities.regions, trimFrom, 'value', true);
+          foundsFrom = filterCities(foundsFrom, trimFrom);
           var foundsFromWithRegion = [];
           if (foundsFrom.length > 1) {
             var regionFrom = commonHelper.getRegionName(item.from);
+            if (regionFrom) {
+              foundsFrom = filterCitiesByRegion(foundsFrom, item.from, regionFrom);
+            }
             foundsFromWithRegion = commonHelper.findInArray(foundsFrom, regionFrom, 'value');
           }
           var resultsFrom = foundsFromWithRegion.length ? foundsFromWithRegion : foundsFrom;
           var trimTo = commonHelper.getCity(item.to);
           var foundsTo = commonHelper.findInArray(results.getCities.regions, trimTo, 'value', true);
+          foundsTo = filterCities(foundsTo, trimTo);
           var foundsToWithRegion = [];
           if (foundsTo.length > 1) {
             var regionTo = commonHelper.getRegionName(item.to);
+            if (regionTo) {
+              foundsTo = filterCitiesByRegion(foundsTo, item.to, regionTo);
+            }
             foundsToWithRegion = commonHelper.findInArray(foundsTo, regionTo, 'value');
           }
           var resultsTo = foundsToWithRegion.length ? foundsToWithRegion : foundsTo;
@@ -239,7 +263,7 @@ module.exports = function (req, cities) {
       });
       tempRequests.forEach(function (item) {
         req.body.weights.forEach(function (weight) {
-          var obj = Object.assign({}, item);
+          var obj = commonHelper.deepClone(item);
           obj.weight = weight;
           obj.req.push('total_weight=' + weight);
           requests.push(obj);

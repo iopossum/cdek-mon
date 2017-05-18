@@ -71,7 +71,7 @@ var getCity = function (city, isFrom, callback) {
       founds = commonHelper.findInArray(json, region, 'OkatoName');
     }
     if (!founds.length) {
-      founds = commonHelper.findInArray(json, result.trim, 'OkatoName');
+      founds = commonHelper.findInArray(json, result.trim, 'OkatoName', true);
     }
     result.foundCities = founds.length ? formatCities(founds) : [initialJson];
     result.cities = json;
@@ -451,7 +451,7 @@ module.exports = function (req, cities) {
       });
       tempRequests.forEach(function (item) {
         req.body.weights.forEach(function (weight) {
-          var obj = Object.assign({}, item);
+          var obj = commonHelper.deepClone(item);
           obj.weight = weight;
           obj.req.weight = weight;
           requests.push(obj);
@@ -459,7 +459,7 @@ module.exports = function (req, cities) {
       });
       tempIntRequests.forEach(function (item) {
         req.body.weights.forEach(function (weight) {
-          var obj = Object.assign({}, item);
+          var obj = commonHelper.deepClone(item);
           obj.weight = weight;
           obj.req.weight = weight;
           intRequests.push(obj);

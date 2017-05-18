@@ -12,7 +12,7 @@ var logger = require('../../helpers/logger');
 
 module.exports = function (req, res) {
   var deliveryData = deliveryHelper.get(req.body.delivery);
-  var requests = [];
+  var warning = null;
   async.auto({
     getLink: function (callback) {
       var opts = deliveryData.newsUrl;
@@ -39,25 +39,31 @@ module.exports = function (req, res) {
       var news = [];
       $('channel').find('item').each(function (index, item) {
         var date = $(item).find('pubDate').text().trim();
-        if (date && moment(date).isAfter(moment(req.body.date))) {
-          news.push(
-            {
-              title: $(item).find('title').text().trim(),
-              date: moment(date).locale("ru").format('DD MMMM YYYY'),
-              link: $(item).find('link').text().trim(),
-              description: $(item).find('description').text().trim(),
-              delivery: req.body.delivery
-            }
-          );
+        if (date) {
+          if (moment(date).isAfter(moment(req.body.date))) {
+            news.push(
+              {
+                title: $(item).find('title').text().trim(),
+                date: moment(date).locale("ru").format('DD MMMM YYYY'),
+                link: $(item).find('link').text().trim(),
+                description: $(item).find('description').text().trim(),
+                delivery: req.body.delivery
+              }
+            );
+          }
+        } else {
+          warning = commonHelper.getNewsWrongResponse(req.body.delivery);
         }
       });
       callback(null, news);
     }]
   }, function (err, results) {
     if (err) {
+      err.message = commonHelper.getNewsError(req.body.delivery, err);
       return responseHelper.createResponse(res, err, 500);
     }
     logger.newsInfoLog(req.body.delivery, results.getNews, 'news');
-    res.json(results.getNews);
+    var items = commonHelper.sortNews(results.getNews);
+    res.json(commonHelper.newsResponse(items, warning));
   });
 };

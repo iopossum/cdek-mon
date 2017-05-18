@@ -92,11 +92,7 @@ var getCity = function (city, dest, callback) {
       var region = commonHelper.getRegionName(city);
       var founds = [];
       if (region) {
-        json.suggestions.forEach(function (item) {
-          if (new RegExp(region, 'gi').test(item.value)) {
-            founds.push(item);
-          }
-        });
+        founds = commonHelper.findInArray(json.suggestions, region, 'value');
       }
       result.foundCities = founds.length ? founds : [json.suggestions[0]];
       result.success = true;
@@ -135,7 +131,7 @@ var getCalcResult = function (requests, timestamp, inOpts, callback) {
           if (tds.length) {
             item.tariffs.push({
               service: $($(trs[2]).find('td')[1]).text(),
-              cost: $(tds[8]).text(),
+              cost: $(tds[8]).text().replace(" ", ""),
               deliveryTime: $(tds[0]).text()
             });
           }
@@ -144,9 +140,12 @@ var getCalcResult = function (requests, timestamp, inOpts, callback) {
           var service = $($(trs[6]).find('td')[0]).text();
           for (var i=6; i<trs.length; i++) {
             var tds = $(trs[i]).find('td');
+            if (tds.length > 4) {
+              service = $($(trs[i]).find('td')[0]).text();
+            }
             item.tariffs.push({
-              service: service + ' ' + (i === 6 ? $(tds[1]).text() : $(tds[0]).text()),
-              cost: $(tds[4]).text(),
+              service: service + ' ' + (tds.length > 4 ? $(tds[1]).text() : $(tds[0]).text()),
+              cost: $(tds[tds.length > 4 ? 4 : 3]).text().replace(" ", ""),
               deliveryTime: ''
             });
           }
@@ -264,7 +263,7 @@ module.exports = function (req, cities) {
                 initialCityFrom: item.from,
                 initialCityTo: item.to,
                 from: fromCity.value,
-                to: item.to || item.countryTo,
+                to: item.countryTo,
                 countryFrom: item.countryFrom,
                 countryTo: item.countryTo
               },
@@ -295,7 +294,7 @@ module.exports = function (req, cities) {
       });
       tempRequests.forEach(function (item) {
         req.body.weights.forEach(function (weight) {
-          var obj = Object.assign({}, item);
+          var obj = commonHelper.deepClone(item);
           obj.weight = weight;
           obj.req.massa = weight;
           requests.push(obj);
@@ -303,7 +302,7 @@ module.exports = function (req, cities) {
       });
       tempIntRequests.forEach(function (item) {
         req.body.weights.forEach(function (weight) {
-          var obj = Object.assign({}, item);
+          var obj = commonHelper.deepClone(item);
           obj.weight = weight;
           obj.req.massa = weight;
           intRequests.push(obj);

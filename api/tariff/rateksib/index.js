@@ -29,6 +29,17 @@ var getReq = function (from, to) {
   }
 };
 
+var getCityName = function (city) {
+  var result = '';
+  if (city.name) {
+    result += city.name;
+  }
+  if (city.namefull) {
+    result += ', ' + city.namefull;
+  }
+  return result;
+};
+
 var getCity = function (city, callback) {
   var deliveryData = deliveryHelper.get(delivery);
   var opts = Object.assign({}, deliveryData.citiesUrl);
@@ -67,7 +78,7 @@ var getCity = function (city, callback) {
       return callback(null, result);
     }
     if (!json.items.length) {
-      result.message = commonHelper.getCityNoResultError();
+      result.message = commonHelper.getCityNoResultError(trim);
     } else if (json.items.length === 1) {
       result.foundCities = json.items;
       result.success = true;
@@ -202,8 +213,8 @@ module.exports = function (req, cities) {
                 city: {
                   initialCityFrom: item.from,
                   initialCityTo: item.to,
-                  from: fromCity.name,
-                  to: toCity.name,
+                  from: getCityName(fromCity),
+                  to: getCityName(toCity),
                   countryFrom: item.countryFrom,
                   countryTo: item.countryTo
                 },
@@ -217,7 +228,7 @@ module.exports = function (req, cities) {
       });
       tempRequests.forEach(function (item) {
         req.body.weights.forEach(function (weight) {
-          var obj = Object.assign({}, item);
+          var obj = commonHelper.deepClone(item);
           obj.weight = weight;
           obj.req.weight = weight;
           requests.push(obj);

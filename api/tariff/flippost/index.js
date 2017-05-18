@@ -224,7 +224,7 @@ module.exports = function (req, cities) {
               initialCityFrom: item.from,
               initialCityTo: item.to,
               from: item.from,
-              to: item.to,
+              to: item.toJson.isCountry ? item.to : item.toJson.name,
               initialCountryFrom: item.countryFrom,
               initialCountryTo: item.countryTo,
               countryFrom: item.countryFrom,
@@ -238,14 +238,13 @@ module.exports = function (req, cities) {
         } else if (!item.toJson.success) {
           requests = requests.concat(commonHelper.getResponseArray(req.body.weights, item, delivery, item.toJson.message));
         } else {
-          //console.log(item.toJson);
           item.toJson.foundCities.forEach(function (toCity) {
             tempRequests.push({
               city: {
                 initialCityFrom: item.from,
                 initialCityTo: item.to,
                 from: item.from,
-                to: toCity.city,
+                to: toCity.fullname,
                 countryFrom: item.countryFrom,
                 countryTo: item.countryTo
               },
@@ -258,7 +257,7 @@ module.exports = function (req, cities) {
       });
       tempRequests.forEach(function (item) {
         req.body.weights.forEach(function (weight) {
-          var obj = Object.assign({}, item);
+          var obj = commonHelper.deepClone(item);
           obj.weight = weight;
           obj.req.weight = weight;
           requests.push(obj);
@@ -266,7 +265,7 @@ module.exports = function (req, cities) {
       });
       tempOtdoRequests.forEach(function (item) {
         req.body.weights.forEach(function (weight) {
-          var obj = Object.assign({}, item);
+          var obj = commonHelper.deepClone(item);
           obj.weight = weight;
           obj.req.Ves = weight;
           otdoRequests.push(obj);

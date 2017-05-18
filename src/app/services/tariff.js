@@ -19,7 +19,7 @@ class Tariff {
       news: {
         params: {action: 'news'},
         method: 'POST',
-        isArray: true
+        isArray: false
       },
       cities: {
         params: {action: 'cities'},

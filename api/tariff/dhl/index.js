@@ -46,7 +46,7 @@ var getCity = function (json, callback) {
       success: false
     };
     if (err) {
-      result.message = commonHelper.getResponseError(err);
+      result.message = commonHelper.getCityJsonError(err);
       return callback(null, result);
     }
     if (!b) {

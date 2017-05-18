@@ -68,7 +68,7 @@ var getCity = function (city, country, callback) {
       success: false
     };
     if (err) {
-      result.message = commonHelper.getResponseError(err);
+      result.message = commonHelper.getCityJsonError(err);
       return callback(null, result);
     }
     var $ = cheerio.load(b);
@@ -77,6 +77,7 @@ var getCity = function (city, country, callback) {
     items.each(function (index, item) {
       cities.push(parseCity($(item).text(), $(item).find('.locationDivider').text()));
     });
+    cities = commonHelper.findInArray(cities, trim, 'name', true);
     if (!cities.length) {
       result.message = commonHelper.getCityNoResultError();
     } else if (cities.length === 1) {
@@ -86,11 +87,7 @@ var getCity = function (city, country, callback) {
       var region = commonHelper.getRegionName(city);
       var founds = [];
       if (region) {
-        cities.forEach(function (item) {
-          if (new RegExp(region, 'gi').test(item.name)) {
-            founds.push(item);
-          }
-        });
+        founds = commonHelper.findInArray(cities, region, 'name');
       }
       result.foundCities = founds.length ? founds : [cities[0]];
       result.success = true;
@@ -251,7 +248,7 @@ module.exports = function (req, cities) {
       });
       tempRequests.forEach(function (item) {
         req.body.weights.forEach(function (weight) {
-          var obj = Object.assign({}, item);
+          var obj = commonHelper.deepClone(item);
           obj.weight = weight;
           obj.req['ctl00$ContentPlaceHolderMain$TextBoxWeight'] = weight;
           requests.push(obj);

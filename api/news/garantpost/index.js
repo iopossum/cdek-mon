@@ -12,6 +12,7 @@ var logger = require('../../helpers/logger');
 
 module.exports = function (req, res) {
   var deliveryData = deliveryHelper.get(req.body.delivery);
+  var warning = null;
 
   async.auto({
     getNews: [function (callback) {
@@ -28,14 +29,18 @@ module.exports = function (req, res) {
         var items = $('.about-post');
         items.each(function (index, item) {
           var date = $(item).find('span.title');
-          if (date && moment(date, 'DD/MM/YYYY').isAfter(moment(req.body.date))) {
-            news.push({
-              title: $(item).find('h3.title').text().trim(),
-              date: moment(date, 'DD/MM/YYYY').locale('ru').format('DD MMMM YYYY'),
-              link: deliveryData.baseUrl + $(item).find('a').attr('href').trim(),
-              description: $(item).find('p').text().trim(),
-              delivery: req.body.delivery
-            })
+          if (date) {
+            if (moment(date, 'DD/MM/YYYY').isAfter(moment(req.body.date))) {
+              news.push({
+                title: $(item).find('h3.title').text().trim(),
+                date: moment(date, 'DD/MM/YYYY').locale('ru').format('DD MMMM YYYY'),
+                link: deliveryData.baseUrl + $(item).find('a').attr('href').trim(),
+                description: $(item).find('p').text().trim(),
+                delivery: req.body.delivery
+              })
+            }
+          } else {
+            warning = commonHelper.getNewsWrongResponse(req.body.delivery);
           }
         });
         return callback(null, news);
@@ -44,12 +49,11 @@ module.exports = function (req, res) {
   }, function (err, results) {
 
     if (err) {
+      err.message = commonHelper.getNewsError(req.body.delivery, err);
       return responseHelper.createResponse(res, err, 500);
     }
     logger.newsInfoLog(req.body.delivery, results.getNews, 'news');
-    var items = _.sortBy(results.getNews, function (item) {
-      return item.date;
-    });
-    res.json(items);
+    var items = commonHelper.sortNews(results.getNews);
+    res.json(commonHelper.newsResponse(items, warning));
   });
 };

@@ -1,7 +1,9 @@
 var moment = require('moment');
+var _ = require('underscore');
+var commonHelper = require('../../../../api/helpers/common-safe');
 
 class NewsCtrl {
-  constructor($scope, $rootScope, Tariff, Notify) {
+  constructor($scope, $rootScope, Tariff, Notify, Xls) {
     this.filter = {
       targets: [],
       date: new Date(moment().add(-1, 'month'))
@@ -9,25 +11,59 @@ class NewsCtrl {
     this.results = [];
     this.errors = [];
     this.loading = false;
-    this.dpOpened = false;
     this.$scope = $scope;
     this.notify = Notify;
+    this.xls = Xls;
     this.tariffService = Tariff;
     this.dynamic = 0;
     this.targets = Tariff.getTargets();
     this.targetsObj = Tariff.getTargetsObj();
 
-    /*that.tariffService.request({}).then(function (res) {
-      that.pingTariffs();
-    }, function (err) {
-      console.log(err);
-      that.notify.error(err);
-    });*/
+    this.sort = {
+      name: 'date',
+      direction: 'desc'
+    };
   }
 
   receiveNews(res) {
     var that = this;
-    this.results = this.results.concat(res);
+    this.results = this.results.concat(res.items);
+    this.setSort(this.sort.name);
+    if (res.warning) {
+      that.notify.warning(res.warning);
+    }
+  }
+
+  setSort () {
+    var results = [];
+    var that = this;
+    switch (this.sort.name) {
+      case 'date':
+        results = _.sortBy(this.results, function (item) {
+          return moment(item.date, 'DD MMMM YYYY', 'ru');
+        });
+        break;
+      case 'delivery':
+        results = _.sortBy(this.results, function (item) {
+          return item.delivery;
+        });
+        break;
+    }
+    var needReverse = this.sort.direction === 'desc' && results.length;
+    if (needReverse) {
+      var value = results[0][this.sort.name];
+      if (results.every(function (item) {return item[that.sort.name] === value;})) {
+        needReverse = false;
+      }
+    }
+    if (needReverse) {
+      results.reverse();
+    }
+    this.results = results;
+  }
+
+  downloadFile () {
+    this.xls.download('Новости.xlsx', document.getElementById('news'));
   }
 
   requestNews () {
@@ -60,4 +96,4 @@ class NewsCtrl {
 
 export default NewsCtrl;
 
-NewsCtrl.$inject = ['$scope', '$rootScope', 'Tariff', 'Notify'];
+NewsCtrl.$inject = ['$scope', '$rootScope', 'Tariff', 'Notify', 'Xls'];

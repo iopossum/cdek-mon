@@ -252,6 +252,20 @@ var getReqs = function (from, to) {
   return results;
 };
 
+var getCityName = function (city) {
+  var result = '';
+  if (city.type) {
+    result += city.type + '. ';
+  }
+  if (city.name) {
+    result += city.name + ', ';
+  }
+  if (city.region) {
+    result += city.region;
+  }
+  return result;
+};
+
 var getCity = function (city, token, callback) {
   var deliveryData = deliveryHelper.get(delivery);
   var opts = Object.assign({}, deliveryData.citiesUrl);
@@ -289,6 +303,7 @@ var getCity = function (city, token, callback) {
       result.message = commonHelper.getCityJsonError(new Error("Неверный формат ответа, отсутствует массив"));
       return callback(null, result);
     }
+    json = commonHelper.findInArray(json, trim, 'name', true);
     if (!json.length) {
       result.message = commonHelper.getCityNoResultError(trim);
     } else if (json.length === 1) {
@@ -320,11 +335,9 @@ var calcResults = function (item, token, callback) {
           opts.form = {
             params: JSON.stringify(req)
           };
-          opts.headers = {
-            'X-CSRF-Token': token.token,
-            'Cookie': token.cookie,
-            'X-Requested-With': 'XMLHttpRequest'
-          };
+          opts.headers['X-CSRF-Token'] = token.token;
+          opts.headers['Cookie'] = token.cookie;
+          opts.headers['X-Requested-With'] = 'XMLHttpRequest';
           async.retry(config.retryOpts, function (callback) {
             request(opts, callback)
           }, function (err, r, b) {
@@ -359,11 +372,9 @@ var calcResults = function (item, token, callback) {
           opts.form = {
             params: JSON.stringify(getDispatchReq(req))
           };
-          opts.headers = {
-            'X-CSRF-Token': token.token,
-            'Cookie': token.cookie,
-            'X-Requested-With': 'XMLHttpRequest'
-          };
+          opts.headers['X-CSRF-Token'] = token.token;
+          opts.headers['Cookie'] = token.cookie;
+          opts.headers['X-Requested-With'] = 'XMLHttpRequest';
           async.retry(config.retryOpts, function (callback) {
             request(opts, callback)
           }, function (err, r, b) {
@@ -496,8 +507,8 @@ module.exports = function (req, cities) {
                 city: {
                   initialCityFrom: item.from,
                   initialCityTo: item.to,
-                  from: fromCity.name + ', ' + fromCity.region,
-                  to: toCity.name + ', ' + toCity.region,
+                  from: getCityName(fromCity),
+                  to: getCityName(toCity),
                   countryFrom: item.countryFrom,
                   countryTo: item.countryTo
                 },
@@ -511,7 +522,7 @@ module.exports = function (req, cities) {
       });
       tempRequests.forEach(function (item) {
         req.body.weights.forEach(function (weight) {
-          var obj = Object.assign({}, item);
+          var obj = commonHelper.deepClone(item);
           obj.weight = weight;
           requests.push(obj);
         });

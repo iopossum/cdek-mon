@@ -12,6 +12,9 @@ module.exports = function (req, res) {
     return responseHelper.createResponse(res, new Error("Delivery is required"));
   }
   switch (req.body.delivery) {
+    case 'flippost':
+      return res.json({items: []}); //нет раздела с новостями
+      break;
     case 'emspost':
       return emspost(req, res);
       break;
@@ -39,7 +42,46 @@ module.exports = function (req, res) {
     case 'iml':
       return require('./iml')(req, res);
       break;
+    case 'cityexpress':
+      return require('./cityexpress')(req, res);
+      break;
+    case 'dellin':
+      return require('./dellin')(req, res);
+      break;
+    case 'pecom':
+      return require('./pecom')(req, res);
+      break;
+    case 'vozovoz':
+      return require('./vozovoz')(req, res);
+      break;
+    case 'kit':
+      return require('./kit')(req, res);
+      break;
+    case 'rateksib':
+      return require('./rateksib')(req, res);
+      break;
+    case 'expressauto':
+      return require('./expressauto')(req, res);
+      break;
+    case 'dhl':
+      return require('./dhl')(req, res);
+      break;
+    case 'tnt':
+      return require('./tnt')(req, res);
+      break;
+    case 'jde':
+      return require('./jde')(req, res);
+      break;
+    case 'fedex':
+      return require('./fedex')(req, res);
+      break;
+    case 'ups':
+      return require('./ups')(req, res);
+      break;
+    case 'baikalsr':
+      return require('./baikalsr')(req, res);
+      break;
     default:
-      return res.json([]);
+      return res.json({items: []});
   }
 };

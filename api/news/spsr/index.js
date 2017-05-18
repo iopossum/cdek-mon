@@ -70,6 +70,7 @@ var logger = require('../../helpers/logger');
 
 module.exports = function (req, res) {
   var deliveryData = deliveryHelper.get(req.body.delivery);
+  var warning = null;
   var news = [];
   var page = 0;
   var complete = false;
@@ -85,8 +86,10 @@ module.exports = function (req, res) {
           request(opts, callback)
         }, function (err, r, b) {
           page++;
-          if (err && !news.length) {
-            return callback(err);
+          if (err) {
+            complete = true;
+            warning = commonHelper.getNewsPartError(req.body.delivery);
+            return callback(null, []);
           }
           var $ = cheerio.load(b);
           var count = 0;
@@ -94,21 +97,23 @@ module.exports = function (req, res) {
           $('.sonata-blog-post-container').each(function (index, item) {
             var date = $(item).find('.sonata-blog-post-information').text().trim();
             var momentDate = moment(date, "DD MMMM, HH:mm", 'ru');
-            if (date && momentDate.isAfter(moment(req.body.date)) && !wasOld) {
-              var title = $(item).find('.sonata-blog-post-title');
-              var desc = $(item).find('.sonata-blog-post-abtract').text().trim();
-              news.push(
-                {
+            if (date) {
+              if (momentDate.isAfter(moment(req.body.date)) && !wasOld) {
+                var title = $(item).find('.sonata-blog-post-title');
+                var desc = $(item).find('.sonata-blog-post-abtract').text().trim();
+                news.push({
                   title: $(title).text().trim(),
                   date: momentDate.locale("ru").format('DD MMMM YYYY'),
                   link: $(title).find('a').attr('href').trim(),
                   description: desc,
                   delivery: req.body.delivery
-                }
-              );
-              count++;
+                });
+                count++;
+              } else {
+                wasOld = true;
+              }
             } else {
-              wasOld = true;
+              warning = commonHelper.getNewsWrongResponse(req.body.delivery);
             }
           });
           if (count !== $('.sonata-blog-post-container').length || !$('.sonata-blog-post-container').length) {
@@ -120,10 +125,12 @@ module.exports = function (req, res) {
     },
     function (err, n) {
       if (err) {
+        err.message = commonHelper.getNewsError(req.body.delivery, err);
         return responseHelper.createResponse(res, err, 500);
       }
       logger.newsInfoLog(req.body.delivery, news, 'news');
-      res.json(news);
+      var items = commonHelper.sortNews(news);
+      res.json(commonHelper.newsResponse(items, warning));
     }
   );
 };

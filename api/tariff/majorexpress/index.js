@@ -141,7 +141,7 @@ module.exports = function (req, cities) {
           })
           .end()
           .then(function (result) {
-            callback(!result.length ? 'Не удалось получить страны' : null, result);
+            callback(!result.length ? commonHelper.getCountriesError() : null, result);
           })
           .catch(function (error) {
             callback(error, []);
@@ -182,7 +182,7 @@ module.exports = function (req, cities) {
             success: false
           };
           if (err) {
-            result.message = "Не удалось получить города с сайта. " + (err.message ? 'Ошибка: ' + err.message : '');
+            result.message = commonHelper.getCityJsonError(err);
             return callback(null, result);
           }
           b = b.replace('0|/*DX*/(', '');
@@ -192,26 +192,26 @@ module.exports = function (req, cities) {
           try {
             json = JSON.parse(b);
           } catch (e) {
-            result.message = "Не удалось получить города с сайта. Неверный ответ от сервера. " + (e.message ? 'Ошибка: ' + e.message : '');
+            result.message = commonHelper.getCityJsonError(e);
           }
           if (!json) {
             return callback(null, result);
           }
           if (!json.result) {
-            result.message = "Не удалось получить города с сайта. Неверный ответ от сервера.";
+            result.message = commonHelper.getCityJsonError(new Error("Отсутствует обязательный параметр result"));
             return callback(null, result);
           }
           var array = null;
           try {
             array = JSON.parse(json.result);
           } catch (e) {
-            result.message = "Не удалось получить города с сайта. Неверный ответ от сервера. " + (e.message ? 'Ошибка: ' + e.message : '');
+            result.message = commonHelper.getCityJsonError(new Error("Неверный формат result"));
           }
           if (!array) {
             return callback(null, result);
           }
           if (!array.length) {
-            result.message = "Не удалось получить города с сайта. Такого города нет в БД сайта.";
+            result.message = commonHelper.getCityNoResultError(trim);
           } else if (array.length === 2) {
             result.ids = [{id: array[0], name: array[1]}];
             result.success = true;
@@ -257,7 +257,6 @@ module.exports = function (req, cities) {
       }, callback);
     }],
     parseCities: ['getCities', function (results, callback) {
-      //todo: save ids to mongo
       var respCityObj = _.indexBy(results.getCities, 'city');
       cities.forEach(function (item) {
         if (item.from && item.to) {
@@ -333,7 +332,7 @@ module.exports = function (req, cities) {
             return false;
           }, item) // <-- that's how you pass parameters from Node scope to browser scope)
           .realClick('#ContentPlaceHolder1_btnCalc')
-          .wait(2000)
+          .wait(3000)
           .wait('#ContentPlaceHolder1_cbPackage')
           //.inject('js', process.cwd() + '/node_modules/jquery/dist/jquery.js')
           //.screenshot(process.cwd() + '/temp2.png')

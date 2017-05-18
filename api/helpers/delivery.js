@@ -53,7 +53,7 @@ var targets = [
     calcOtdoUrl: {method: 'GET', uri: 'http://otdo.ru/calc/delivery-russia/?'},
     calcOtdoIntUrl: {method: 'GET', uri: 'http://otdo.ru/calc/world/?'},
     citiesUrl: {method: 'GET', uri: 'http://flippost.com/proxy.php?dbAct=getCities&'},
-    //newsUrl: {method: 'GET', uri: 'http://www.dimex.ws/novosti-kompanii/arhiv-novostey/'}
+    //newsUrl: {method: 'GET', uri: ''}
   },
   {
     id: 'ponyexpress',
@@ -92,20 +92,23 @@ var targets = [
     id: 'cityexpress',
     calcUrl: {method: 'POST', uri: 'http://clients.cityexpress.ru/Customers/Calc.aspx'},
     citiesUrl: {method: 'POST', uri: 'http://clients.cityexpress.ru/Customers/GEstAutoComplete.asmx/GetFullCompletionList'},
-    newsUrl: {method: 'GET', uri: 'http://www.cityexpress.ru/news'}
+    newsUrl: {method: 'GET', uri: 'http://www.cityexpress.ru/news'},
+    baseUrl: 'http://www.cityexpress.ru'
   },
   {
     id: 'dellin',
     calcUrl: {method: 'GET', uri: 'https://www.dellin.ru/api/calculation.json?'},
     citiesUrl: {method: 'GET', uri: 'https://www.dellin.ru/api/cities/search.json?q='},
     terminalsUrl: {method: 'GET', uri: 'https://www.dellin.ru/api/get_terminal_data.json?'},
-    newsUrl: {method: 'GET', uri: 'https://www.dellin.ru/news/'}
+    newsUrl: {method: 'GET', uri: 'https://www.dellin.ru/api/news/filter.json?categories%5B%5D=1&categories%5B%5D=2&categories%5B%5D=3&categories%5B%5D=4&categories%5B%5D=7&categories%5B%5D=6&categories%5B%5D=5&'},
+    baseUrl: 'https://www.dellin.ru'
   },
   {
     id: 'pecom',
     calcUrl: {method: 'GET', uri: 'https://pecom.ru/ajax/calc.php?requrl=%2Fbitrix%2Fcomponents%2Fpecom%2Fcalc%2Fajax.php%3Fpage_type%3Dcalc%26'},
     citiesUrl: {method: 'GET', uri: 'https://pecom.ru/services-are/the-calculation-of-the-cost/'},
-    newsUrl: {method: 'GET', uri: 'https://pecom.ru/news/'}
+    newsUrl: {method: 'GET', uri: 'https://pecom.ru/news/'},
+    baseUrl: 'https://pecom.ru'
   },
   {
     id: 'vozovoz',
@@ -113,26 +116,29 @@ var targets = [
     calcUrl: {method: 'POST', uri: 'https://vozovoz.ru/order/get-price/'},
     calcUrlAdditional: {method: 'POST', uri: 'https://vozovoz.ru/shipping-term/change-dispatch/'},
     citiesUrl: {method: 'POST', uri: 'https://vozovoz.ru/location/get/'},
-    newsUrl: {method: 'GET', uri: 'https://vozovoz.ru/news/'}
+    newsUrl: {method: 'POST', uri: 'https://vozovoz.ru/article/ajax-get-news/'},
+    baseUrl: 'https://vozovoz.ru'
   },
   {
     id: 'kit',
     calcUrl: {method: 'GET', uri: 'http://tk-kit.ru/calculate/get_form_hash.php?'},
     calcUrlAdditional: {method: 'GET', uri: 'http://tk-kit.ru/calculate/rx_gocalc_multi.php?'},
     citiesUrl: {method: 'GET', uri: 'http://tk-kit.ru/calculate/ajax/get_city_list.php'},
-    newsUrl: {method: 'GET', uri: 'http://tk-kit.ru/about/news/'}
+    newsUrl: {method: 'GET', uri: 'http://tk-kit.ru/about/news/'},
+    baseUrl: 'http://tk-kit.ru'
   },
   {
     id: 'rateksib',
     calcUrl: {method: 'POST', uri: 'http://rateksib.ru/ajax/calc'},
     citiesUrl: {method: 'POST', uri: 'http://rateksib.ru/ajax/calccity'},
-    newsUrl: {method: 'GET', uri: 'http://rateksib.ru/novosti'}
+    newsUrl: {method: 'GET', uri: 'http://rateksib.ru/novosti/'}
   },
   {
     id: 'expressauto',
     calcUrl: {method: 'POST', uri: 'http://expressauto.ru/ajax/'},
     citiesUrl: {method: 'POST', uri: 'http://expressauto.ru/ajax/'},
-    newsUrl: {method: 'GET', uri: 'http://expressauto.ru/news'}
+    newsUrl: {method: 'GET', uri: 'http://expressauto.ru/news/'},
+    baseUrl: 'http://expressauto.ru'
   },
   {
     id: 'dhl',
@@ -140,38 +146,43 @@ var targets = [
     calcUrl: {method: 'POST', uri: 'http://zakaz.dhl.ru/api/calculatePrice'},
     calcUrlAdditional: {method: 'POST', uri: 'http://zakaz.dhl.ru/api/getServicePoints'},
     citiesUrl: {method: 'POST', uri: 'http://zakaz.dhl.ru/api/GetPlaceDetails'},
-    newsUrl: {method: 'GET', uri: 'http://www.dhl.ru/ru/press/releases.html'}
+    newsUrl: {method: 'GET', uri: 'http://www.dhl.ru/ru/press/releases'}
   },
   {
     id: 'tnt',
     calcUrl: {method: 'POST', uri: 'https://www.tnt.com/publicapis/v1/quotes'},
     citiesUrl: {method: 'GET', uri: 'https://mytnt.tnt.com/service/address-search-v2/location?limit=30&locale=ru_RU&q='},
-    newsUrl: {method: 'GET', uri: 'https://www.tnt.com/express/ru_ru/site/home/the-company/press/press_releases.html'}
+    newsUrl: {method: 'GET', uri: 'https://www.tnt.com/express/ru_ru/site/home/the-company/press/press_releases.html'},
+    baseUrl: 'https://www.tnt.com'
   },
   {
     id: 'jde',
     calcUrl: {method: 'POST', uri: 'http://www.jde.ru/ajax/calculator.html'},
     citiesUrl: {method: 'POST', uri: 'http://www.jde.ru/ajax/branch.html'},
-    newsUrl: {method: 'GET', uri: 'http://www.jde.ru/company/news.html'}
+    newsUrl: {method: 'GET', uri: 'http://www.jde.ru/company/news/'},
+    baseUrl: 'http://www.jde.ru'
   },
   {
     id: 'fedex',
     calcUrl: {method: 'POST', uri: 'https://www.fedex.com/ratefinder/standalone?method=getQuickQuote'},
     countriesUrl: {method: 'GET', uri: 'https://www.fedex.com/ratefinder/home?cc=ru&language=ru'},
-    newsUrl: {method: 'GET', uri: 'http://about.van.fedex.com/newsroom/global-english/'}
+    newsFirstUrl: {method: 'GET', uri: 'http://about.van.fedex.com/newsroom/global-english/'},
+    newsUrl: {method: 'POST', uri: 'http://about.van.fedex.com/wp-admin/admin-ajax.php'}
   },
   {
     id: 'ups',
     calcUrl: {method: 'POST', uri: 'https://wwwapps.ups.com/ctc/results'},
     countriesUrl: {method: 'GET', uri: 'https://wwwapps.ups.com/calTimeCost?loc=ru_RU&WT.svl=PNRO_L1'},
     citiesUrl: {method: 'GET', uri: 'https://wwwapps.ups.com/rifservice/CityValue.json?'},
-    newsUrl: {method: 'GET', uri: 'https://www.pressroom.ups.com/pressroom/news-assets/new-assets-subpage-landing.page?ConceptType=PressReleases'}
+    newsUrl: {method: 'GET', uri: 'https://www.pressroom.ups.com/pressroom/news-assets/pagination/fetchbyconcept.page?ConceptType=PressReleases&language=ru&start='},
+    baseUrl: 'https://www.pressroom.ups.com'
   },
   {
     id: 'baikalsr',
     calcUrl: {method: 'POST', uri: 'https://www.baikalsr.ru/json/api_calculator.json'},
     citiesUrl: {method: 'GET', uri: 'https://www.baikalsr.ru/json/api_fias_cities.json?text='},
-    newsUrl: {method: 'GET', uri: 'https://www.baikalsr.ru/company/news/'}
+    newsUrl: {method: 'GET', uri: 'https://www.baikalsr.ru/json/news.json?'},
+    baseUrl: 'https://www.baikalsr.ru'
   }
 ];
 

@@ -23,7 +23,7 @@
 			</div>
 			<div class="col-xs-12">
 				<div class="form-group">
-					<button type="button" class="btn btn-success" ng-disabled="!news.results.length">Скачать</button>
+					<button type="button" class="btn btn-success" ng-disabled="!news.results.length" ng-click="news.downloadFile()">Скачать</button>
 					<button type="button" class="btn btn-warning" ng-click="news.requestNews()" ng-disabled="news.loading">Получить</button>
 					<uib-progressbar class="cd-progress" max="news.filter.targets.length ? news.filter.targets.length : news.targets.length" value="news.dynamic"><span style="color:white; white-space:nowrap;">{{news.dynamic}} / {{!news.filter.targets.length ? news.targets.length : news.filter.targets.length}}</span></uib-progressbar>
 				</div>
@@ -32,28 +32,28 @@
 	</div>
 	<div class="col-xs-12">
 		<div class="form-group" ng-if="news.results.length">
-			<table class="table table-bordered">
+			<table class="table table-bordered" id="news">
 				<thead>
 				<tr>
-					<th>Дата</th>
+					<th sort-header title="Дата" name="date" sort="news.sort" accept="news.setSort()"></th>
 					<th>Новость</th>
-					<th>СД</th>
+					<th sort-header title="СД" name="delivery" sort="news.sort" accept="news.setSort()"></th>
 					<th>Описание</th>
 				</tr>
 				</thead>
 				<tbody>
 				<tr ng-repeat="item in news.results track by $index">
-					<td>{{::item.date}}</td>
+					<td>{{item.date}}</td>
 					<td>
 						<div ng-if="item.link">
-							<a href="{{item.link}}" target="_blank">{{::item.title}}</a>
+							<a href="{{item.link}}" target="_blank">{{item.title}}</a>
 						</div>
 						<div ng-if="!item.link">
-							<span>{{::item.title}}</span>
+							<span>{{item.title}}</span>
 						</div>
 					</td>
-					<td>{{::item.delivery}}</td>
-					<td>{{::item.description}}</td>
+					<td>{{item.delivery}}</td>
+					<td>{{item.description}}</td>
 				</tr>
 				</tbody>
 			</table>

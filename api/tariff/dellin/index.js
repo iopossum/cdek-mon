@@ -58,18 +58,6 @@ var getReq = function (from, to) {
   };
 };
 
-var parseCity = function (string, divider) {
-  string = string || '';
-  var result = {};
-  var splits = string.split(divider);
-  result.id = splits[splits.length - 1];
-  result.name = splits[0];
-  if (splits.length === 3 && splits[1] && splits[1].length) {
-    result.name += ', ' + splits[1];
-  }
-  return result;
-};
-
 var getCity = function (city, callback) {
   var deliveryData = deliveryHelper.get(delivery);
   var opts = Object.assign({}, deliveryData.citiesUrl);
@@ -84,7 +72,7 @@ var getCity = function (city, callback) {
       success: false
     };
     if (err) {
-      result.message = commonHelper.getResponseError(err);
+      result.message = commonHelper.getCityJsonError(err);
       return callback(null, result);
     }
     var json = null;
@@ -205,6 +193,20 @@ var getTariffs = function (type, json) {
   return tariffs;
 };
 
+var getCityName = function (city) {
+  var result = '';
+  if (city.nameString) {
+    result += city.nameString;
+  }
+  if (city.uString) {
+    result +=  ', ' + city.uString;
+  }
+  if (city.regionString) {
+    result += ', ' + city.regionString;
+  }
+  return result;
+};
+
 module.exports = function (req, cities) {
   var deliveryData = deliveryHelper.get(delivery);
   var requests = [];
@@ -267,8 +269,8 @@ module.exports = function (req, cities) {
                 city: {
                   initialCityFrom: item.from,
                   initialCityTo: item.to,
-                  from: fromCity.fullName,
-                  to: toCity.fullName,
+                  from: getCityName(fromCity),
+                  to: getCityName(toCity),
                   countryFrom: item.countryFrom,
                   countryTo: item.countryTo
                 },
@@ -284,7 +286,7 @@ module.exports = function (req, cities) {
       });
       tempRequests.forEach(function (item) {
         req.body.weights.forEach(function (weight) {
-          var obj = Object.assign({}, item);
+          var obj = commonHelper.deepClone(item);
           obj.weight = weight;
           obj.req['sized_weight'] = weight;
           requests.push(obj);
@@ -355,7 +357,7 @@ module.exports = function (req, cities) {
             try {
               json = JSON.parse(b);
             } catch (e) {
-              item.error = commonHelper.getCityJsonError(e);
+              item.error = commonHelper.getResponseError(e);
             }
             if (!json) {
               return callback(null, item);

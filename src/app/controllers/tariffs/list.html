@@ -16,7 +16,7 @@
 		</div>
 		<div class="form-group">
 			<label>Вес</label>
-			<ui-select multiple tagging tagging-label="false" on-select="tariffs.addWeight($item, $model)" ng-model="tariffs.filter.weights" theme="bootstrap" title="Вес">
+			<ui-select multiple tagging tagging-label="false" on-remove="tariffs.removeWeight()" on-select="tariffs.addWeight($item, $model)" ng-model="tariffs.filter.weights" theme="bootstrap" title="Вес">
 				<ui-select-match placeholder="Выберите вес...">{{$item}}</ui-select-match>
 				<ui-select-choices repeat="weight in tariffs.availableWeights | filter:$select.search">
 					{{weight}}
@@ -35,10 +35,12 @@
 			<table class="table table-bordered" id="tariffs">
 				<thead>
 				<tr>
-					<th>СД</th>
+					<th sort-header title="СД" name="delivery" sort="tariffs.sort" accept="tariffs.setSort()"></th>
 					<th>Откуда</th>
 					<th>Куда</th>
-					<th>Вес</th>
+					<th>Откуда(калькулятор)</th>
+					<th>Куда(калькулятор)</th>
+					<th sort-header title="Вес" name="weight" sort="tariffs.sort" accept="tariffs.setSort()"></th>
 					<th>Услуга</th>
 					<th>Цена</th>
 					<th>Срок доставки</th>
@@ -63,13 +65,15 @@
 				</tbody>-->
 				<tbody ng-repeat="item in tariffs.results">
 				<tr ng-repeat="srv in item.tariffs">
-					<td>{{::item.delivery}}</td>
-					<td>{{::item.city.from || item.city.countryFrom}}</td>
-					<td>{{::item.city.to || item.city.countryTo}}</td>
-					<td>{{::item.weight}}</td>
-					<td>{{::srv.service}}</td>
-					<td>{{::srv.cost}}</td>
-					<td>{{::srv.deliveryTime}}</td>
+					<td>{{item.delivery}}</td>
+					<td>{{item.city.initialCityFrom || item.city.countryFrom}}</td>
+					<td>{{item.city.initialCityTo || item.city.countryTo}}</td>
+					<td>{{item.city.from || item.city.countryFrom}}</td>
+					<td>{{item.city.to || item.city.countryTo}}</td>
+					<td>{{item.weight}}</td>
+					<td>{{srv.service}}</td>
+					<td>{{srv.cost}}</td>
+					<td>{{srv.deliveryTime}}</td>
 					<td>
 						<button type="button" class="btn btn-danger" ng-click="tariffs.deleteTariff($parent.$index, $index)">
 							<span class="fa fa-trash" aria-hidden="true"></span>
@@ -94,6 +98,8 @@
 					<th>СД</th>
 					<th>Откуда</th>
 					<th>Куда</th>
+					<th>Откуда(калькулятор)</th>
+					<th>Куда(калькулятор)</th>
 					<th>Вес</th>
 					<th>Ошибка</th>
 					<th></th>
@@ -102,8 +108,10 @@
 				<tbody>
 				<tr ng-repeat="item in tariffs.errors">
 					<td>{{::item.delivery}}</td>
-					<td>{{::item.city.from}}</td>
-					<td>{{::item.city.to}}</td>
+					<td>{{::item.city.initialCityFrom || item.city.from || item.city.countryFrom}}</td>
+					<td>{{::item.city.initialCityTo || item.city.to || item.city.countryTo}}</td>
+					<td>{{::item.city.from || item.city.countryFrom}}</td>
+					<td>{{::item.city.to || item.city.countryTo}}</td>
 					<td>{{::item.weight}}</td>
 					<td>{{::item.error}}</td>
 					<td>

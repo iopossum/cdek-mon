@@ -35,12 +35,10 @@ class TariffsCtrl {
     this.requestedTargets = [];
     this.targetsObj = Tariff.getTargetsObj();
 
-    //that.tariffService.request({deliveries: ['emspost', 'majorexpress']}).then(function (res) {
-    //  that.pingTariffs();
-    //}, function (err) {
-    //  console.log(err);
-    //  that.notify.error(err);
-    //});
+    this.sort = {
+      name: 'delivery',
+      direction: 'asc'
+    };
 
     this.acService;
     this.placeService;
@@ -52,6 +50,47 @@ class TariffsCtrl {
     } catch (e) {
       console.error(e);
     }
+
+    var weightStr = localStorage.weights;
+    if (weightStr) {
+      var json = null;
+      try {
+        json = JSON.parse(weightStr);
+      } catch (e) {
+        console.error(e);
+      }
+      if (json && Array.isArray(json)) {
+        this.filter.weights = json;
+      }
+    }
+  }
+
+  setSort () {
+    var results = [];
+    var that = this;
+    switch (this.sort.name) {
+      case 'delivery':
+        results = _.sortBy(this.results, function (item) {
+          return item.delivery;
+        });
+        break;
+      case 'weight':
+        results = _.sortBy(this.results, function (item) {
+          return item.weight;
+        });
+        break;
+    }
+    var needReverse = this.sort.direction === 'desc' && results.length;
+    if (needReverse) {
+      var value = results[0][this.sort.name];
+      if (results.every(function (item) {return item[that.sort.name] === value;})) {
+        needReverse = false;
+      }
+    }
+    if (needReverse) {
+      results.reverse();
+    }
+    this.results = results;
   }
 
   pingTariffs() {
@@ -72,6 +111,7 @@ class TariffsCtrl {
             countCompleted++;
             if (!that.targetsObj[key].complete) {
               results = results.concat(res.deliveries[key].results || []);
+              that.setSort(that.sort.name);
             }
             that.targetsObj[key].complete = true;
             if (res.deliveries[key].error && !that.targetsObj[key].error) {
@@ -161,6 +201,11 @@ class TariffsCtrl {
       });
       return false;
     }
+    localStorage.weights = JSON.stringify(this.filter.weights);
+  }
+
+  removeWeight() {
+    localStorage.weights = JSON.stringify(this.filter.weights);
   }
 
   getTariffs() {

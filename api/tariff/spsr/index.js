@@ -237,20 +237,23 @@ var getCity = function (city, country, deliveryData, callback) {
       success: false
     };
     if (err) {
-      result.message = "Не удалось получить города с сайта. " + (err.message ? 'Ошибка: ' + err.message : '');
+      result.message = commonHelper.getCityJsonError(err);
       return callback(null, result);
     }
     var array = null;
     try {
       array = JSON.parse(b);
     } catch (e) {
-      result.message = "Не удалось получить города с сайта. Неверный ответ от сервера. " + (e.message ? 'Ошибка: ' + e.message : '');
+      result.message = commonHelper.getCityJsonError(e);;
     }
     if (!array) {
       return callback(null, result);
     }
+    if (!country) {
+      array = commonHelper.findInArray(array, trim, 'name', true);
+    }
     if (!array.length) {
-      result.message = "Не удалось получить города с сайта. Такого города нет в БД сайта.";
+      result.message = commonHelper.getCityNoResultError(trim);
     } else if (array.length === 1) {
       result.foundCities = array;
       result.success = true;
@@ -258,11 +261,7 @@ var getCity = function (city, country, deliveryData, callback) {
       var region = commonHelper.getRegionName(city);
       var founds = [];
       if (region) {
-        array.forEach(function (item) {
-          if (new RegExp(region, 'gi').test(item.region)) {
-            founds.push(item);
-          }
-        });
+        founds = commonHelper.findInArray(array, region, 'region', true);
       }
       array.forEach(function (item) {
         if (country && item.region && country.toLowerCase() === item.region.toLowerCase()) {
@@ -311,7 +310,7 @@ module.exports = function (req, cities) {
     getCities: function (callback) {
       async.mapSeries(cities, function (city, callback) {
         if (!city.from || !city.to) {
-          city.error = 'Должен быть указан хотя бы 1 город';
+          city.error = commonHelper.CITIESREQUIRED;
           return async.nextTick(function () {
             callback(null, city);
           });
@@ -383,7 +382,7 @@ module.exports = function (req, cities) {
       });
       tempRequests.forEach(function (item) {
         req.body.weights.forEach(function (weight) {
-          var obj = Object.assign({}, item);
+          var obj = commonHelper.deepClone(item);
           obj.weight = weight;
           obj.req.weight = weight;
           requests.push(obj);
@@ -406,27 +405,26 @@ module.exports = function (req, cities) {
           async.retry(config.retryOpts, function (callback) {
             request(opts, callback)
           }, function (err, r, b) {
-            logger.tariffsInfoLog(delivery, b, 'getTariffs');
             if (err) {
-              item.error = "Не удалось получить информацию с сайта, попробуйте позже";
+              item.error = commonHelper.getResultJsonError(err);
               return callback(null, item);
             }
             var json = null;
             try {
               json = JSON.parse(b);
             } catch (e) {
-              item.error = "Не удалось получить информацию с сайта, попробуйте позже. " + (e.message ? 'Ошибка: ' + e.message : '');
+              item.error = commonHelper.getResultJsonError(e);
             }
             if (!json) {
               return callback(null, item);
             }
             if (!json.Tariff) {
-              item.message = "Не удалось получить информацию с сайта, неверный ответ. Попробуйте позже.";
+              item.message = commonHelper.getCityJsonError(new Error("Отсутствует Tariff в ответе"));
               item.res = json;
               return callback(null, item);
             }
             if (!Array.isArray(json.Tariff)) {
-              item.message = "Не удалось получить информацию с сайта, неверный ответ. Попробуйте позже.";
+              item.message = commonHelper.getCityJsonError(new Error("Неверный тип Tariff в ответе"));
               item.res = json;
               return callback(null, item);
             }
@@ -438,7 +436,7 @@ module.exports = function (req, cities) {
               }
             });
             if (!item.tariffs.length) {
-              item.error = "По направлениям ничего не найдено";
+              item.error = commonHelper.getNoResultError();
             }
             return callback(null, item);
           });

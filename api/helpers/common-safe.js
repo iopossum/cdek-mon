@@ -1,3 +1,4 @@
+var moment = require('moment');
 var _ = require('underscore');
 
 exports.CITIESREQUIRED = 'Должен быть указан город отправления и город назначения';
@@ -82,6 +83,8 @@ exports.getResponseArray = function (weights, cityItem, delivery, error) {
 };
 
 exports.getResponseObject = function (cityItem, delivery, weight, error) {
+  delete cityItem.fromJson;
+  delete cityItem.toJson;
   return {
     city: _.clone(cityItem),
     delivery: delivery,
@@ -94,7 +97,7 @@ exports.getResponseObject = function (cityItem, delivery, weight, error) {
 exports.findInArray = function (array, value, key, exactly) {
   key = key || 'name';
   array = array || [];
-  var reg = exactly ? new RegExp("(^|[^_0-9a-zA-Zа-яёА-ЯЁ])" + value + "([^_0-9a-zA-Zа-яёА-ЯЁ]|$)", "i") : new RegExp(value, 'gi');
+  var reg = exactly ? new RegExp("(^|[^_0-9a-zA-Zа-яёА-ЯЁ])" + value + "([^_0-9a-zA-Zа-яёА-ЯЁ-]|$)", "i") : new RegExp(value, 'gi');
   return array.filter(function (item) {
     if (!item[key]) {
       return false;
@@ -110,7 +113,7 @@ exports.getServicesError = function (err) {
 
 exports.getResponseError = function (err) {
   err = err || {};
-  return "Не удалось получить города с сайта. " + (err.message ? 'Ошибка: ' + err.message : '');
+  return "Не удалось получить информацию с сайта. " + (err.message ? 'Ошибка: ' + err.message : '');
 };
 
 exports.getCityJsonError = function (err) {
@@ -122,6 +125,7 @@ exports.getCountriesError = function (err) {
 };
 
 exports.getResultJsonError = function (err) {
+  err = err || {};
   return "Не удалось получить информацию с сайта, попробуйте позже. " + (err.message ? 'Ошибка: ' + err.message : '');
 };
 
@@ -143,12 +147,24 @@ exports.getUnavailableError = function (err) {
   return "Калькулятор недоступен, попробуйте позже. " + (err.message ? 'Ошибка: ' + err.message : '');
 };
 
-exports.cloneArray = function (array) {
-  return _.map(array, _.clone);
+exports.getNewsError = function (delivery, err) {
+  return "Не удалось получить новости c сайта " + delivery.toUpperCase() + ". Попробуйте позже. " + (err ? 'Ошибка: ' + err.message : '');
+};
+
+exports.getNewsPartError = function (delivery) {
+  return "Не удалось получить часть новостей c сайта " + delivery.toUpperCase() + ". Попробуйте позже.";
+};
+
+exports.getNewsWrongResponse = function (delivery) {
+  return "Не удалось получить часть новостей c сайта " + delivery.toUpperCase() + ". Возможно изменалась структура сайта.";
 };
 
 exports.cloneArray = function (array) {
   return _.map(array, _.clone);
+};
+
+exports.deepClone = function (obj) {
+  return JSON.parse(JSON.stringify(obj));
 };
 
 exports.getQueryString = function (req) {
@@ -175,4 +191,24 @@ exports.createNews = function (title, date, link, delivery, description) {
     description: description,
     delivery: delivery
   };
+};
+
+exports.sortNews = function (items) {
+  return _.sortBy(items, function (item) {
+    return -moment(item.date, 'DD MMMM YYYY', 'ru');
+  });
+};
+
+exports.newsResponse = function (items, warning) {
+  return {
+    items: items,
+    warning: warning
+  };
+};
+
+exports.addZero = function (number) {
+  if (number < 10) {
+    number = ('0' + number);
+  }
+  return number;
 };

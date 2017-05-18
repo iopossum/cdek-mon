@@ -12,6 +12,7 @@ var logger = require('../../helpers/logger');
 
 module.exports = function (req, res) {
   var deliveryData = deliveryHelper.get(req.body.delivery);
+  var warning = null;
   var requests = [];
   var from = moment(req.body.date);
   for (var i=from.year(); i<=moment().year(); i++) {
@@ -27,21 +28,26 @@ module.exports = function (req, res) {
             request(opts, callback)
           }, function (err, r, b) {
             if (err) {
-              return callback(null, null);
+              warning = commonHelper.getNewsPartError(req.body.delivery);
+              return callback(null, []);
             }
             var $ = cheerio.load(b);
             var news = [];
             var tables = $('#ContentPlaceHolder1_gvNews').find('table');
             tables.each(function (index, item) {
               var date = $(item).find('.newsDate').text().trim();
-              if (date && moment(date, 'DD MMMM YYYY', 'ru').isAfter(moment(req.body.date))) {
-                news.push({
-                  title: $(item).find('.newsTitle').text().trim(),
-                  date: date,
-                  link: opts.uri,
-                  description: $(item).find('.newsText').text().trim(),
-                  delivery: req.body.delivery
-                })
+              if (date) {
+                if (moment(date, 'DD MMMM YYYY', 'ru').isAfter(moment(req.body.date))) {
+                  news.push({
+                    title: $(item).find('.newsTitle').text().trim(),
+                    date: date,
+                    link: opts.uri,
+                    description: $(item).find('.newsText').text().trim(),
+                    delivery: req.body.delivery
+                  })
+                }
+              } else {
+                warning = commonHelper.getNewsWrongResponse(req.body.delivery);
               }
             });
             return callback(null, news);
@@ -52,6 +58,7 @@ module.exports = function (req, res) {
   }, function (err, results) {
 
     if (err) {
+      err.message = commonHelper.getNewsError(req.body.delivery, err);
       return responseHelper.createResponse(res, err, 500);
     }
     logger.newsInfoLog(req.body.delivery, results.getNews, 'news');
@@ -61,9 +68,7 @@ module.exports = function (req, res) {
         items = items.concat(item);
       }
     });
-    items = _.sortBy(items, function (item) {
-      return item.date;
-    });
-    res.json(items);
+    items = commonHelper.sortNews(items);
+    res.json(commonHelper.newsResponse(items, warning));
   });
 };
