@@ -88,10 +88,10 @@ app.post('/api/tariff/news', cors(), require('./api/news'));
 
 //require('./api/tariff')(
 //  {session: {delivery: {}}, body: {
-//    deliveries: ['ponyexpress'],
+//    deliveries: ['garantpost'],
 //    cities: [
-      //{from: 'Москва', to: 'Москва'},
-      //{from: 'Москва', to: 'Сидней', countryTo: 'Австралия'},
+//      {from: 'Пушкино, Московская обл.', to: 'Москва'},
+      //{from: 'Москва', to: 'Sydney', countryTo: 'Australia'},
       //{from: 'Новосибирск', to: 'Москва', postcodeFrom: '630000', countryFromEngShort: 'RU', countryToEngShort: 'RU', postcodeTo: '119002', fromGooglePlaceId: 'ChIJl03MkOHl30IRhenT4XMGOps', toGooglePlaceId: 'ChIJybDUc_xKtUYRTM9XV8zWRD0', fromEngName: "Novosibirsk", fromEngFullName: "Novosibirsk, Novosibirsk Oblast, Russia", toEngName: "Moscow", toEngFullName: "Moscow, Russia"},
       //{from: 'Новосибирск', to: 'Москва', postcodeFrom: '119002', countryFromEngShort: 'RU', countryToEngShort: 'RU', postcodeTo: '630000', fromGooglePlaceId: 'ChIJl03MkOHl30IRhenT4XMGOps', toGooglePlaceId: 'ChIJybDUc_xKtUYRTM9XV8zWRD0', fromEngName: "Novosibirsk", fromEngFullName: "Novosibirsk, Novosibirsk Oblast, Russia", toEngName: "Moscow", toEngFullName: "Moscow, Russia"},
       //{from: 'Пушкино, Московская обл.', to: 'Новосибирск'},

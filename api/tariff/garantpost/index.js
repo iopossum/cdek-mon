@@ -22,35 +22,34 @@ var formatCities = function (array) {
 var getCity = function (city, isFrom, callback) {
   var deliveryData = deliveryHelper.get(delivery);
   var opts = Object.assign({}, deliveryData.citiesUrl);
-  var initialJson = isFrom ? city.fromJson : city.toJson;
-  initialJson = _.clone(initialJson);
-  opts.uri += initialJson.id;
+  var result = isFrom ? _.clone(city.fromJson) : _.clone(city.toJson);
+  if (result.isSpecial) {
+    result.regionId = result.foundCities[0].id;
+  }
+  opts.uri += result.foundCities[0].id;
   async.retry(config.retryOpts, function (callback) {
     request(opts, callback)
   }, function (err, r, b) {
-    var result = {
-      city: isFrom ? city.from : city.to,
-      trim: isFrom ? city.fromTrim : city.toTrim,
-      foundCities: [initialJson],
-      success: true
-    };
+    result.city = isFrom ? city.from : city.to;
+    result.trim = isFrom ? city.fromTrim : city.toTrim;
+    result.success = true;
     //hack for Moscow
     var regionFrom = commonHelper.getRegionName(city.from);
     var regionTo = commonHelper.getRegionName(city.to);
-    if (regionFrom && regionFrom.toLowerCase() === 'московская') {
+    /*if (regionFrom && regionFrom.toLowerCase() === 'московская') {
       if (city.toTrim.toLowerCase() !== 'москва') {
         return callback(null, result);
       } else {
-        result.regionId = initialJson.id;
+        result.regionId = result.id;
       }
     }
     if (regionTo && regionTo.toLowerCase() === 'московская') {
       if (city.fromTrim.toLowerCase() !== 'москва') {
         return callback(null, result);
       } else {
-        result.regionId = initialJson.id;
+        result.regionId = result.id;
       }
-    }
+    }*/
     if (err) {
       return callback(null, result);
     }
@@ -66,14 +65,16 @@ var getCity = function (city, isFrom, callback) {
       return callback(null, result);
     }
     var founds = [];
-    var region = commonHelper.getRegionName(isFrom ? city.from : city.to);
+    var region = commonHelper.getDistrictName(isFrom ? city.from : city.to);
     if (region) {
       founds = commonHelper.findInArray(json, region, 'OkatoName');
     }
     if (!founds.length) {
       founds = commonHelper.findInArray(json, result.trim, 'OkatoName', true);
     }
-    result.foundCities = founds.length ? formatCities(founds) : [initialJson];
+    if (founds.length) {
+      result.foundCities = formatCities(founds);
+    }
     result.cities = json;
     callback(null, result);
   });
@@ -106,8 +107,8 @@ var getCalcResult = function (requests, timestamp, type, services, callback) {
         getDeliveryTime: function (callback) {
           var opts = Object.assign({}, deliveryData.calcUrl1);
           opts.uri += 'calc=' + type;
-          opts.uri += '&from=' + (item.req.regionId || item.req.fromJson.id);
-          opts.uri += '&to=' + (item.req.regionId || item.req.toJson.id);
+          opts.uri += '&from=' + (item.req.fromJson.regionId || item.req.fromJson.id);
+          opts.uri += '&to=' + (item.req.toJson.regionId || item.req.toJson.id);
           async.retry(config.retryOpts, function (callback) {
             request(opts, callback)
           }, function (err, r, b) {
@@ -196,7 +197,7 @@ var getCalcResult = function (requests, timestamp, type, services, callback) {
             item.tariffs.push({
               service: trf.service,
               cost: trf.cost,
-              deliveryTime: results.getDeliveryTime.from + '-' + results.getDeliveryTime.to,
+              deliveryTime: !results.getDeliveryTime.error ? results.getDeliveryTime.from + '-' + results.getDeliveryTime.to : '',
               deliveryMin: results.getDeliveryTime.from,
               deliveryMax: results.getDeliveryTime.to
             });
@@ -337,15 +338,16 @@ module.exports = function (req, cities) {
         }
         if (!city.countryTo) {
           if (!results.getInitialCities.length) {
-            city.error = commonHelper.getResponseError({});
+            city.error = commonHelper.getCityJsonError(new Error("Не удалось получить список городов"));
             return async.nextTick(function () {
               callback(null, city);
             });
           }
           city.fromTrim = commonHelper.getCity(city.from);
           var from = commonHelper.findInArray(results.getInitialCities, city.fromTrim);
+          var regionFrom = commonHelper.getRegionName(city.from);
           if (!from.length) {
-            from = commonHelper.findInArray(results.getInitialCities, commonHelper.getRegionName(city.from));
+            from = commonHelper.findInArray(results.getInitialCities, regionFrom);
           }
           if (!from.length) {
             city.error = commonHelper.CITYFROMNOTFOUND;
@@ -355,8 +357,9 @@ module.exports = function (req, cities) {
           }
           city.toTrim = commonHelper.getCity(city.to);
           var to = commonHelper.findInArray(results.getInitialCities, city.toTrim);
+          var regionTo = commonHelper.getRegionName(city.to);
           if (!to.length) {
-            to = commonHelper.findInArray(results.getInitialCities, commonHelper.getRegionName(city.to));
+            to = commonHelper.findInArray(results.getInitialCities, regionTo);
           }
           if (!to.length) {
             city.error = commonHelper.CITYTONOTFOUND;
@@ -364,9 +367,12 @@ module.exports = function (req, cities) {
               callback(null, city);
             });
           }
-          city.fromJson = from[0];
-          city.toJson = to[0];
+          city.fromJson = {foundCities: [from[0]], success: true, isSpecial: regionFrom && /московская/gi.test(regionFrom) && /москва/gi.test(city.toTrim)};
+          city.toJson = {foundCities: [to[0]], success: true, isSpecial: regionTo && /московская/gi.test(regionTo) && /москва/gi.test(city.fromTrim)};
+        } else {
+          city.toJson = countryObj[city.countryTo.toLowerCase()];
         }
+        /*уточнение нужно только по мсо-москва*/
         setTimeout(function () {
           if (global[delivery] > timestamp) {
             return callback({abort: true});
@@ -379,6 +385,9 @@ module.exports = function (req, cities) {
               if (city.countryTo) {
                 return callback(null);
               }
+              if (!city.fromJson.isSpecial) {
+                return callback(null);
+              }
               getCity(city, true, callback);
             },
             function (callback) {
@@ -386,6 +395,9 @@ module.exports = function (req, cities) {
                 return callback(null);
               }
               if (city.countryTo) {
+                return callback(null);
+              }
+              if (!city.toJson.isSpecial) {
                 return callback(null);
               }
               getCity(city, false, callback);
@@ -398,10 +410,12 @@ module.exports = function (req, cities) {
               if (typeof  cityObj[city.to + city.countryTo] === 'undefined') {
                 cityObj[city.to + city.countryTo] = foundCities[1];
               }
-              city.fromJson = cityObj[city.from + city.countryFrom];
-              city.toJson = cityObj[city.to + city.countryTo];
-            } else {
-              city.toJson = countryObj[city.countryTo.toLowerCase()];
+              if (cityObj[city.from + city.countryFrom] && city.fromJson.isSpecial) {
+                city.fromJson = cityObj[city.from + city.countryFrom];
+              }
+              if (cityObj[city.to + city.countryTo] && city.toJson.isSpecial) {
+                city.toJson = cityObj[city.to + city.countryTo];
+              }
             }
             callback(null, city);
           });
@@ -429,9 +443,19 @@ module.exports = function (req, cities) {
             delivery: delivery,
             tariffs: []
           });
+        } else if (!item.fromJson.success) {
+          requests = requests.concat(commonHelper.getResponseArray(req.body.weights, item, delivery, item.fromJson.message));
+        } else if (!item.toJson.success) {
+          requests = requests.concat(commonHelper.getResponseArray(req.body.weights, item, delivery, item.toJson.message));
         } else {
           item.fromJson.foundCities.forEach(function (fromCity) {
+            if (item.fromJson.regionId) {
+              fromCity.regionId = item.fromJson.regionId;
+            }
             item.toJson.foundCities.forEach(function (toCity) {
+              if (item.toJson.regionId) {
+                toCity.regionId = item.toJson.regionId;
+              }
               tempRequests.push({
                 city: {
                   initialCityFrom: item.from,
@@ -441,7 +465,7 @@ module.exports = function (req, cities) {
                   countryFrom: item.countryFrom,
                   countryTo: item.countryTo
                 },
-                req: {fromJson: fromCity, toJson: toCity, regionId: item.fromJson.regionId || item.toJson.regionId},
+                req: {fromJson: fromCity, toJson: toCity},
                 delivery: delivery,
                 tariffs: []
               });

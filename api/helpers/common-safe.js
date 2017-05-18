@@ -53,12 +53,21 @@ exports.getCity = function (city) {
   return city.split(',')[0].trim();
 };
 
+exports.getDistrictName = function (city) {
+  var region = null;
+  var splits = city.split(',');
+  if (splits.length >= 3) {
+    region = splits[2].split(' ')[1] || splits[2].split(' ')[0];
+  }
+  return region;
+};
+
 exports.getRegionName = function (city) {
   var region = null;
   var splits = city.split(',');
   if (splits.length === 2) {
     region = splits[1].split(' ')[1] || splits[1].split(' ')[0];
-  } else if (splits.length > 3) {
+  } else if (splits.length >= 3) {
     region = splits[2].split(' ')[1] || splits[2].split(' ')[0];
   }
   return region;
