@@ -7,6 +7,7 @@ var cheerio = require('cheerio');
 var config = require('../../../conf');
 var logger = require('../../helpers/logger');
 var _ = require('underscore');
+var delivery = 'majorexpress';
 
 var formData = {
   __EVENTTARGET: '',
@@ -87,28 +88,122 @@ var formData = {
   __EVENTVALIDATION: '/wEdAAg+8a68xr3s0poGWclUeS1ujtVQLQrEnIbjmIO/ZtnanBURE9yPSvOSRjDl2QhdsmkuZdkoFpB4ESxdAtuiUVt8gl73xgw2NCSYTnx1Re6LhDcdrfIBD0KLYT9317mddRwD6Jh4KGw6EeOMB2EMx8q+sBBTJQXkxFp9HwpVVLmS7jW36QSP0vLTTzlJKqnaEajshG8aizhfmygvfQzYKi7N'
 };
 
+var getReq = function (from, countryFrom, to, countryTo) {
+  from = from || {};
+  to = to || {};
+  countryFrom = countryFrom || {};
+  countryTo = countryTo || {};
+  return {
+    countryFromId: countryFrom.id || 0,
+    countryToId: countryTo.id || 0,
+    countryFromName: countryFrom.name || "Россия",
+    countryToName: countryTo.name || "Россия",
+    cityFromId: countryTo && countryTo.useEng ? 129 : from.id,
+    cityToId: to.id || undefined,
+    cityFrom: countryTo && countryTo.useEng ? "Москва" : (from.name || ''),
+    cityTo: to.name || ""
+  }
+};
+
+var getCity = function (city, cityEng, country, callback) {
+  var totalCity = city;
+  if (country && country.useEng) {
+    totalCity = cityEng;
+  }
+  var deliveryData = deliveryHelper.get(delivery);
+  var opts = deliveryData.citiesUrl;
+  var trim = commonHelper.getCity(totalCity);
+  var splitTrim = null;
+  if (country && country.useEng) {
+    var splits = trim.split(" ");
+    if (splits.length > 1) {
+      splitTrim = splits[0];
+    }
+  }
+  var result = {
+    city: totalCity,
+    cityTrim: trim,
+    success: false
+  };
+  opts.form = Object.assign({}, formData);
+  opts.form.ctl00$ContentPlaceHolder1$cbCityTo = splitTrim || trim;
+  opts.form.__CALLBACKPARAM = 'c0:LBCRI|4;0:99;CBCF|' + (splitTrim ? splitTrim.length : trim.length) + ';' + (splitTrim ? splitTrim : trim) + ';';
+  if (country) {
+    opts.form.ContentPlaceHolder1_cbCountryTo_VI = country.id;
+    opts.form.ctl00$ContentPlaceHolder1$cbCountryTo = country.name;
+    opts.form.ctl00$ContentPlaceHolder1$cbCountryTo$DDD$L = country.id;
+  }
+  async.retry(config.retryOpts, function (callback) {
+    request(opts, callback)
+  }, function (err, r, b) {
+    if (err) {
+      result.message = commonHelper.getCityJsonError(err);
+      return callback(null, result);
+    }
+    b = b.replace('0|/!*DX*!/(', '');
+    b = b.replace('0|/*DX*/(', '');
+    b = b.substring(0, b.length - 1);
+    b = b.replace(/\"/g, '\\"').replace(/\'/g, '"');
+    var json = null;
+    try {
+      json = JSON.parse(b);
+    } catch (e) {
+      result.message = commonHelper.getCityJsonError(e);
+    }
+    if (!json) {
+      return callback(null, result);
+    }
+    if (!json.result) {
+      result.message = commonHelper.getCityJsonError(new Error("Отсутствует обязательный параметр result"));
+      return callback(null, result);
+    }
+    var array = null;
+    try {
+      array = JSON.parse(json.result);
+    } catch (e) {
+      result.message = commonHelper.getCityJsonError(new Error("Неверный формат result"));
+    }
+    if (!array) {
+      return callback(null, result);
+    }
+    var cities = [];
+    array.forEach(function (item, index) {
+      if (typeof item === 'string') {
+        cities.push({id: array[index-1], name: item});
+      }
+    });
+    if (!cities.length) {
+      result.message = commonHelper.getCityNoResultError(trim);
+    } else if (cities.length === 1) {
+      result.foundCities = cities;
+      result.success = true;
+    } else {
+      var region = commonHelper.getRegionName(totalCity);
+      var foundIds = [];
+      if (region) {
+        foundIds = commonHelper.findInArray(cities, region, 'name');
+      }
+      if (!foundIds.length) {
+        //ищем по точному совпадению
+        cities.forEach(function (item, index) {
+          if (commonHelper.getCity(item.name).toUpperCase() === trim.toUpperCase()) {
+            foundIds.push(item);
+          }
+        });
+      }
+      result.cities = cities;
+      result.foundCities = foundIds.length ? foundIds : [cities[0]];
+      result.success = true;
+    }
+    callback(null, result);
+  });
+};
+
 module.exports = function (req, cities) {
-  var delivery = 'majorexpress';
   var deliveryData = deliveryHelper.get(delivery);
   var requests = [];
-  var tempRequests = [];
   var cityObj = {};
   var timestamp = global[delivery];
-  cities.forEach(function (item) {
-    if (item.from) {
-      if (typeof cityObj[item.from] === 'undefined') {
-        cityObj[item.from] = item.countryFrom || '';
-      }
-    }
-    if (item.to) {
-      if (typeof cityObj[item.to] === 'undefined') {
-        cityObj[item.to] = item.countryTo || '';
-      }
-    }
-    if (!item.from && !item.to) {
-      tempRequests.push({cityFrom: item.from, cityTo: item.to, countryFrom: item.countryFrom, countryTo: item.countryTo, delivery: delivery, tariffs: [], error: 'Должны быть указаны оба города'});
-    }
-  });
 
   async.auto({
     getCountries: function (callback) {
@@ -123,256 +218,242 @@ module.exports = function (req, cities) {
           .wait('#ContentPlaceHolder1_cbPackage')
           .wait()
           .evaluate(function () {
+            var result = {
+              from: [],
+              to: [],
+              params: {}
+            };
             var reg = /dxo\.itemsValue=(\[[0-9\-,]*\])/i;
-            var container = document.querySelector('#ContentPlaceHolder1_cbCountryTo_DDD_PWC-1');
-            if (!container) {
-              return [];
+            var containerFrom = document.querySelector('#ContentPlaceHolder1_cbCountryFrom_DDD_PWC-1');
+            var containerTo = document.querySelector('#ContentPlaceHolder1_cbCountryTo_DDD_PWC-1');
+            if (!containerFrom || !containerTo) {
+              return result;
             }
-            var matches = container.querySelector('script').innerText.match(reg);
-            var countries = [];
+            var matchesFrom = containerFrom.querySelector('script').innerText.match(reg);
+            var matchesTo = containerTo.querySelector('script').innerText.match(reg);
             try {
-              var ids = JSON.parse(matches[1]);
-              var labels = document.querySelector('#ContentPlaceHolder1_cbCountryTo_DDD_L_LBT').querySelectorAll('.dxeListBoxItemRow');
-              labels.forEach(function (item, index) {
-                countries.push({id: ids[index], name: item.querySelector('td').innerText.trim()});
+              var idsFrom = JSON.parse(matchesFrom[1]);
+              var idsTo = JSON.parse(matchesTo[1]);
+              var labelsFrom = document.querySelector('#ContentPlaceHolder1_cbCountryFrom_DDD_L_LBT').querySelectorAll('.dxeListBoxItemRow');
+              var labelsTo = document.querySelector('#ContentPlaceHolder1_cbCountryTo_DDD_L_LBT').querySelectorAll('.dxeListBoxItemRow');
+              labelsFrom.forEach(function (item, index) {
+                result.from.push({id: idsFrom[index], name: item.querySelector('td').innerText.trim().toLowerCase()});
+              });
+              labelsTo.forEach(function (item, index) {
+                result.to.push({id: idsTo[index], name: item.querySelector('td').innerText.trim().toLowerCase()});
               });
             } catch (e) {}
-            return countries;
+            return result;
           })
           .end()
           .then(function (result) {
-            callback(!result.length ? commonHelper.getCountriesError() : null, result);
+            callback(!result.from.length || !result.to.length ? commonHelper.getCountriesError(new Error("Возможно изменилась структура сайта")) : null, result);
           })
           .catch(function (error) {
-            callback(error, []);
+            callback(error ? commonHelper.getCountriesError(error) : null, []);
           });
       }, function (err, results) {
         async.nextTick(function () {
-          callback(null, results || []);
+          callback(err, results);
         });
       });
 
     },
     getCities: ['getCountries', function (results, callback) {
-      async.mapLimit(_.keys(cityObj), 3, function (city, callback) {
-        if (global[delivery] > timestamp) {
-          return callback({abort: true});
-        }
-        var opts = deliveryData.citiesUrl;
-        var trim = commonHelper.getCity(city);
-        opts.form = Object.assign({}, formData);
-        opts.form.ctl00$ContentPlaceHolder1$cbCityTo = trim;
-        opts.form.__CALLBACKPARAM = 'c0:LBCRI|4;0:99;CBCF|' + trim.length + ';' + trim + ';';
-        if (cityObj[city].length && results.getCountries.length) {
-          var filtered = results.getCountries.filter(function (item) {
-            return item.name.toUpperCase() === cityObj[city].toUpperCase();
+      var countryFromObj = _.indexBy(results.getCountries.from, 'name');
+      var countryToObj = _.indexBy(results.getCountries.to, 'name');
+      async.mapSeries(cities, function (city, callback) {
+        if (!city.from || !city.to) {
+          city.error = commonHelper.CITIESREQUIRED;
+          return async.nextTick(function () {
+            callback(null, city);
           });
-          if (filtered.length) {
-            opts.form.ContentPlaceHolder1_cbCountryTo_VI = filtered[0].id;
-            opts.form.ctl00$ContentPlaceHolder1$cbCountryTo = filtered[0].name;
-            opts.form.ctl00$ContentPlaceHolder1$cbCountryTo$DDD$L = filtered[0].id;
+        }
+        if (city.countryFrom) {
+          if (typeof countryFromObj[city.countryFrom.toLowerCase()] === 'undefined') {
+            city.error = commonHelper.COUNTRYFROMNOTFOUND;
+            return async.nextTick(function () {
+              callback(null, city);
+            });
+          } else {
+            city.countryFromTemp = countryFromObj[city.countryFrom.toLowerCase()];
           }
         }
-        async.retry(config.retryOpts, function (callback) {
-          request(opts, callback)
-        }, function (err, r, b) {
-          var result = {
-            city: city,
-            cityTrim: trim,
-            success: false
-          };
-          if (err) {
-            result.message = commonHelper.getCityJsonError(err);
-            return callback(null, result);
+        if (city.countryTo) {
+          var found = false;
+          if (typeof countryToObj[city.countryTo.toLowerCase()] !== 'undefined') {
+            found = true;
+            city.countryToTemp = countryToObj[city.countryTo.toLowerCase()];
+          } else if (city.countryToEng && typeof countryToObj[city.countryToEng.toLowerCase()] !== 'undefined') {
+            found = true;
+            city.countryToTemp = countryToObj[city.countryToEng.toLowerCase()];
+            city.countryToTemp.useEng = true;
           }
-          b = b.replace('0|/*DX*/(', '');
-          b = b.substring(0, b.length - 1);
-          b = b.replace(/\"/g, '\\"').replace(/\'/g, '"');
-          var json = null;
-          try {
-            json = JSON.parse(b);
-          } catch (e) {
-            result.message = commonHelper.getCityJsonError(e);
-          }
-          if (!json) {
-            return callback(null, result);
-          }
-          if (!json.result) {
-            result.message = commonHelper.getCityJsonError(new Error("Отсутствует обязательный параметр result"));
-            return callback(null, result);
-          }
-          var array = null;
-          try {
-            array = JSON.parse(json.result);
-          } catch (e) {
-            result.message = commonHelper.getCityJsonError(new Error("Неверный формат result"));
-          }
-          if (!array) {
-            return callback(null, result);
-          }
-          if (!array.length) {
-            result.message = commonHelper.getCityNoResultError(trim);
-          } else if (array.length === 2) {
-            result.ids = [{id: array[0], name: array[1]}];
-            result.success = true;
-          } else {
-            var region = commonHelper.getRegionName(city);
-            var foundIds = [];
-            if (region) {
-              array.forEach(function (item, index) {
-                if (typeof item === 'string') {
-                  if (new RegExp(region, 'gi').test(item)) {
-                    foundIds.push({id: array[index-1], name: item});
-                  }
-                }
-              });
-            }
-            if (!region || !foundIds.length) {
-              //ищем по точному совпадению
-              array.forEach(function (item, index) {
-                if (typeof item !== 'string' && array[index+1] && commonHelper.getCity(array[index+1]).toUpperCase() === trim.toUpperCase()) {
-                  foundIds.push({id: item, name: array[index+1]});
-                }
-              });
-              //ищем хоть что-то
-              if (!foundIds.length) {
-                array.forEach(function (item, index) {
-                  if (typeof item !== 'string') {
-                    foundIds.push({id: item, name: array[index+1]});
-                  }
-                });
-              }
-            }
-            result.cities = [];
-            array.forEach(function (item, index) {
-              if (typeof item !== 'string') {
-                result.cities.push({id: item, name: array[index+1]});
-              }
+          if (!found) {
+            city.error = commonHelper.COUNTRYNOTFOUND;
+            return async.nextTick(function () {
+              callback(null, city);
             });
-            result.ids = foundIds;
-            result.success = true;
           }
-          callback(null, result);
-        });
+        }
+        setTimeout(function () {
+          if (global[delivery] > timestamp) {
+            return callback({abort: true});
+          }
+          async.parallel([
+            function (callback) {
+              if (typeof  cityObj[city.from + city.countryFrom] !== 'undefined') {
+                return callback(null);
+              }
+              getCity(city.from, city.fromEngName, city.countryFromTemp, callback);
+            },
+            function (callback) {
+              if (typeof  cityObj[city.to + city.countryTo] !== 'undefined') {
+                return callback(null);
+              }
+              getCity(city.to, city.toEngName, city.countryToTemp, callback);
+            }
+          ], function (err, foundCities) { //ошибки быть не может
+            if (typeof  cityObj[city.from + city.countryFrom] === 'undefined') {
+              cityObj[city.from + city.countryFrom] = foundCities[0];
+            }
+            if (typeof  cityObj[city.to + city.countryTo] === 'undefined') {
+              cityObj[city.to + city.countryTo] = foundCities[1];
+            }
+            city.fromJson = cityObj[city.from + city.countryFrom];
+            city.toJson = cityObj[city.to + city.countryTo];
+            callback(null, city);
+          });
+        }, commonHelper.randomInteger(500, 1000));
       }, callback);
     }],
     parseCities: ['getCities', function (results, callback) {
-      var respCityObj = _.indexBy(results.getCities, 'city');
-      cities.forEach(function (item) {
-        if (item.from && item.to) {
-          var obj = {
-            city: {
-              initialCityFrom: item.from,
-              initialCityTo: item.to,
-              from: item.from,
-              to: item.to,
-              countryFrom: item.countryFrom,
-              countryTo: item.countryTo
-            },
-            delivery: delivery,
-            tariffs: []
-          };
-          if (respCityObj[item.from].success && respCityObj[item.to].success) {
-            for (var i=0; i<respCityObj[item.from].ids.length; i++) {
-              for (var j=0; j<respCityObj[item.to].ids.length; j++) {
-                var copy = _.clone(obj);
-                copy.city = _.clone(obj.city);
-                copy.city.from = respCityObj[item.from].ids[i].name;
-                copy.city.to = respCityObj[item.to].ids[j].name;
-                copy.req = {
-                  cityFromId: respCityObj[item.from].ids[i].id || undefined,
-                  cityToId: respCityObj[item.to].ids[j].id || undefined,
-                  cityFrom: respCityObj[item.from].ids[i].name || item.from,
-                  cityTo: respCityObj[item.to].ids[j].name || item.to
-                };
-                tempRequests.push(copy);
-              }
-            }
-          } else if (!respCityObj[item.from].success) {
-            var copy = Object.assign({}, obj);
-            copy.error = respCityObj[item.from].message;
-            tempRequests.push(copy);
-          } else if (!respCityObj[item.to].success) {
-            var copy = Object.assign({}, obj);
-            copy.error = respCityObj[item.to].message;
-            tempRequests.push(copy);
+
+      var tempRequests = [];
+      results.getCities.forEach(function (item) {
+        if (item.error) {
+          requests = requests.concat(commonHelper.getResponseArray(req.body.weights, item, delivery, item.error));
+        } else if (!item.fromJson.success) {
+          requests = requests.concat(commonHelper.getResponseArray(req.body.weights, item, delivery, item.fromJson.message));
+        } else if (!item.toJson.success) {
+          if (item.countryToTemp && item.countryToTemp.useEng && item.toEngName) {
+            item.initialCityTo = item.to;
+            item.to = item.toEngName;
           }
+          requests = requests.concat(commonHelper.getResponseArray(req.body.weights, item, delivery, item.toJson.message));
+        } else {
+          item.fromJson.foundCities.forEach(function (fromCity) {
+            item.toJson.foundCities.forEach(function (toCity) {
+              tempRequests.push({
+                city: {
+                  initialCityFrom: item.from,
+                  initialCityTo: item.to,
+                  from: fromCity.name,
+                  to: toCity.name,
+                  countryFrom: item.countryFrom,
+                  countryTo: item.countryTo
+                },
+                req: getReq(fromCity, item.countryFromTemp, toCity, item.countryToTemp),
+                delivery: delivery,
+                tariffs: []
+              });
+            });
+          });
         }
       });
       tempRequests.forEach(function (item) {
         req.body.weights.forEach(function (weight) {
-          var obj = Object.assign({}, item);
+          var obj = commonHelper.deepClone(item);
           obj.weight = weight;
           requests.push(obj);
         });
       });
-      async.mapLimit(requests, 3, function (item, callback) {
-        if (global[delivery] > timestamp) {
-          return callback({abort: true});
-        }
-        if (!item.req || item.error) {
-          return async.nextTick(function () {
-            callback(null, item);
-          });
-        }
-        var nightmare = commonHelper.getNightmare();
-        nightmare.goto(deliveryData.calcUrl.uri)
-          .realMousedown('#ContentPlaceHolder1_cbProduct_B-1')
-          .wait('#ContentPlaceHolder1_cbProduct_DDD_L_LBT')
-          .realMousedown('#ContentPlaceHolder1_cbProduct_DDD_L_LBI0T0')
-          .realClick('#ContentPlaceHolder1_cbProduct_DDD_L_LBI0T0')
-          .wait('#ContentPlaceHolder1_cbPackage')
-          .insert('input#ContentPlaceHolder1_tbCalcWeight_Raw', item.weight)
-          .insert('input#ContentPlaceHolder1_tbCalcWeight_I', item.weight)
-          .evaluate(function (item) {
-            document.querySelector('input#ContentPlaceHolder1_cbCityFrom_I').value = item.req.cityFrom;
-            document.querySelector('input#ContentPlaceHolder1_cbCityFrom_VI').value = item.req.cityFromId;
-            document.querySelector('input#ContentPlaceHolder1_cbCityTo_I').value = item.req.cityTo;
-            document.querySelector('input#ContentPlaceHolder1_cbCityTo_VI').value = item.req.cityToId;
-            return false;
-          }, item) // <-- that's how you pass parameters from Node scope to browser scope)
-          .realClick('#ContentPlaceHolder1_btnCalc')
-          .wait(3000)
-          .wait('#ContentPlaceHolder1_cbPackage')
-          //.inject('js', process.cwd() + '/node_modules/jquery/dist/jquery.js')
-          //.screenshot(process.cwd() + '/temp2.png')
-          .evaluate(function (item) {
-            var spans = null;
-            try {
-              spans = document.querySelector('#ContentPlaceHolder1_gvCalc').querySelector('table').querySelectorAll('span');
-            } catch (e) {}
-            if (!spans) {
-              item.error = "По запросу ничего не найдено";
-              return item;
-            }
-            item.tariffs = [{
-              cost: spans[4].innerText.trim(),
-              deliveryTime: spans[8].innerText.trim()
-            }];
-            return item;
-          }, item)
-          .end()
-          .then(function (result) {
-            callback(null, result);
-          })
-          .catch(function (error) {
-            item.error = error;
-            callback(null, item);
-          });
+      callback(null);
+    }],
+    requests: ['parseCities', function (results, callback) {
 
+      async.mapLimit(requests, 3, function (item, callback) {
+        setTimeout(function () {
+          if (global[delivery] > timestamp) {
+            return callback({abort: true});
+          }
+          if (item.error) {
+            return async.nextTick(function () {
+              callback(null, item);
+            });
+          }
+
+          var nightmare = commonHelper.getNightmare();
+          nightmare.goto(deliveryData.calcUrl.uri)
+            .realMousedown('#ContentPlaceHolder1_cbProduct_B-1')
+            .wait('#ContentPlaceHolder1_cbProduct_DDD_L_LBT')
+            .realMousedown('#ContentPlaceHolder1_cbProduct_DDD_L_LBI0T0')
+            .realClick('#ContentPlaceHolder1_cbProduct_DDD_L_LBI0T0')
+            .wait('#ContentPlaceHolder1_cbPackage')
+            .insert('input#ContentPlaceHolder1_tbCalcWeight_Raw', item.weight)
+            .insert('input#ContentPlaceHolder1_tbCalcWeight_I', item.weight)
+            .evaluate(function (item) {
+              document.querySelector('input#ContentPlaceHolder1_cbCountryFrom_VI').value = item.req.countryFromId;
+              document.querySelector('input#ContentPlaceHolder1_cbCountryTo_VI').value = item.req.countryToId;
+              document.querySelector('input#ContentPlaceHolder1_cbCountryFrom_I').value = item.req.countryFromName;
+              document.querySelector('input#ContentPlaceHolder1_cbCountryTo_I').value = item.req.countryToName;
+
+              document.querySelector('input#ContentPlaceHolder1_cbCityFrom_I').value = item.req.cityFrom;
+              document.querySelector('input#ContentPlaceHolder1_cbCityFrom_VI').value = item.req.cityFromId;
+              document.querySelector('input#ContentPlaceHolder1_cbCityTo_I').value = item.req.cityTo;
+              document.querySelector('input#ContentPlaceHolder1_cbCityTo_VI').value = item.req.cityToId;
+              return false;
+            }, item) // <-- that's how you pass parameters from Node scope to browser scope)
+            .realClick('#ContentPlaceHolder1_btnCalc')
+            .wait(3000)
+            .wait('#ContentPlaceHolder1_cbPackage')
+            //.inject('js', process.cwd() + '/node_modules/jquery/dist/jquery.js')
+            //.screenshot(process.cwd() + '/temp2.png')
+            .evaluate(function (item) {
+              var spans = null;
+              var int = false;
+              try {
+                spans = document.querySelector('#ContentPlaceHolder1_gvCalc').querySelector('table').querySelectorAll('span');
+              } catch (e) {}
+              if (!spans) {
+                try {
+                  spans = document.querySelector('#ContentPlaceHolder1_gvInterCalc').querySelector('table').querySelectorAll('span');
+                  int = true;
+                } catch (e) {
+                }
+              }
+              if (!spans) {
+                item.error = "По указанным направлениям ничего не найдено";
+                return item;
+              }
+              item.tariffs = [{
+                cost: int ? spans[2].innerText.trim() + '$' : spans[4].innerText.trim(),
+                deliveryTime: int ? '' : spans[8].innerText.trim()
+              }];
+              return item;
+            }, item)
+            .end()
+            .then(function (result) {
+              callback(null, result);
+            })
+            .catch(function (error) {
+              item.error = commonHelper.getResultJsonError(new Error(error));
+              callback(null, item);
+            });
+        }, commonHelper.randomInteger(500, 1000));
       }, callback);
     }],
-    nextTick: ['parseCities', function (results, callback) {
+    nextTick: ['requests', function (results, callback) {
       async.nextTick(callback);
     }]
 
   }, function (err, results) {
-    logger.tariffsInfoLog(delivery, results.parseCities, 'getTariffs');
+    logger.tariffsInfoLog(delivery, results.requests, 'getTariffs');
     commonHelper.saveResults(req, err, {
       delivery: delivery,
       timestamp: timestamp,
       cities: cities,
-      items: results.parseCities || []
+      items: results.requests || []
     });
   });
 };

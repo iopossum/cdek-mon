@@ -44,8 +44,12 @@ var getCity = function (city, callback) {
   var deliveryData = deliveryHelper.get(delivery);
   var opts = Object.assign({}, deliveryData.citiesUrl);
   var trim = commonHelper.getCity(city);
+  var trimSplit = null;
+  if (trim.split(' ').length > 1) {
+    trimSplit = trim[0];
+  }
   opts.form = {
-    pattern: trim
+    pattern: trimSplit || trim
   };
   opts.headers = {'X-Requested-With': 'XMLHttpRequest'};
   async.retry(config.retryOpts, function (callback) {
@@ -57,7 +61,7 @@ var getCity = function (city, callback) {
       success: false
     };
     if (err) {
-      result.message = commonHelper.getResponseError(err);
+      result.message = commonHelper.getCityJsonError(err);
       return callback(null, result);
     }
     var json = null;
@@ -76,6 +80,9 @@ var getCity = function (city, callback) {
     if (!Array.isArray(json.items)) {
       result.message = commonHelper.getCityJsonError(new Error("Неверный формат items"));
       return callback(null, result);
+    }
+    if (trimSplit) {
+      json.items = commonHelper.findInArray(json.items, trim, 'name');
     }
     if (!json.items.length) {
       result.message = commonHelper.getCityNoResultError(trim);
