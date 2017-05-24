@@ -34,6 +34,14 @@ module.exports = function (req, res) {
     global[item.id] = new Date().getTime();
   });
   req.session.delivery = obj;
+  req.body.cities.forEach(function (item) {
+    if (item.countryFrom && commonHelper.RUSSIA.indexOf(item.countryFrom.toLowerCase()) > -1) {
+      item.countryFrom = '';
+    }
+    if (item.countryTo && commonHelper.RUSSIA.indexOf(item.countryTo.toLowerCase()) > -1) {
+      item.countryTo = '';
+    }
+  });
   for (var i=0; i<req.body.deliveries.length; i++) {
     var item = req.body.deliveries[i];
     var cities = commonHelper.cloneArray(req.body.cities);

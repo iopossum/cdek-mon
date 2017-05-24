@@ -237,6 +237,24 @@ module.exports = function (req, cities) {
   var cityObj = {};
   var cityIntObj = {};
   var timestamp = global[delivery];
+  cities.forEach(function (item) {
+    if (item.countryFrom && commonHelper.SNG.indexOf(item.countryFrom.toLowerCase()) > -1) {
+      item.countryFromTemp = item.countryFrom;
+      item.countryFrom = '';
+    }
+    if (item.countryTo) {
+      if (commonHelper.SNG.indexOf(item.countryTo.toLowerCase()) > -1) {
+        item.countryToTemp = item.countryTo;
+        item.countryTo = '';
+      }
+      if (item.countryTo.toLowerCase() === 'южная корея') {
+        item.countryTo = 'Корея Респ.';
+      }
+      if (item.countryTo.toLowerCase() === 'молдавия') {
+        item.countryTo = 'Молдова Респ.';
+      }
+    }
+  });
   async.auto({
     getCookie: function (callback) {
       var opts = _.extend({}, deliveryData.calcUrl);

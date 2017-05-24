@@ -20,16 +20,19 @@ var getServiceReq = function (id, session) {
 };
 
 var getReq = function (from, to, servicePoint, session) {
-  return {
+  var req = {
     date: moment().add(1, 'day').format("YYYY-MM-DD"),
     language: "ru",
     pieces: [{id: "1", weight: "1", type: 0, width: null, height: null, depth: null}],
     ready_time: "09:00",
     rec_google_place_id: to,
-    service_point_route: servicePoint || '',
     session_id: session,
     shp_google_place_id: from
   };
+  if (servicePoint) {
+    req.service_point_route = servicePoint;
+  }
+  return req;
 };
 
 var getCity = function (json, callback) {
@@ -74,7 +77,7 @@ var calcResults = function (item, session, callback) {
     async.waterfall([
       function (callback) {
         var opts = _.extend({}, deliveryData.calcUrlAdditional);
-        opts.json = item.serviceReq;
+        opts.json = item.req;
         async.retry(config.retryOpts, function (callback) {
           request(opts, callback)
         }, function (err, r, b) {
@@ -90,7 +93,8 @@ var calcResults = function (item, session, callback) {
       },
       function (servicePoint, callback) {
         var opts = _.extend({}, deliveryData.calcUrl);
-        opts.json = getReq(item.city.fromGooglePlaceId, item.city.toGooglePlaceId, servicePoint, session);
+        item.req2 = getReq(item.city.fromGooglePlaceId, item.city.toGooglePlaceId, servicePoint, session);
+        opts.json = item.req2;
         opts.json.pieces[0].weight = item.weight;
         async.retry(config.retryOpts, function (callback) {
           request(opts, callback)
@@ -267,7 +271,7 @@ module.exports = function (req, cities) {
                   fromGooglePlaceId: item.fromGooglePlaceId,
                   toGooglePlaceId: item.toGooglePlaceId
                 },
-                serviceReq: getServiceReq(item.fromGooglePlaceId, results.getSession),
+                req: getServiceReq(item.fromGooglePlaceId, results.getSession),
                 delivery: delivery,
                 tariffs: []
               });

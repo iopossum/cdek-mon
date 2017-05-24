@@ -280,6 +280,12 @@ module.exports = function (req, cities) {
           }
         }
         if (city.countryTo) {
+          if (city.countryToEng === 'United States') {
+            city.countryToEng = 'USA';
+          }
+          if (city.countryToEng === 'беларусь') {
+            city.countryToEng = 'Белоруссия';
+          }
           var found = false;
           if (typeof countryToObj[city.countryTo.toLowerCase()] !== 'undefined') {
             found = true;

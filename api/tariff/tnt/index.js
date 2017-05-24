@@ -152,6 +152,10 @@ var hackCity = function (eng, trim) {
   eng = eng.replace(/yo/gi, 'e');
   eng = eng.replace(/x/gi, 'ks');
 
+  if (/viciebsk/gi.test(eng)) {
+    eng = 'Vitebsk';
+  }
+
   if (/рьи/.test(trim)) {
     eng = eng.replace(/ri/i, 'rji');
   }
@@ -171,7 +175,10 @@ var hackCity = function (eng, trim) {
     eng = eng.replace(/y$/i, "ij");
     eng = eng.replace(/y /i, "ij ");
   }
-  if (trim.split(' ').length < 2) {
+  if (/льн/.test(trim)) {
+    eng = eng.replace(/ln/i, "l'n");
+  }
+  if (trim.split(' ').length < 2 && !/-/g.test(trim)) {
     var splits = eng.split(' ');
     if (splits.length > 1) {
       eng = splits[0];

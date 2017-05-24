@@ -205,11 +205,25 @@ module.exports = function (req, cities) {
             callback(null, city);
           });
         }
-        if (city.countryTo && typeof countryObj[city.countryTo.toUpperCase()] === 'undefined') {
-          city.error = commonHelper.COUNTRYNOTFOUND;
-          return async.nextTick(function () {
-            callback(null, city);
-          });
+        if (city.countryTo) {
+          if (city.countryTo.toLowerCase() === 'южная корея') {
+            city.countryTo = 'Корея (Южная)';
+          }
+          if (city.countryTo.toLowerCase() === 'белоруссия') {
+            city.countryTo = 'Беларусь';
+          }
+          if (city.countryTo.toLowerCase() === 'молдавия') {
+            city.countryTo = 'Молдова';
+          }
+          if (city.countryTo.toLowerCase() === 'ирландия') {
+            city.countryTo = 'Ирландия, республика';
+          }
+          if (typeof countryObj[city.countryTo.toUpperCase()] === 'undefined') {
+            city.error = commonHelper.COUNTRYNOTFOUND;
+            return async.nextTick(function () {
+              callback(null, city);
+            });
+          }
         }
         setTimeout(function () {
           if (global[delivery] > timestamp) {

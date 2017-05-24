@@ -86,22 +86,10 @@ module.exports = function (req, cities) {
   var cityObj = {};
   var cityIntObj = {};
   var timestamp = global[delivery];
-  var hackCities = ["москва", "владивосток", "санкт-петербург"];
+  var sng = ['азербайджан', 'армения', 'беларусь', 'казахстан', 'кыргызстан', 'молдавия', 'молдова', 'узбекистан', 'украина', 'латвия', 'литва', 'эстония', 'грузия'];
   async.auto({
     getCities: [function (callback) {
       async.mapSeries(cities, function (city, callback) {
-        /*if (!city.from && !city.countryFrom && city.countryTo) {
-          city.countryFrom = 'Россия';
-        }
-        if (!city.to && !city.countryTo && city.countryFrom) {
-          city.countryTo = 'Россия';
-        }*/
-        /*if (city.from && !city.countryFrom && !city.to && city.countryTo) {
-          city.countryFrom = 'Россия';
-        }
-        if (city.to && !city.countryTo && !city.from && city.countryFrom) {
-          city.countryTo = 'Россия';
-        }*/
         if (!city.from && !city.countryFrom && !city.countryTo) {
           city.error = commonHelper.CITYORCOUNTRYFROMREQUIRED;
           return async.nextTick(function () {
@@ -120,6 +108,24 @@ module.exports = function (req, cities) {
             return async.nextTick(function () {
               callback(null, city);
             });
+          }
+        }
+        if (city.countryTo) {
+          if (city.countryTo.toLowerCase() === 'белоруссия') {
+            city.countryTo = 'беларусь';
+          }
+          if (sng.indexOf(city.countryTo.toLowerCase()) > -1) {
+            city.inititalCountryTo = city.countryTo;
+            city.countryTo = '';
+          }
+        }
+        if (city.countryFrom) {
+          if (city.countryFrom.toLowerCase() === 'белоруссия') {
+            city.countryFrom = 'беларусь';
+          }
+          if (sng.indexOf(city.countryFrom.toLowerCase()) > -1) {
+            city.inititalCountryFrom = city.countryFrom;
+            city.countryFrom = '';
           }
         }
         setTimeout(function () {

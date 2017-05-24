@@ -19,7 +19,8 @@ exports.DATEFORMATREG = /^\s*((0?[1-9]|[12][0-9]|3[01])\.(0?[1-9]|1[012])\.\d{4}
 exports.COSTREG = /[^0-9,]/g;
 exports.DELIVERYTIMEREG = /[^0-9-]/g;
 
-exports.SNG = ['казахстан'];
+exports.RUSSIA = ['россия', 'российская', 'рф', 'russia'];
+exports.SNG = ['казахстан', 'армения', 'беларусь', 'белоруссия', 'кыргызстан', 'киргизия'];
 
 exports.randomInteger = function (min, max) {
   var rand = min - 0.5 + Math.random() * (max - min + 1);
