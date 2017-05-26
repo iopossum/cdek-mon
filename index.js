@@ -82,6 +82,7 @@ app.use('/api*', function (req, res, next) {
 
 app.options('/api/*', cors());
 app.post('/api/tariff/request', cors(), require('./api/tariff'));
+app.post('/api/tariff/one', cors(), require('./api/tariff/one'));
 app.get('/api/tariff/ping', cors(), require('./api/tariff/ping'));
 app.post('/api/tariff/cities', cors(), require('./api/tariff/city'));
 app.post('/api/tariff/news', cors(), require('./api/news'));

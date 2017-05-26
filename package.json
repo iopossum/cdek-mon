@@ -13,6 +13,8 @@
   "dependencies": {
     "angular": "~1.4.0",
     "angular-cookie": "^4.1.0",
+    "angular-loading-overlay": "^1.1.1",
+    "angular-loading-overlay-spinjs": "^1.0.2",
     "angular-resource": "~1.4.0",
     "angular-toastr": "^2.1.1",
     "angular-ui-bootstrap": "^2.5.0",

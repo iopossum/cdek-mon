@@ -242,12 +242,12 @@ var getService = function (type, callback) {
   });
 };
 
-module.exports = function (req, cities) {
+module.exports = function (req, cities, callback) {
   var deliveryData = deliveryHelper.get(delivery);
   var requests = [];
   var intRequests = [];
   var cityObj = {};
-  var timestamp = global[delivery];
+  var timestamp = callback ? new Date().getTime*2 : global[delivery];
   async.auto({
     getServices: function (callback) {
       async.parallel([
@@ -504,7 +504,8 @@ module.exports = function (req, cities) {
       delivery: delivery,
       timestamp: timestamp,
       cities: cities,
-      items: err ? [] : results.requests.concat(results.internationalRequests)
+      items: err ? [] : results.requests.concat(results.internationalRequests),
+      callback: callback
     });
   });
 };

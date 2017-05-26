@@ -4,7 +4,7 @@ var async = require('async');
 var commonHelper = require('../../../../api/helpers/common-safe');
 class TariffsCtrl {
 
-  constructor($scope, $rootScope, Tariff, Notify, Xls) {
+  constructor($scope, $rootScope, Tariff, Notify, Xls, bsLoadingOverlayService) {
     this.filter = {
       cities: [],
       weights: [],
@@ -29,6 +29,7 @@ class TariffsCtrl {
     this.$scope = $scope;
     this.notify = Notify;
     this.xls = Xls;
+    this.bsLoadingOverlayService = bsLoadingOverlayService;
     this.tariffService = Tariff;
     this.dynamic = 0;
     this.targets = Tariff.getTargets();
@@ -252,6 +253,87 @@ class TariffsCtrl {
 
   }
 
+  getCityKey (item) {
+    return item.city.initialCityFrom + item.city.initialCityTo + item.city.from + item.city.to +
+      item.city.initialCountryFrom + item.city.initialCountryTo + item.city.countryFrom + item.city.countryTo + item.weight
+  }
+
+  repeatResponse (res) {
+    var that = this;
+    res.forEach(function (item) {
+      var key = that.getCityKey(item);
+      if (!item.error) {
+        var resFilter = that.results.filter(function (resItem) {
+          return that.getCityKey(resItem) === key;
+        });
+        if (!resFilter.length) {
+          that.results.push(item);
+        } else {
+          _.extend(resFilter[0], item);
+        }
+      } else {
+        var errFilter = that.errors.filter(function (resItem) {
+          return that.getCityKey(resItem) === key;
+        });
+        if (!errFilter.length) {
+          that.errors.push(item);
+        } else {
+          _.extend(errFilter[0], item);
+        }
+      }
+    });
+
+  }
+
+  repeatAll() {
+    this.loading.errors = true;
+    this.bsLoadingOverlayService.start();
+    var that = this;
+    var requests = {};
+    this.errors.forEach(function (item) {
+      if (item.req) {
+        requests[item.delivery] = requests[item.delivery] || {};
+        requests[item.delivery].delivery = item.delivery;
+        requests[item.delivery].requests = requests[item.delivery].requests || [];
+        var copy = _.clone(item.city);
+        copy.from = copy.initialCityFrom || copy.from;
+        copy.to = copy.initialCityTo || copy.to;
+        copy.countryFrom = copy.initialCountryFrom || copy.countryFrom;
+        copy.countryTo = copy.initialCountryTo || copy.countryTo;
+        requests[item.delivery].requests.push({
+          city: copy,
+          weight: item.weight
+        });
+      }
+    });
+    var total = Object.keys(requests).length;
+    Object.keys(requests).forEach(function (key, index) {
+      async.eachSeries(requests[key].requests, function (item, callback) {
+        that.tariffService.one({delivery: key, requests: [item]}).then(that.repeatResponse.bind(that), that.notify.error).finally(function () {
+          callback(null);
+        });
+      }, function () {
+        if (total === index + 1) {
+          that.loading.errors = false;
+          that.bsLoadingOverlayService.stop();
+        }
+      });
+    });
+  }
+
+  repeat(item) {
+    item.loading = true;
+    var that = this;
+    var copy = _.clone(item.city);
+    copy.from = copy.initialCityFrom || copy.from;
+    copy.to = copy.initialCityTo || copy.to;
+    copy.countryFrom = copy.initialCountryFrom || copy.countryFrom;
+    copy.countryTo = copy.initialCountryTo || copy.countryTo;
+    this.tariffService.one({delivery: item.delivery, requests: [{city: copy, weight: item.weight}]}).then(that.repeatResponse.bind(that), that.notify.error).finally(function () {
+      item.loading = false;
+    });
+  }
+
   downloadFile () {
     this.xls.download('Тарифы.xlsx', document.getElementById('tariffs'));
   }
@@ -449,4 +531,4 @@ class TariffsCtrl {
 
 export default TariffsCtrl;
 
-TariffsCtrl.$inject = ['$scope', '$rootScope', 'Tariff', 'Notify', 'Xls'];
+TariffsCtrl.$inject = ['$scope', '$rootScope', 'Tariff', 'Notify', 'Xls', 'bsLoadingOverlayService'];

@@ -187,11 +187,11 @@ var hackCity = function (eng, trim) {
   return eng;
 };
 
-module.exports = function (req, cities) {
+module.exports = function (req, cities, callback) {
   var deliveryData = deliveryHelper.get(delivery);
   var requests = [];
   var cityObj = {};
-  var timestamp = global[delivery];
+  var timestamp = callback ? new Date().getTime*2 : global[delivery];
   async.auto({
     getCities: function (callback) {
       async.mapSeries(cities, function (city, callback) {
@@ -277,15 +277,15 @@ module.exports = function (req, cities) {
         } else {
           item.fromJson.foundCities.forEach(function (fromCity) {
             item.toJson.foundCities.forEach(function (toCity) {
+              var copy = _.clone(item);
+              copy.initialCityFrom = item.from;
+              copy.initialCityTo = item.to;
+              copy.from = getFullCity(fromCity);
+              copy.to = getFullCity(toCity);
+              copy.countryFrom = item.countryFrom;
+              copy.countryTo = item.countryTo;
               tempRequests.push({
-                city: {
-                  initialCityFrom: item.from,
-                  initialCityTo: item.to,
-                  from: getFullCity(fromCity),
-                  to: getFullCity(toCity),
-                  countryFrom: item.countryFrom,
-                  countryTo: item.countryTo
-                },
+                city: copy,
                 req: getReq(fromCity, toCity),
                 delivery: delivery,
                 tariffs: []
@@ -358,7 +358,8 @@ module.exports = function (req, cities) {
       delivery: delivery,
       timestamp: timestamp,
       cities: cities,
-      items: results.requests || []
+      items: results.requests || [],
+      callback: callback
     });
   });
 };

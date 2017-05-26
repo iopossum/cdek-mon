@@ -126,11 +126,11 @@ var getCost = function (string) {
   return result ? result[1] : '';
 };
 
-module.exports = function (req, cities) {
+module.exports = function (req, cities, callback) {
   var deliveryData = deliveryHelper.get(delivery);
   var requests = [];
   var cityObj = {};
-  var timestamp = global[delivery];
+  var timestamp = callback ? new Date().getTime*2 : global[delivery];
   async.auto({
     getInitial: function (callback) {
       var opts = Object.assign({}, deliveryData.calcUrl);
@@ -283,7 +283,8 @@ module.exports = function (req, cities) {
       delivery: delivery,
       timestamp: timestamp,
       cities: cities,
-      items: results.requests || []
+      items: results.requests || [],
+      callback: callback
     });
   });
 };

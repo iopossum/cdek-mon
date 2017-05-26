@@ -159,12 +159,12 @@ var getCalcResult = function (requests, timestamp, inOpts, callback) {
   }, callback);
 };
 
-module.exports = function (req, cities) {
+module.exports = function (req, cities, callback) {
   var deliveryData = deliveryHelper.get(delivery);
   var requests = [];
   var intRequests = [];
   var cityObj = {};
-  var timestamp = global[delivery];
+  var timestamp = callback ? new Date().getTime*2 : global[delivery];
   async.auto({
     getCountries: function (callback) {
       var opts = Object.assign({}, deliveryData.countriesUrl);
@@ -341,7 +341,8 @@ module.exports = function (req, cities) {
       delivery: delivery,
       timestamp: timestamp,
       cities: cities,
-      items: err ? [] : results.requests.concat(results.internationalRequests)
+      items: err ? [] : results.requests.concat(results.internationalRequests),
+      callback: callback
     });
   });
 };

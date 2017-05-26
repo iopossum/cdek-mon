@@ -230,13 +230,13 @@ var getIntCalcResult = function (item, opts, callback) {
   }, commonHelper.randomInteger(500, 1000));
 };
 
-module.exports = function (req, cities) {
+module.exports = function (req, cities, callback) {
   var deliveryData = deliveryHelper.get(delivery);
   var requests = [];
   var internationalRequests = [];
   var cityObj = {};
   var cityIntObj = {};
-  var timestamp = global[delivery];
+  var timestamp = callback ? new Date().getTime*2 : global[delivery];
   cities.forEach(function (item) {
     if (item.countryFrom && commonHelper.SNG.indexOf(item.countryFrom.toLowerCase()) > -1) {
       item.countryFromTemp = item.countryFrom;
@@ -490,7 +490,8 @@ module.exports = function (req, cities) {
       delivery: delivery,
       timestamp: timestamp,
       cities: cities,
-      items: err ? [] : results.requests.concat(results.internationalRequests)
+      items: err ? [] : results.requests.concat(results.internationalRequests),
+      callback: callback
     });
   });
 };

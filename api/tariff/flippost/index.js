@@ -102,12 +102,12 @@ var existsCountry = function (countries, country) {
   return found;
 };
 
-module.exports = function (req, cities) {
+module.exports = function (req, cities, callback) {
   var deliveryData = deliveryHelper.get(delivery);
   var requests = [];
   var otdoRequests = [];
   var cityObj = {};
-  var timestamp = global[delivery];
+  var timestamp = callback ? new Date().getTime*2 : global[delivery];
   async.auto({
     getOtDoCountries: function (callback) {
       var opts = Object.assign({}, deliveryData.calcOtdoIntUrl);
@@ -398,7 +398,8 @@ module.exports = function (req, cities) {
       delivery: delivery,
       timestamp: timestamp,
       cities: cities,
-      items: err ? [] : results.requests.concat(results.otDoRequests)
+      items: err ? [] : results.requests.concat(results.otDoRequests),
+      callback: callback
     });
   });
 };

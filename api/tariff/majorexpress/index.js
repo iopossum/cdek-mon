@@ -199,11 +199,11 @@ var getCity = function (city, cityEng, country, callback) {
   });
 };
 
-module.exports = function (req, cities) {
+module.exports = function (req, cities, callback) {
   var deliveryData = deliveryHelper.get(delivery);
   var requests = [];
   var cityObj = {};
-  var timestamp = global[delivery];
+  var timestamp = callback ? new Date().getTime*2 : global[delivery];
 
   async.auto({
     getCountries: function (callback) {
@@ -350,15 +350,15 @@ module.exports = function (req, cities) {
         } else {
           item.fromJson.foundCities.forEach(function (fromCity) {
             item.toJson.foundCities.forEach(function (toCity) {
+              var copy = _.clone(item);
+              copy.initialCityFrom = item.from;
+              copy.initialCityTo = item.to;
+              copy.from = fromCity.name;
+              copy.to = toCity.name;
+              copy.countryFrom = item.countryFrom;
+              copy.countryTo = item.countryTo;
               tempRequests.push({
-                city: {
-                  initialCityFrom: item.from,
-                  initialCityTo: item.to,
-                  from: fromCity.name,
-                  to: toCity.name,
-                  countryFrom: item.countryFrom,
-                  countryTo: item.countryTo
-                },
+                city: copy,
                 req: getReq(fromCity, item.countryFromTemp, toCity, item.countryToTemp),
                 delivery: delivery,
                 tariffs: []
@@ -459,7 +459,8 @@ module.exports = function (req, cities) {
       delivery: delivery,
       timestamp: timestamp,
       cities: cities,
-      items: results.requests || []
+      items: results.requests || [],
+      callback: callback
     });
   });
 };

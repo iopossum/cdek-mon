@@ -226,10 +226,10 @@ var getReq = function (item) {
   };
 };
 
-module.exports = function (req, cities) {
+module.exports = function (req, cities, callback) {
   var deliveryData = deliveryHelper.get(delivery);
   var requests = [];
-  var timestamp = global[delivery];
+  var timestamp = callback ? new Date().getTime*2 : global[delivery];
   async.auto({
     getCountries: function (callback) {
       var opts = Object.assign({}, deliveryData.countriesUrl);
@@ -316,15 +316,15 @@ module.exports = function (req, cities) {
         if (item.error) {
           requests = requests.concat(commonHelper.getResponseArray(req.body.weights, item, delivery, item.error));
         } else {
+          var copy = _.clone(item);
+          copy.initialCityFrom = item.from;
+          copy.initialCityTo = item.to;
+          copy.from = item.from;
+          copy.to = item.to;
+          copy.countryFrom = item.countryFrom;
+          copy.countryTo = item.countryTo;
           tempRequests.push({
-            city: {
-              initialCityFrom: item.from,
-              initialCityTo: item.to,
-              from: item.from,
-              to: item.to,
-              countryFrom: item.countryFrom,
-              countryTo: item.countryTo
-            },
+            city: copy,
             req: getReq(item),
             delivery: delivery,
             tariffs: []
@@ -404,7 +404,8 @@ module.exports = function (req, cities) {
       delivery: delivery,
       timestamp: timestamp,
       cities: cities,
-      items: results.requests || []
+      items: results.requests || [],
+      callback: callback
     });
   });
 };

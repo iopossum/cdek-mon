@@ -7,6 +7,7 @@ var cheerio = require('cheerio');
 var config = require('../../../conf');
 var _ = require('underscore');
 var logger = require('../../helpers/logger');
+var delivery = 'emspost';
 
 var convertCityToEms = function (city) {
   var splits = city.split(',');
@@ -115,11 +116,10 @@ var getEMSReq = function (cities, countries, item) {
   return null;
 };
 
-module.exports = function (req, cities) {
-  var delivery = 'emspost';
+module.exports = function (req, cities, callback) {
   var deliveryData = deliveryHelper.get(delivery);
   var requests = [];
-  var timestamp = global[delivery];
+  var timestamp = callback ? new Date().getTime*2 : global[delivery];
   async.auto({
     getCities: function (callback) {
       var opts = deliveryData.citiesUrl;
@@ -212,7 +212,8 @@ module.exports = function (req, cities) {
       delivery: delivery,
       timestamp: timestamp,
       cities: cities,
-      items: results.parseCities || []
+      items: results.parseCities || [],
+      callback: callback
     });
   });
 };

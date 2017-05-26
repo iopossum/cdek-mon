@@ -276,12 +276,12 @@ var getCity = function (city, country, deliveryData, callback) {
   });
 };
 
-module.exports = function (req, cities) {
+module.exports = function (req, cities, callback) {
   var delivery = 'spsr';
   var deliveryData = deliveryHelper.get(delivery);
   var requests = [];
   var cityObj = {};
-  var timestamp = global[delivery];
+  var timestamp = callback ? new Date().getTime*2 : global[delivery];
   /*cities.forEach(function (item) {
     if (!item.from || !item.to) {
       requests = requests.concat(commonHelper.getResponseArray(req.body.weights, item, delivery, 'Должен быть указан хотя бы 1 город'));
@@ -449,7 +449,8 @@ module.exports = function (req, cities) {
       delivery: delivery,
       timestamp: timestamp,
       cities: cities,
-      items: results.parseCities || []
+      items: results.parseCities || [],
+      callback: callback
     });
   });
 };

@@ -31,6 +31,9 @@ exports.getNightmare = function () {
 };
 
 exports.saveResults = function (req, err, opts) {
+  if (opts.callback) {
+    return opts.callback(err, opts.items);
+  }
   if (global[opts.delivery] > opts.timestamp) {
     return false;
   }

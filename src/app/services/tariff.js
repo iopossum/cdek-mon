@@ -11,6 +11,11 @@ class Tariff {
         method: 'POST',
         isArray: false
       },
+      one: {
+        params: {action: 'one'},
+        method: 'POST',
+        isArray: true
+      },
       ping: {
         params: {action: 'ping'},
         method: 'GET',
@@ -56,6 +61,10 @@ class Tariff {
 
   request(data) {
     return this.resource.request(data).$promise;
+  }
+
+  one(data) {
+    return this.resource.one(data).$promise;
   }
 
   ping(data) {

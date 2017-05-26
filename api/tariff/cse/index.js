@@ -97,11 +97,11 @@ var getCity = function (city, country, callback) {
   });
 };
 
-module.exports = function (req, cities) {
+module.exports = function (req, cities, callback) {
   var deliveryData = deliveryHelper.get(delivery);
   var requests = [];
   var cityObj = {};
-  var timestamp = global[delivery];
+  var timestamp = callback ? new Date().getTime*2 : global[delivery];
   async.auto({
     getCountries: function (callback) {
       /*async.retry(config.retryOpts, function (callback) {
@@ -322,7 +322,8 @@ module.exports = function (req, cities) {
       delivery: delivery,
       timestamp: timestamp,
       cities: cities,
-      items: results.requests || []
+      items: results.requests || [],
+      callback: callback
     });
   });
 };

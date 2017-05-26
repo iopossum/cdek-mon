@@ -86,13 +86,13 @@
 		</div>
 		<div class="form-group" ng-if="tariffs.errors.length">
 			<span class="text-danger">Не удалось получить информацию: </span>
-			<button type="button" class="btn btn-warning" ng-click="" ng-disabled="tariffs.loading.errors">
+			<button type="button" class="btn btn-warning" ng-click="tariffs.repeatAll()" ng-disabled="tariffs.loading.errors">
 				<span class="fa fa-refresh" aria-hidden="true"></span> Повторить все
 			</button>
 		</div>
 		<div class="form-group" ng-if="tariffs.errors.length">
 
-			<table class="table table-bordered">
+			<table class="table table-bordered" ng-class="{loading: tariffs.loading.errors}" bs-loading-overlay>
 				<thead>
 				<tr>
 					<th>СД</th>
@@ -105,20 +105,20 @@
 					<th></th>
 				</tr>
 				</thead>
-				<tbody>
+				<tbody bs-loading-overlay>
 				<tr ng-repeat="item in tariffs.errors">
-					<td>{{::item.delivery}}</td>
-					<td>{{::item.city.initialCityFrom || item.city.from || item.city.countryFrom}}</td>
-					<td>{{::item.city.initialCityTo || item.city.to || item.city.countryTo}}</td>
-					<td>{{::item.city.from || item.city.countryFrom}}</td>
-					<td>{{::item.city.to || item.city.countryTo}}</td>
-					<td>{{::item.weight}}</td>
-					<td>{{::item.error}}</td>
+					<td>{{item.delivery}}</td>
+					<td>{{item.city.initialCityFrom || item.city.from || item.city.countryFrom}}</td>
+					<td>{{item.city.initialCityTo || item.city.to || item.city.countryTo}}</td>
+					<td>{{item.city.from || item.city.countryFrom}}</td>
+					<td>{{item.city.to || item.city.countryTo}}</td>
+					<td>{{item.weight}}</td>
+					<td>{{item.error}}</td>
 					<td>
-						<button type="button" class="btn btn-warning" ng-click="" ng-disabled="tariffs.loading.errors" ng-if="item.req">
+						<button type="button" class="btn btn-warning" ng-click="tariffs.repeat(item)" ng-disabled="item.loading" ng-if="item.req">
 							<span class="fa fa-refresh" aria-hidden="true"></span>
 						</button>
-						<button type="button" class="btn btn-danger" ng-click="tariffs.errors.splice($index, 1)">
+						<button type="button" class="btn btn-danger" ng-click="tariffs.errors.splice($index, 1)" ng-disabled="item.loading">
 							<span class="fa fa-trash" aria-hidden="true"></span>
 						</button>
 					</td>
