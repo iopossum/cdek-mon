@@ -137,7 +137,7 @@ var getCity = function (city, cityEng, country, callback) {
     request(opts, callback)
   }, function (err, r, b) {
     if (err) {
-      result.message = commonHelper.getCityJsonError(err);
+      result.message = commonHelper.getCityJsonError(err, trim);
       return callback(null, result);
     }
     b = b.replace('0|/!*DX*!/(', '');
@@ -148,20 +148,20 @@ var getCity = function (city, cityEng, country, callback) {
     try {
       json = JSON.parse(b);
     } catch (e) {
-      result.message = commonHelper.getCityJsonError(e);
+      result.message = commonHelper.getCityJsonError(e, trim);
     }
     if (!json) {
       return callback(null, result);
     }
     if (!json.result) {
-      result.message = commonHelper.getCityJsonError(new Error("Отсутствует обязательный параметр result"));
+      result.message = commonHelper.getCityJsonError(new Error("Отсутствует обязательный параметр result"), trim);
       return callback(null, result);
     }
     var array = null;
     try {
       array = JSON.parse(json.result);
     } catch (e) {
-      result.message = commonHelper.getCityJsonError(new Error("Неверный формат result"));
+      result.message = commonHelper.getCityJsonError(new Error("Неверный формат result"), trim);
     }
     if (!array) {
       return callback(null, result);
@@ -203,7 +203,7 @@ module.exports = function (req, cities, callback) {
   var deliveryData = deliveryHelper.get(delivery);
   var requests = [];
   var cityObj = {};
-  var timestamp = callback ? new Date().getTime*2 : global[delivery];
+  var timestamp = callback ? new Date().getTime*2 : commonHelper.getReqStored(req, delivery);
 
   async.auto({
     getCountries: function (callback) {
@@ -303,7 +303,7 @@ module.exports = function (req, cities, callback) {
           }
         }
         setTimeout(function () {
-          if (global[delivery] > timestamp) {
+          if (commonHelper.getReqStored(req, delivery) > timestamp) {
             return callback({abort: true});
           }
           async.parallel([
@@ -380,7 +380,7 @@ module.exports = function (req, cities, callback) {
 
       async.mapLimit(requests, 3, function (item, callback) {
         setTimeout(function () {
-          if (global[delivery] > timestamp) {
+          if (commonHelper.getReqStored(req, delivery) > timestamp) {
             return callback({abort: true});
           }
           if (item.error) {

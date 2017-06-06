@@ -80,9 +80,9 @@ var getCity = function (city, isFrom, callback) {
   });
 };
 
-var getCalcResult = function (requests, timestamp, type, services, callback) {
+var getCalcResult = function (requests, req, timestamp, type, services, callback) {
   async.mapLimit(requests, 2, function (item, callback) {
-    if (global[delivery] > timestamp) {
+    if (commonHelper.getReqStored(req, delivery) > timestamp) {
       return callback({abort: true});
     }
     if (item.error) {
@@ -247,7 +247,7 @@ module.exports = function (req, cities, callback) {
   var requests = [];
   var intRequests = [];
   var cityObj = {};
-  var timestamp = callback ? new Date().getTime*2 : global[delivery];
+  var timestamp = callback ? new Date().getTime*2 : commonHelper.getReqStored(req, delivery);
   async.auto({
     getServices: function (callback) {
       async.parallel([
@@ -374,7 +374,7 @@ module.exports = function (req, cities, callback) {
         }
         /*уточнение нужно только по мсо-москва*/
         setTimeout(function () {
-          if (global[delivery] > timestamp) {
+          if (commonHelper.getReqStored(req, delivery) > timestamp) {
             return callback({abort: true});
           }
           async.parallel([
@@ -492,10 +492,10 @@ module.exports = function (req, cities, callback) {
       callback(null);
     }],
     requests: ['parseCities', 'getServices', function (results, callback) {
-      getCalcResult(requests, timestamp, 'r', results.getServices[0], callback);
+      getCalcResult(requests, req, timestamp, 'r', results.getServices[0], callback);
     }],
     internationalRequests: ['parseCities', 'getServices', function (results, callback) {
-      getCalcResult(intRequests, timestamp, 'w', results.getServices[1], callback);
+      getCalcResult(intRequests, req, timestamp, 'w', results.getServices[1], callback);
     }]
   }, function (err, results) {
     logger.tariffsInfoLog(delivery, results.requests, 'getTariffs');

@@ -49,19 +49,19 @@ var getCity = function (json, callback) {
       success: false
     };
     if (err) {
-      result.message = commonHelper.getCityJsonError(err);
+      result.message = commonHelper.getCityJsonError(err, json.city);
       return callback(null, result);
     }
     if (!b) {
-      result.message = commonHelper.getCityJsonError(new Error("Неверный ответ от сервера"));
+      result.message = commonHelper.getCityJsonError(new Error("Неверный ответ от сервера"), json.city);
       return callback(null, result);
     }
     if (!b.success) {
-      result.message = commonHelper.getCityJsonError(new Error("Отсутствует обязательный параметр success"));
+      result.message = commonHelper.getCityJsonError(new Error("Отсутствует обязательный параметр success"), json.city);
       return callback(null, result);
     }
     if (!b.success.place_details) {
-      result.message = commonHelper.getCityJsonError(new Error("Отсутствует обязательный параметр success.place_details"));
+      result.message = commonHelper.getCityJsonError(new Error("Отсутствует обязательный параметр success.place_details"), json.city);
       return callback(null, result);
     }
     result.foundCities = [b.success.place_details];
@@ -154,7 +154,7 @@ module.exports = function (req, cities, callback) {
   var deliveryData = deliveryHelper.get(delivery);
   var requests = [];
   var cityObj = {};
-  var timestamp = callback ? new Date().getTime*2 : global[delivery];
+  var timestamp = callback ? new Date().getTime*2 : commonHelper.getReqStored(req, delivery);
 
   async.auto({
     getSession: function (callback) {
@@ -205,7 +205,7 @@ module.exports = function (req, cities, callback) {
           });
         }
         setTimeout(function () {
-          if (global[delivery] > timestamp) {
+          if (commonHelper.getReqStored(req, delivery) > timestamp) {
             return callback({abort: true});
           }
           async.parallel([
@@ -215,6 +215,7 @@ module.exports = function (req, cities, callback) {
               }
               var opts = {
                 google_place_id: city.fromGooglePlaceId,
+                city: city.fromEngName,
                 language: "ru",
                 purpose: 'pickup',
                 session_id: results.getSession
@@ -227,6 +228,7 @@ module.exports = function (req, cities, callback) {
               }
               var opts = {
                 google_place_id: city.toGooglePlaceId,
+                city: city.toEngName,
                 language: "ru",
                 purpose: 'delivery',
                 session_id: results.getSession
@@ -290,7 +292,7 @@ module.exports = function (req, cities, callback) {
     }],
     requests: ['parseCities', function (results, callback) {
       async.mapLimit(requests, 2, function (item, callback) {
-        if (global[delivery] > timestamp) {
+        if (commonHelper.getReqStored(req, delivery) > timestamp) {
           return callback({abort: true});
         }
         if (item.error) {

@@ -274,7 +274,7 @@ var calcResults = function (item, callback) {
 module.exports = function (req, cities, callback) {
   var deliveryData = deliveryHelper.get(delivery);
   var requests = [];
-  var timestamp = callback ? new Date().getTime*2 : global[delivery];
+  var timestamp = callback ? new Date().getTime*2 : commonHelper.getReqStored(req, delivery);
   async.auto({
     getCities: function (callback) {
       var opts = _.extend({}, deliveryData.citiesUrl);
@@ -283,14 +283,14 @@ module.exports = function (req, cities, callback) {
         request(opts, callback)
       }, function (err, r, b) {
         if (err) {
-          return callback(commonHelper.getResponseError(err));
+          return callback(commonHelper.getCityJsonError(err));
         }
         var json = null;
         try {
           json = JSON.parse(b);
         } catch (e) {}
         if (!json) {
-          return callback(commonHelper.getResponseError(new Error("Неверный формат json городов")));
+          return callback(commonHelper.getCityJsonError(new Error("Неверный формат json городов")));
         }
         if (!json.success) {
           return callback(commonHelper.getCityJsonError(new Error("Неверный тип данных в ответе. Отсутствует параметр success")));
@@ -364,7 +364,7 @@ module.exports = function (req, cities, callback) {
     }],
     requests: ['parseCities', function (results, callback) {
       async.mapLimit(requests, 2, function (item, callback) {
-        if (global[delivery] > timestamp) {
+        if (commonHelper.getReqStored(req, delivery) > timestamp) {
           return callback({abort: true});
         }
         if (item.error) {

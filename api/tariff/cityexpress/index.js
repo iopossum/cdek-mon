@@ -76,19 +76,19 @@ var getCity = function (city, country, callback) {
       success: false
     };
     if (err) {
-      result.message = commonHelper.getCityJsonError(err);
+      result.message = commonHelper.getCityJsonError(err, trim);
       return callback(null, result);
     }
     if (!b) {
-      result.message = commonHelper.getCityJsonError(new Error("Неверный тип данных в ответе"));
+      result.message = commonHelper.getCityJsonError(new Error("Неверный тип данных в ответе"), trim);
       return callback(null, result);
     }
     if (!b.d) {
-      result.message = commonHelper.getCityJsonError(new Error("Неверный тип данных в ответе. Отсутствует параметр d"));
+      result.message = commonHelper.getCityJsonError(new Error("Неверный тип данных в ответе. Отсутствует параметр d"), trim);
       return callback(null, result);
     }
     if (!Array.isArray(b.d)) {
-      result.message = commonHelper.getCityJsonError(new Error("Неверный тип данных в ответе"));
+      result.message = commonHelper.getCityJsonError(new Error("Неверный тип данных в ответе"), trim);
       return callback(null, result);
     }
     b.d = b.d.map(function (item) {
@@ -130,7 +130,7 @@ module.exports = function (req, cities, callback) {
   var deliveryData = deliveryHelper.get(delivery);
   var requests = [];
   var cityObj = {};
-  var timestamp = callback ? new Date().getTime*2 : global[delivery];
+  var timestamp = callback ? new Date().getTime*2 : commonHelper.getReqStored(req, delivery);
   async.auto({
     getInitial: function (callback) {
       var opts = Object.assign({}, deliveryData.calcUrl);
@@ -164,7 +164,7 @@ module.exports = function (req, cities, callback) {
           });
         }
         setTimeout(function () {
-          if (global[delivery] > timestamp) {
+          if (commonHelper.getReqStored(req, delivery) > timestamp) {
             return callback({abort: true});
           }
           async.parallel([
@@ -236,7 +236,7 @@ module.exports = function (req, cities, callback) {
     }],
     requests: ['parseCities', function (results, callback) {
       async.mapLimit(requests, 2, function (item, callback) {
-        if (global[delivery] > timestamp) {
+        if (commonHelper.getReqStored(req, delivery) > timestamp) {
           return callback({abort: true});
         }
         if (item.error) {

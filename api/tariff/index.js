@@ -31,7 +31,7 @@ module.exports = function (req, res) {
   var obj = {};
   targets.forEach(function (item) {
     obj[item.id] = {complete: false, results: []};
-    global[item.id] = new Date().getTime();
+    commonHelper.saveReqStore(req, item.id, new Date().getTime());
   });
   req.session.delivery = obj;
   req.body.cities.forEach(function (item) {
@@ -46,6 +46,9 @@ module.exports = function (req, res) {
     var item = req.body.deliveries[i];
     var cities = commonHelper.cloneArray(req.body.cities);
     switch (item) {
+      case 'cdek':
+        require('./cdek')(req, cities);
+        break;
       case 'emspost':
         emspost(req, cities);
         break;

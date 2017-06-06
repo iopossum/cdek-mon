@@ -237,14 +237,14 @@ var getCity = function (city, country, deliveryData, callback) {
       success: false
     };
     if (err) {
-      result.message = commonHelper.getCityJsonError(err);
+      result.message = commonHelper.getCityJsonError(err, trim);
       return callback(null, result);
     }
     var array = null;
     try {
       array = JSON.parse(b);
     } catch (e) {
-      result.message = commonHelper.getCityJsonError(e);;
+      result.message = commonHelper.getCityJsonError(e, trim);
     }
     if (!array) {
       return callback(null, result);
@@ -281,7 +281,7 @@ module.exports = function (req, cities, callback) {
   var deliveryData = deliveryHelper.get(delivery);
   var requests = [];
   var cityObj = {};
-  var timestamp = callback ? new Date().getTime*2 : global[delivery];
+  var timestamp = callback ? new Date().getTime*2 : commonHelper.getReqStored(req, delivery);
   /*cities.forEach(function (item) {
     if (!item.from || !item.to) {
       requests = requests.concat(commonHelper.getResponseArray(req.body.weights, item, delivery, 'Должен быть указан хотя бы 1 город'));
@@ -316,7 +316,7 @@ module.exports = function (req, cities, callback) {
           });
         }
         setTimeout(function () {
-          if (global[delivery] > timestamp) {
+          if (commonHelper.getReqStored(req, delivery) > timestamp) {
             return callback({abort: true});
           }
           async.parallel([
@@ -389,7 +389,7 @@ module.exports = function (req, cities, callback) {
         });
       });
       async.mapLimit(requests, 3, function (item, callback) {
-        if (global[delivery] > timestamp) {
+        if (commonHelper.getReqStored(req, delivery) > timestamp) {
           return callback({abort: true});
         }
         if (item.error) {

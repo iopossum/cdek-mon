@@ -61,24 +61,24 @@ var getCity = function (city, callback) {
       success: false
     };
     if (err) {
-      result.message = commonHelper.getCityJsonError(err);
+      result.message = commonHelper.getCityJsonError(err, trim);
       return callback(null, result);
     }
     var json = null;
     try {
       json = JSON.parse(b);
     } catch (e) {
-      result.message = commonHelper.getCityJsonError(e);
+      result.message = commonHelper.getCityJsonError(e, trim);
     }
     if (!json) {
       return callback(null, result);
     }
     if (!json.items) {
-      result.message = commonHelper.getCityJsonError(new Error("Отсутствует обязательный параметр items"));
+      result.message = commonHelper.getCityJsonError(new Error("Отсутствует обязательный параметр items"), trim);
       return callback(null, result);
     }
     if (!Array.isArray(json.items)) {
-      result.message = commonHelper.getCityJsonError(new Error("Неверный формат items"));
+      result.message = commonHelper.getCityJsonError(new Error("Неверный формат items"), trim);
       return callback(null, result);
     }
     if (trimSplit) {
@@ -162,7 +162,7 @@ module.exports = function (req, cities, callback) {
   var deliveryData = deliveryHelper.get(delivery);
   var requests = [];
   var cityObj = {};
-  var timestamp = callback ? new Date().getTime*2 : global[delivery];
+  var timestamp = callback ? new Date().getTime*2 : commonHelper.getReqStored(req, delivery);
   async.auto({
     getCities: function (callback) {
       async.mapSeries(cities, function (city, callback) {
@@ -173,7 +173,7 @@ module.exports = function (req, cities, callback) {
           });
         }
         setTimeout(function () {
-          if (global[delivery] > timestamp) {
+          if (commonHelper.getReqStored(req, delivery) > timestamp) {
             return callback({abort: true});
           }
           async.parallel([
@@ -245,7 +245,7 @@ module.exports = function (req, cities, callback) {
     }],
     requests: ['parseCities', function (results, callback) {
       async.mapLimit(requests, 2, function (item, callback) {
-        if (global[delivery] > timestamp) {
+        if (commonHelper.getReqStored(req, delivery) > timestamp) {
           return callback({abort: true});
         }
         if (item.error) {

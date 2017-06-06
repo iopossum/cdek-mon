@@ -78,13 +78,13 @@ class NewsCtrl {
         delivery: item.id
       };
       that.tariffService.news(obj).then(function (res) {
-        that.dynamic++;
-        if (index === targets.length - 1) {
+        if (that.dynamic === targets.length - 1) {
           that.loading = false;
         }
+        that.dynamic++;
         that.receiveNews(res);
       }, function (err) {
-        if (index === targets.length - 1) {
+        if (that.dynamic === targets.length - 1) {
           that.loading = false;
         }
         that.dynamic++;

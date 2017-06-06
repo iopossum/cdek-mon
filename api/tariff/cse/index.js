@@ -68,7 +68,7 @@ var getCity = function (city, country, callback) {
       success: false
     };
     if (err) {
-      result.message = commonHelper.getCityJsonError(err);
+      result.message = commonHelper.getCityJsonError(err, trim);
       return callback(null, result);
     }
     var $ = cheerio.load(b);
@@ -101,7 +101,7 @@ module.exports = function (req, cities, callback) {
   var deliveryData = deliveryHelper.get(delivery);
   var requests = [];
   var cityObj = {};
-  var timestamp = callback ? new Date().getTime*2 : global[delivery];
+  var timestamp = callback ? new Date().getTime*2 : commonHelper.getReqStored(req, delivery);
   async.auto({
     getCountries: function (callback) {
       /*async.retry(config.retryOpts, function (callback) {
@@ -186,7 +186,7 @@ module.exports = function (req, cities, callback) {
           });
         }
         setTimeout(function () {
-          if (global[delivery] > timestamp) {
+          if (commonHelper.getReqStored(req, delivery) > timestamp) {
             return callback({abort: true});
           }
           async.parallel([
@@ -258,7 +258,7 @@ module.exports = function (req, cities, callback) {
     }],
     requests: ['parseCities', function (results, callback) {
       async.mapLimit(requests, 2, function (item, callback) {
-        if (global[delivery] > timestamp) {
+        if (commonHelper.getReqStored(req, delivery) > timestamp) {
           return callback({abort: true});
         }
         if (item.error) {

@@ -7,62 +7,38 @@ var cheerio = require('cheerio');
 var config = require('../../../conf');
 var _ = require('underscore');
 var logger = require('../../helpers/logger');
-var delivery = 'jde';
+var delivery = 'cdek';
 
 var getReq = function (from, to) {
   from = from || {};
   to = to || {};
   return {
+    Action: 'GetTarifList',
+    orderType: 1,
     FromCity: from.id,
     ToCity: to.id,
-    Weight: 1,
-    Volume: '0,01',
-    VolumeDimension1: '',
-    VolumeDimension2: '',
-    VolumeDimension3: '',
-    OverSizeWeight: '',
-    OverSizeVolume: '',
-    OverSizeVolumeDimension1: '',
-    OverSizeVolumeDimension2: '',
-    OverSizeVolumeDimension3: '',
-    LathingVolume: '',
-    LathingRatio: 1,
-    SealingBag80: '',
-    SealingBag100: '',
-    SealingBag150: '',
-    SealingBox1: '',
-    SealingBox2: '',
-    SealingBox3: '',
-    SealingBox4: '',
-    DeclaredUse: 'n',
-    DeclaredPrice: '',
-    FromDeliveryUse: 'y',
-    FromDeliveryCity: from.trim,
-    FromDeliveryCityKm: '',
-    FromDeliveryLoadingUse: 'n',
-    FromDeliveryLoadingTime: 15,
-    ToDeliveryUse: 'y',
-    ToDeliveryCity: to.trim,
-    ToDeliveryCityKm: '',
-    ToDeliveryLoadingUse: 'n',
-    ToDeliveryLoadingTime: 15,
-    add: 1
-  };
+    'Package[0][weight]': 1,
+    'Package[0][length]': 1,
+    'Package[0][width]': 1,
+    'Package[0][height]': 1,
+    'Package[0][description]': '',
+    idInterface: 3
+  }
 };
 
-var getCity = function (city, type, callback) {
+var getCity = function (city, country, callback) {
   var deliveryData = deliveryHelper.get(delivery);
   var opts = Object.assign({}, deliveryData.citiesUrl);
   var trim = commonHelper.getCity(city);
-  opts.form = {
-    type: type,
-    name: trim
-  };
+  opts.body = 'Action=GetLocationList&city=' + escape(trim);
+  opts.followAllRedirects = true;
+  opts.jar = true;
   async.retry(config.retryOpts, function (callback) {
     request(opts, callback)
   }, function (err, r, b) {
     var result = {
       city: city,
+      country: country,
       cityTrim: trim,
       success: false
     };
@@ -79,25 +55,40 @@ var getCity = function (city, type, callback) {
     if (!json) {
       return callback(null, result);
     }
-    if (!Array.isArray(json)) {
-      result.message = commonHelper.getCityJsonError(new Error("Неверный тип данных в ответе"), trim);
+    if (!json.js) {
+      result.message = commonHelper.getCityJsonError(new Error("Неверный формат ответа, отсутствует параметр js"), trim);
       return callback(null, result);
     }
-    if (!json.length) {
+    if (!json.js.Content) {
+      result.message = commonHelper.getCityJsonError(new Error("Неверный формат ответа, отсутствует параметр js.Content"), trim);
+      return callback(null, result);
+    }
+    if (!json.js.Content.geonames) {
+      result.message = commonHelper.getCityJsonError(new Error("Неверный формат ответа, отсутствует параметр js.Content.geonames"), trim);
+      return callback(null, result);
+    }
+    if (!Array.isArray(json.js.Content.geonames)) {
+      result.message = commonHelper.getCityJsonError(new Error("Неверный формат ответа, js.Content.geonames - не массив"), trim);
+      return callback(null, result);
+    }
+    var cities = commonHelper.findInArray(json.js.Content.geonames, trim, 'name', true);
+    if (!cities.length) {
       result.message = commonHelper.getCityNoResultError(trim);
-    } else if (json.length === 1) {
-      result.foundCities = json;
+    } else if (cities.length === 1) {
+      result.foundCities = cities;
       result.success = true;
     } else {
       var region = commonHelper.getRegionName(city);
       var founds = [];
-      if (region) {
-        founds = commonHelper.findInArray(json, region, 'name');
+      if (country) {
+        founds = commonHelper.findInArray(cities, country, 'countryName');
       }
-      result.foundCities = founds.length ? founds : [json[0]];
+      if (region) {
+        founds = commonHelper.findInArray(founds.length ? founds : cities, region, 'name');
+      }
+      result.foundCities = founds.length ? founds : [cities[0]];
       result.success = true;
     }
-    result.cities = json;
     callback(null, result);
   });
 };
@@ -125,13 +116,13 @@ module.exports = function (req, cities, callback) {
               if (typeof  cityObj[city.from + city.countryFrom] !== 'undefined') {
                 return callback(null);
               }
-              getCity(city.from, 'from', callback);
+              getCity(city.from, city.countryFrom, callback);
             },
             function (callback) {
               if (typeof  cityObj[city.to + city.countryTo] !== 'undefined') {
                 return callback(null);
               }
-              getCity(city.to, 'to', callback);
+              getCity(city.to, city.countryTo, callback);
             }
           ], function (err, foundCities) { //ошибки быть не может
             if (typeof  cityObj[city.from + city.countryFrom] === 'undefined') {
@@ -160,14 +151,12 @@ module.exports = function (req, cities, callback) {
         } else {
           item.fromJson.foundCities.forEach(function (fromCity) {
             item.toJson.foundCities.forEach(function (toCity) {
-              fromCity.trim = item.fromJson.cityTrim;
-              toCity.trim = item.toJson.cityTrim;
               tempRequests.push({
                 city: {
                   initialCityFrom: item.from,
                   initialCityTo: item.to,
-                  from: fromCity.trim,
-                  to: toCity.trim,
+                  from: fromCity.name,
+                  to: toCity.name,
                   countryFrom: item.countryFrom,
                   countryTo: item.countryTo
                 },
@@ -183,7 +172,7 @@ module.exports = function (req, cities, callback) {
         req.body.weights.forEach(function (weight) {
           var obj = commonHelper.deepClone(item);
           obj.weight = weight;
-          obj.req.Weight = weight;
+          obj.req['Package[0][weight]'] = weight;
           requests.push(obj);
         });
       });
@@ -200,7 +189,11 @@ module.exports = function (req, cities, callback) {
           });
         }
         var opts = _.extend({}, deliveryData.calcUrl);
-        opts.form = item.req;
+        opts.body = '';
+        for (var key in item.req) {
+          opts.body += (key + '=' + item.req[key] + '&');
+        }
+        opts.jar = true;
         setTimeout(function () {
           async.retry(config.retryOpts, function (callback) {
             request(opts, callback)
@@ -213,39 +206,36 @@ module.exports = function (req, cities, callback) {
             try {
               json = JSON.parse(b);
             } catch (e) {
-              item.error = commonHelper.getResponseError(e);
+              item.error = commonHelper.getResultJsonError(e);
             }
             if (!json) {
               return callback(null, item);
             }
-            if (!json.base) {
-              item.error = commonHelper.getResponseError(new Error("Отсутствует обязательный параметр base"));
+            if (!json.js) {
+              item.error = commonHelper.getResultJsonError(new Error("Неверный формат ответа, отсутствует параметр js"));
               return callback(null, item);
             }
-            try {
-              var basePrice = commonHelper.parseFloat(json.base.price);
-              if (json.warm && json.warm.price) {
-                basePrice += commonHelper.parseFloat(json.warm.price);
+            if (!json.js.Content) {
+              item.error = commonHelper.getResultJsonError(new Error("Неверный формат ответа, отсутствует параметр js.Content"));
+              return callback(null, item);
+            }
+            if (!json.js.Content.result) {
+              item.error = commonHelper.getResultJsonError(new Error("Неверный формат ответа, отсутствует параметр js.Content.result"));
+              return callback(null, item);
+            }
+            if (!Array.isArray(json.js.Content.result)) {
+              item.error = commonHelper.getResultJsonError(new Error("Неверный формат ответа, js.Content.result - не массив"));
+              return callback(null, item);
+            }
+
+            item.tariffs = json.js.Content.result.map(function (trf) {
+              return {
+                service: trf.serviceName,
+                cost: trf.price,
+                deliveryTime: trf.periodMin === trf.periodMax ? trf.periodMin : trf.periodMin + '-' + trf.periodMax
               }
-              var time = json.time.min + '-' + json.time.max;
-              item.tariffs.push(commonHelper.createTariff("СС", basePrice, time));
-              /*if (json.auto) {
-                if (json.auto.from && json.auto.from.price) {
-                  item.tariffs.push(commonHelper.createTariff("ДС", basePrice + commonHelper.parseFloat(json.auto.from.price), time));
-                }
-                if (json.auto.to && json.auto.to.price) {
-                  item.tariffs.push(commonHelper.createTariff("СД", basePrice + commonHelper.parseFloat(json.auto.to.price), time));
-                }
-                if (json.auto.from && json.auto.from.price && json.auto.to && json.auto.to.price) {
-                  item.tariffs.push(commonHelper.createTariff("ДД", basePrice + commonHelper.parseFloat(json.auto.from.price) + commonHelper.parseFloat(json.auto.to.price), time));
-                }
-              }*/
-            } catch (e) {
-              item.error = commonHelper.getResponseError(e);
-            }
-            if (item.error) {
-              return callback(null, item);
-            }
+            });
+
             if (!item.tariffs.length) {
               item.error = commonHelper.getNoResultError();
             }

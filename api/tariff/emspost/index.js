@@ -119,7 +119,7 @@ var getEMSReq = function (cities, countries, item) {
 module.exports = function (req, cities, callback) {
   var deliveryData = deliveryHelper.get(delivery);
   var requests = [];
-  var timestamp = callback ? new Date().getTime*2 : global[delivery];
+  var timestamp = callback ? new Date().getTime*2 : commonHelper.getReqStored(req, delivery);
   async.auto({
     getCities: function (callback) {
       var opts = deliveryData.citiesUrl;
@@ -173,7 +173,7 @@ module.exports = function (req, cities, callback) {
         });
       });
       async.mapSeries(requests, function (item, callback) {
-        if (global[delivery] > timestamp) {
+        if (commonHelper.getReqStored(req, delivery) > timestamp) {
           return callback({abort: true});
         }
         if (!item.req) {

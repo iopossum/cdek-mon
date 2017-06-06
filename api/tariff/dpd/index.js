@@ -112,24 +112,24 @@ var getCity = function (city, country, cookie, callback) {
       success: false
     };
     if (err) {
-      result.message = commonHelper.getCityJsonError(err);
+      result.message = commonHelper.getCityJsonError(err, trim);
       return callback(null, result);
     }
     var json = null;
     try {
       json = JSON.parse(b);
     } catch (e) {
-      result.message = commonHelper.getCityJsonError(e);
+      result.message = commonHelper.getCityJsonError(e, trim);
     }
     if (!json) {
       return callback(null, result);
     }
     if (!json.geonames) {
-      result.message = commonHelper.getCityJsonError(new Error("Отсутствует geonames в ответе"));
+      result.message = commonHelper.getCityJsonError(new Error("Отсутствует geonames в ответе"), trim);
       return callback(null, result);
     }
     if (!Array.isArray(json.geonames)) {
-      result.message = commonHelper.getCityJsonError(new Error("Неверный тип geonames в ответе"));
+      result.message = commonHelper.getCityJsonError(new Error("Неверный тип geonames в ответе"), trim);
       return callback(null, result);
     }
     json.geonames = commonHelper.findInArray(json.geonames, trim, 'name', true);
@@ -236,7 +236,7 @@ module.exports = function (req, cities, callback) {
   var internationalRequests = [];
   var cityObj = {};
   var cityIntObj = {};
-  var timestamp = callback ? new Date().getTime*2 : global[delivery];
+  var timestamp = callback ? new Date().getTime*2 : commonHelper.getReqStored(req, delivery);
   cities.forEach(function (item) {
     if (item.countryFrom && commonHelper.SNG.indexOf(item.countryFrom.toLowerCase()) > -1) {
       item.countryFromTemp = item.countryFrom;
@@ -325,7 +325,7 @@ module.exports = function (req, cities, callback) {
           });
         }
         setTimeout(function () {
-          if (global[delivery] > timestamp) {
+          if (commonHelper.getReqStored(req, delivery) > timestamp) {
             return callback({abort: true});
           }
           //у dpd разные запросы и разные id города в разных калькуляторах
@@ -454,7 +454,7 @@ module.exports = function (req, cities, callback) {
     }],
     requests: ['parseCities', function (results, callback) {
       async.mapLimit(requests, 1, function (item, callback) {
-        if (global[delivery] > timestamp) {
+        if (commonHelper.getReqStored(req, delivery) > timestamp) {
           return callback({abort: true});
         }
         if (item.error) {
@@ -469,7 +469,7 @@ module.exports = function (req, cities, callback) {
     }],
     internationalRequests: ['parseCities', function (results, callback) {
       async.mapLimit(internationalRequests, 1, function (item, callback) {
-        if (global[delivery] > timestamp) {
+        if (commonHelper.getReqStored(req, delivery) > timestamp) {
           return callback({abort: true});
         }
         if (item.error) {

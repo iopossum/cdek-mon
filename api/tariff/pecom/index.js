@@ -171,7 +171,7 @@ var filterCitiesByRegion = function (array, value, trim) {
 module.exports = function (req, cities, callback) {
   var deliveryData = deliveryHelper.get(delivery);
   var requests = [];
-  var timestamp = callback ? new Date().getTime*2 : global[delivery];
+  var timestamp = callback ? new Date().getTime*2 : commonHelper.getReqStored(req, delivery);
   async.auto({
     getCities: function (callback) {
       async.retry(config.retryOpts, function (callback) {
@@ -186,7 +186,7 @@ module.exports = function (req, cities, callback) {
           })
           .end()
           .then(function (result) {
-            callback(!result.regions.length ? new Error(commonHelper.getResponseError()) : null, result);
+            callback(!result.regions.length ? new Error(commonHelper.getCityJsonError(new Error("Массив городов пустой или отсутствует"))) : null, result);
           })
           .catch(function (error) {
             callback(new Error(commonHelper.getResponseError(error)), []);
@@ -273,7 +273,7 @@ module.exports = function (req, cities, callback) {
     }],
     requests: ['parseCities', function (results, callback) {
       async.mapLimit(requests, 2, function (item, callback) {
-        if (global[delivery] > timestamp) {
+        if (commonHelper.getReqStored(req, delivery) > timestamp) {
           return callback({abort: true});
         }
         if (item.error) {

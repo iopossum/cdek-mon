@@ -36,6 +36,9 @@ module.exports = function (req, res) {
       }
     };
     switch (req.body.delivery) {
+      case 'cdek':
+        require('./cdek')(req, cities, response);
+        break;
       case 'emspost':
         emspost(req, cities, response);
         break;

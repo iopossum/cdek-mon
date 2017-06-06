@@ -33,6 +33,7 @@ class Tariff {
       }
     });
     this.targets = [
+      {id: 'cdek', name: 'CDEK'},
       {id: 'emspost', name: 'EMSPost'},
       {id: 'majorexpress', name: 'Major-express'},
       {id: 'spsr', name: 'Spsr'},

@@ -2,6 +2,12 @@ var _ = require('underscore');
 
 var targets = [
   {
+    id: 'cdek',
+    cookieUrl: {method: 'GET', uri: 'https://www.cdek.ru/calculator.html'},
+    calcUrl: {method: 'POST', uri: 'https://www.cdek.ru/ajax.php?JsHttpRequest=0-xml'},
+    citiesUrl: {method: 'POST', uri: 'https://www.cdek.ru/ajax.php?JsHttpRequest=0-xml'}
+  },
+  {
     id: 'emspost',
     /*calcUrl: {method: 'POST', uri: 'http://www.emspost.ru/default.aspx/MakeCalculation'},*/ //old
     calcUrl: {method: 'POST', uri: 'http://www.emspost.ru/default.aspx/getConditions'},
@@ -57,11 +63,11 @@ var targets = [
   },
   {
     id: 'ponyexpress',
-    calcUrl: {method: 'POST', uri: 'http://www.ponyexpress.ru/local/ajax/tariff.php'},
-    citiesUrl: {method: 'GET', uri: 'http://www.ponyexpress.ru/autocomplete/city?term='},
-    countriesUrl: {method: 'GET', uri: 'http://www.ponyexpress.ru/autocomplete/country?term='},
-    newsUrl: {method: 'GET', uri: 'http://www.ponyexpress.ru/about/press-center/news/'},
-    baseUrl: 'http://www.ponyexpress.ru'
+    calcUrl: {method: 'POST', uri: 'https://www.ponyexpress.ru/local/ajax/tariff.php'},
+    citiesUrl: {method: 'GET', uri: 'https://www.ponyexpress.ru/autocomplete/city?term='},
+    countriesUrl: {method: 'GET', uri: 'https//www.ponyexpress.ru/autocomplete/country?term='},
+    newsUrl: {method: 'GET', uri: 'https://www.ponyexpress.ru/about/press-center/news/'},
+    baseUrl: 'https://www.ponyexpress.ru'
   },
   {
     id: 'cse',

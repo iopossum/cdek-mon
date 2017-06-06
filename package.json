@@ -42,6 +42,7 @@
     "mongoose": "^4.9.2",
     "nightmare": "^2.10.0",
     "nightmare-real-mouse": "^1.0.0",
+    "node-ttl": "0.0.5",
     "password-generator": "^2.1.0",
     "pg": "^6.1.5",
     "phantom": "^4.0.1",

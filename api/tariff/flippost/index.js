@@ -38,32 +38,32 @@ var getCity = function (city, callback) {
       success: false
     };
     if (err) {
-      result.message = commonHelper.getResponseError(err);
+      result.message = commonHelper.getCityJsonError(err, trim);
       return callback(null, result);
     }
     var json = null;
     try {
       json = JSON.parse(b);
     } catch (e) {
-      result.message = commonHelper.getCityJsonError(e);
+      result.message = commonHelper.getCityJsonError(e, trim);
     }
     if (!json) {
       return callback(null, result);
     }
     if (!json.success) {
-      result.message = commonHelper.getCityJsonError(new Error(json.msg || "success=false"));
+      result.message = commonHelper.getCityJsonError(new Error(json.msg || "success=false"), trim);
       return callback(null, result);
     }
     if (!json.data) {
-      result.message = commonHelper.getCityJsonError(new Error("Отсутствует data в ответе"));
+      result.message = commonHelper.getCityJsonError(new Error("Отсутствует data в ответе"), trim);
       return callback(null, result);
     }
     if (!Array.isArray(json.data)) {
-      result.message = commonHelper.getCityJsonError(new Error("Неверный тип data в ответе"));
+      result.message = commonHelper.getCityJsonError(new Error("Неверный тип data в ответе"), trim);
       return callback(null, result);
     }
     if (!json.data.length) {
-      result.message = commonHelper.getCityNoResultError();
+      result.message = commonHelper.getCityNoResultError(trim);
     } else if (json.data.length === 1) {
       result.foundCities = json.data;
       result.success = true;
@@ -107,7 +107,7 @@ module.exports = function (req, cities, callback) {
   var requests = [];
   var otdoRequests = [];
   var cityObj = {};
-  var timestamp = callback ? new Date().getTime*2 : global[delivery];
+  var timestamp = callback ? new Date().getTime*2 : commonHelper.getReqStored(req, delivery);
   async.auto({
     getOtDoCountries: function (callback) {
       var opts = Object.assign({}, deliveryData.calcOtdoIntUrl);
@@ -187,7 +187,7 @@ module.exports = function (req, cities, callback) {
           }
         }
         setTimeout(function () {
-          if (global[delivery] > timestamp) {
+          if (commonHelper.getReqStored(req, delivery) > timestamp) {
             return callback({abort: true});
           }
           if (["новосибирск"].indexOf(city.from.toLowerCase()) !== -1) {
@@ -275,7 +275,7 @@ module.exports = function (req, cities, callback) {
     }],
     requests: ['parseCities', function (results, callback) {
       async.mapLimit(requests, 2, function (item, callback) {
-        if (global[delivery] > timestamp) {
+        if (commonHelper.getReqStored(req, delivery) > timestamp) {
           return callback({abort: true});
         }
         if (item.error) {
@@ -334,7 +334,7 @@ module.exports = function (req, cities, callback) {
     }],
     otDoRequests: ['parseCities', function (results, callback) {
       async.mapLimit(otdoRequests, 2, function (item, callback) {
-        if (global[delivery] > timestamp) {
+        if (commonHelper.getReqStored(req, delivery) > timestamp) {
           return callback({abort: true});
         }
         if (item.error) {

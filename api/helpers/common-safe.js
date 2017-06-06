@@ -126,8 +126,12 @@ exports.getResponseError = function (err) {
   return "Не удалось получить информацию с сайта. " + (err.message ? 'Ошибка: ' + err.message : '');
 };
 
-exports.getCityJsonError = function (err) {
-  return "Не удалось получить города с сайта. Неверный ответ от сервера. " + (err.message ? 'Ошибка: ' + err.message : '');
+exports.getCityJsonError = function (err, city) {
+  var mes = "Не удалось получить города с сайта. Неверный ответ от сервера. " + (err.message ? 'Ошибка: ' + err.message : '');
+  if (city) {
+    mes = "Не удалось получить город " + city.toUpperCase() + " с сайта. Неверный ответ от сервера. " + (err.message ? 'Ошибка: ' + err.message : '')
+  }
+  return mes;
 };
 
 exports.getCountriesError = function (err) {

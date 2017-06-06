@@ -32,56 +32,61 @@
 	<div class="col-xs-12">
 		<div class="form-group" ng-if="tariffs.results.length">
 
-			<table class="table table-bordered" id="tariffs">
-				<thead>
-				<tr>
-					<th sort-header title="СД" name="delivery" sort="tariffs.sort" accept="tariffs.setSort()"></th>
-					<th>Откуда</th>
-					<th>Куда</th>
-					<th>Откуда(калькулятор)</th>
-					<th>Куда(калькулятор)</th>
-					<th sort-header title="Вес" name="weight" sort="tariffs.sort" accept="tariffs.setSort()"></th>
-					<th>Услуга</th>
-					<th>Цена</th>
-					<th>Срок доставки</th>
-					<th></th>
-				</tr>
-				</thead>
-				<!--<tbody ng-repeat="item in tariffs.results track by $index">
-				<tr>
-					<td rowspan="{{item.tariffs.length || 1}}">{{::item.delivery}}</td>
-					<td rowspan="{{item.tariffs.length || 1}}">{{::item.city.from || item.city.countryFrom}}</td>
-					<td rowspan="{{item.tariffs.length || 1}}">{{::item.city.to || item.city.countryTo}}</td>
-					<td rowspan="{{item.tariffs.length || 1}}">{{::item.weight}}</td>
-					<td>{{::item.tariffs[0].service}}</td>
-					<td>{{::item.tariffs[0].cost}}</td>
-					<td>{{::item.tariffs[0].deliveryTime}}</td>
-				</tr>
-				<tr ng-repeat="tarf in item.tariffs" ng-if="$index > 0">
-					<td>{{::tarf.service}}</td>
-					<td>{{::tarf.cost}}</td>
-					<td>{{::tarf.deliveryTime}}</td>
-				</tr>
-				</tbody>-->
-				<tbody ng-repeat="item in tariffs.results">
-				<tr ng-repeat="srv in item.tariffs">
-					<td>{{item.delivery}}</td>
-					<td>{{item.city.initialCityFrom || item.city.countryFrom}}</td>
-					<td>{{item.city.initialCityTo || item.city.countryTo}}</td>
-					<td>{{item.city.from || item.city.countryFrom}}</td>
-					<td>{{item.city.to || item.city.countryTo}}</td>
-					<td>{{item.weight}}</td>
-					<td>{{srv.service}}</td>
-					<td>{{srv.cost}}</td>
-					<td>{{srv.deliveryTime}}</td>
-					<td>
-						<button type="button" class="btn btn-danger" ng-click="tariffs.deleteTariff($parent.$index, $index)">
-							<span class="fa fa-trash" aria-hidden="true"></span>
-						</button>
-					</td>
-				</tr>
-				</tbody>
-			</table>
+			<div class="fixed-table-container">
+				<div class="header-background success"> </div>
+				<div class="fixed-table-container-inner">
+					<table class="table table-bordered" id="tariffs">
+						<thead>
+						<tr>
+							<th sort-header title="СД" name="delivery" sort="tariffs.sort" accept="tariffs.setSort()"></th>
+							<th><div class="th-inner">Откуда</div></th>
+							<th><div class="th-inner">Куда</div></th>
+							<th><div class="th-inner">Откуда(кальк)</div></th>
+							<th><div class="th-inner">Куда(кальк)</div></th>
+							<th style="min-width: 50px;" sort-header title="Вес" name="weight" sort="tariffs.sort" accept="tariffs.setSort()"></th>
+							<th style="min-width: 100px;"><div class="th-inner">Услуга</div></th>
+							<th style="min-width: 50px;"><div class="th-inner">Цена</div></th>
+							<th style="min-width: 100px;"><div class="th-inner">Срок доставки</div></th>
+							<th></th>
+						</tr>
+						</thead>
+						<!--<tbody ng-repeat="item in tariffs.results track by $index">
+						<tr>
+							<td rowspan="{{item.tariffs.length || 1}}">{{::item.delivery}}</td>
+							<td rowspan="{{item.tariffs.length || 1}}">{{::item.city.from || item.city.countryFrom}}</td>
+							<td rowspan="{{item.tariffs.length || 1}}">{{::item.city.to || item.city.countryTo}}</td>
+							<td rowspan="{{item.tariffs.length || 1}}">{{::item.weight}}</td>
+							<td>{{::item.tariffs[0].service}}</td>
+							<td>{{::item.tariffs[0].cost}}</td>
+							<td>{{::item.tariffs[0].deliveryTime}}</td>
+						</tr>
+						<tr ng-repeat="tarf in item.tariffs" ng-if="$index > 0">
+							<td>{{::tarf.service}}</td>
+							<td>{{::tarf.cost}}</td>
+							<td>{{::tarf.deliveryTime}}</td>
+						</tr>
+						</tbody>-->
+						<tbody ng-repeat="item in tariffs.results">
+						<tr ng-repeat="srv in item.tariffs">
+							<td>{{item.delivery}}</td>
+							<td>{{item.city.initialCityFrom || item.city.countryFrom}}</td>
+							<td>{{item.city.initialCityTo || item.city.countryTo}}</td>
+							<td>{{item.city.from || item.city.countryFrom}}</td>
+							<td>{{item.city.to || item.city.countryTo}}</td>
+							<td>{{item.weight}}</td>
+							<td>{{srv.service}}</td>
+							<td>{{srv.cost}}</td>
+							<td>{{srv.deliveryTime}}</td>
+							<td>
+								<button type="button" class="btn btn-danger" ng-click="tariffs.deleteTariff($parent.$index, $index)">
+									<span class="fa fa-trash" aria-hidden="true"></span>
+								</button>
+							</td>
+						</tr>
+						</tbody>
+					</table>
+				</div>
+			</div>
 
 		</div>
 		<div class="form-group" ng-if="tariffs.errors.length">
@@ -92,39 +97,44 @@
 		</div>
 		<div class="form-group" ng-if="tariffs.errors.length">
 
-			<table class="table table-bordered" ng-class="{loading: tariffs.loading.errors}" bs-loading-overlay>
-				<thead>
-				<tr>
-					<th>СД</th>
-					<th>Откуда</th>
-					<th>Куда</th>
-					<th>Откуда(калькулятор)</th>
-					<th>Куда(калькулятор)</th>
-					<th>Вес</th>
-					<th>Ошибка</th>
-					<th></th>
-				</tr>
-				</thead>
-				<tbody bs-loading-overlay>
-				<tr ng-repeat="item in tariffs.errors">
-					<td>{{item.delivery}}</td>
-					<td>{{item.city.initialCityFrom || item.city.from || item.city.countryFrom}}</td>
-					<td>{{item.city.initialCityTo || item.city.to || item.city.countryTo}}</td>
-					<td>{{item.city.from || item.city.countryFrom}}</td>
-					<td>{{item.city.to || item.city.countryTo}}</td>
-					<td>{{item.weight}}</td>
-					<td>{{item.error}}</td>
-					<td>
-						<button type="button" class="btn btn-warning" ng-click="tariffs.repeat(item)" ng-disabled="item.loading" ng-if="item.req">
-							<span class="fa fa-refresh" aria-hidden="true"></span>
-						</button>
-						<button type="button" class="btn btn-danger" ng-click="tariffs.errors.splice($index, 1)" ng-disabled="item.loading">
-							<span class="fa fa-trash" aria-hidden="true"></span>
-						</button>
-					</td>
-				</tr>
-				</tbody>
-			</table>
+			<div class="fixed-table-container">
+				<div class="header-background warning"> </div>
+				<div class="fixed-table-container-inner">
+					<table class="table table-bordered" ng-class="{loading: tariffs.loading.errors}" bs-loading-overlay>
+						<thead>
+						<tr>
+							<th><div class="th-inner">СД</div></th>
+							<th><div class="th-inner">Откуда</div></th>
+							<th><div class="th-inner">Куда</div></th>
+							<th><div class="th-inner">Откуда(кальк)</div></th>
+							<th><div class="th-inner">Куда(кальк)</div></th>
+							<th style="min-width: 50px;"><div class="th-inner">Вес</div></th>
+							<th style="min-width: 100px;"><div class="th-inner">Ошибка</div></th>
+							<th></th>
+						</tr>
+						</thead>
+						<tbody bs-loading-overlay>
+						<tr ng-repeat="item in tariffs.errors">
+							<td>{{item.delivery}}</td>
+							<td>{{item.city.initialCityFrom || item.city.from || item.city.countryFrom}}</td>
+							<td>{{item.city.initialCityTo || item.city.to || item.city.countryTo}}</td>
+							<td>{{item.city.from || item.city.countryFrom}}</td>
+							<td>{{item.city.to || item.city.countryTo}}</td>
+							<td>{{item.weight}}</td>
+							<td>{{item.error}}</td>
+							<td>
+								<button type="button" class="btn btn-warning" ng-click="tariffs.repeat(item)" ng-disabled="item.loading" ng-if="item.req">
+									<span class="fa fa-refresh" aria-hidden="true"></span>
+								</button>
+								<button type="button" class="btn btn-danger" ng-click="tariffs.errors.splice($index, 1)" ng-disabled="item.loading">
+									<span class="fa fa-trash" aria-hidden="true"></span>
+								</button>
+							</td>
+						</tr>
+						</tbody>
+					</table>
+				</div>
+			</div>
 
 		</div>
 	</div>

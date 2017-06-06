@@ -20,6 +20,15 @@ var getReq = function (from, to, isCountry) {
     'parcel[to_country]': isCountry ? to : '',
     'parcel[to_city]': !isCountry ? to : '',
     'parcel[weight]': 1,
+    b_volume_l: '',
+    b_volume_h: '',
+    b_volume_w: '',
+    c_volume_l: '',
+    c_volume_d: '',
+    t_volume_h: '',
+    t_volume_b: '',
+    t_volume_a: '',
+    t_volume_c: '',
     'parcel[usecurrentdt]': 0,
     'parcel[kgo]': 0,
     'parcel[og]': 0,
@@ -85,7 +94,7 @@ module.exports = function (req, cities, callback) {
   var requests = [];
   var cityObj = {};
   var cityIntObj = {};
-  var timestamp = callback ? new Date().getTime*2 : global[delivery];
+  var timestamp = callback ? new Date().getTime*2 : commonHelper.getReqStored(req, delivery);
   var sng = ['азербайджан', 'армения', 'беларусь', 'казахстан', 'кыргызстан', 'молдавия', 'молдова', 'узбекистан', 'украина', 'латвия', 'литва', 'эстония', 'грузия'];
   async.auto({
     getCities: [function (callback) {
@@ -129,7 +138,7 @@ module.exports = function (req, cities, callback) {
           }
         }
         setTimeout(function () {
-          if (global[delivery] > timestamp) {
+          if (commonHelper.getReqStored(req, delivery) > timestamp) {
             return callback({abort: true});
           }
           var cityOpts = {
@@ -234,7 +243,7 @@ module.exports = function (req, cities, callback) {
     }],
     requests: ['parseCities', function (results, callback) {
       async.mapLimit(requests, 2, function (item, callback) {
-        if (global[delivery] > timestamp) {
+        if (commonHelper.getReqStored(req, delivery) > timestamp) {
           return callback({abort: true});
         }
         if (item.error) {
@@ -244,6 +253,8 @@ module.exports = function (req, cities, callback) {
         }
         var opts = _.extend({}, deliveryData.calcUrl);
         opts.form = item.req;
+        opts.followAllRedirects = true;
+        opts.headers['X-Requested-With'] = 'XMLHttpRequest';
         setTimeout(function () {
           async.retry(config.retryOpts, function (callback) {
             request(opts, callback)
@@ -256,13 +267,13 @@ module.exports = function (req, cities, callback) {
             try {
               json = JSON.parse(b);
             } catch (e) {
-              item.error = commonHelper.getCityJsonError(e);
+              item.error = commonHelper.getResponseError(e);
             }
             if (!json) {
               return callback(null, item);
             }
             if (!json.result) {
-              item.error = commonHelper.getCityJsonError(new Error("Неверный тип данных в ответе. Отсутствует параматер result"));
+              item.error = commonHelper.getResponseError(new Error("Неверный тип данных в ответе. Отсутствует параматер result"));
               return callback(null, item);
             }
             if (typeof json.result.calculation !== 'undefined' && !json.result.calculation) {

@@ -63,28 +63,28 @@ var getCity = function (city, dest, callback) {
       success: false
     };
     if (err) {
-      result.message = commonHelper.getResponseError(err);
+      result.message = commonHelper.getCityJsonError(err, trim);
       return callback(null, result);
     }
     var json = null;
     try {
       json = JSON.parse(b);
     } catch (e) {
-      result.message = commonHelper.getCityJsonError(e);
+      result.message = commonHelper.getCityJsonError(e, trim);
     }
     if (!json) {
       return callback(null, result);
     }
     if (!json.suggestions) {
-      result.message = commonHelper.getCityJsonError(new Error("Отсутствует suggestions в ответе"));
+      result.message = commonHelper.getCityJsonError(new Error("Отсутствует suggestions в ответе"), trim);
       return callback(null, result);
     }
     if (!Array.isArray(json.suggestions)) {
-      result.message = commonHelper.getCityJsonError(new Error("Неверный тип suggestions в ответе"));
+      result.message = commonHelper.getCityJsonError(new Error("Неверный тип suggestions в ответе"), trim);
       return callback(null, result);
     }
     if (!json.suggestions.length) {
-      result.message = commonHelper.getCityNoResultError();
+      result.message = commonHelper.getCityNoResultError(trim);
     } else if (json.suggestions.length === 1) {
       result.foundCities = json.suggestions;
       result.success = true;
@@ -102,9 +102,9 @@ var getCity = function (city, dest, callback) {
   });
 };
 
-var getCalcResult = function (requests, timestamp, inOpts, callback) {
+var getCalcResult = function (requests, req, timestamp, inOpts, callback) {
   async.mapLimit(requests, 2, function (item, callback) {
-    if (global[delivery] > timestamp) {
+    if (commonHelper.getReqStored(req, delivery) > timestamp) {
       return callback({abort: true});
     }
     if (item.error) {
@@ -164,7 +164,7 @@ module.exports = function (req, cities, callback) {
   var requests = [];
   var intRequests = [];
   var cityObj = {};
-  var timestamp = callback ? new Date().getTime*2 : global[delivery];
+  var timestamp = callback ? new Date().getTime*2 : commonHelper.getReqStored(req, delivery);
   async.auto({
     getCountries: function (callback) {
       var opts = Object.assign({}, deliveryData.countriesUrl);
@@ -226,7 +226,7 @@ module.exports = function (req, cities, callback) {
           }
         }
         setTimeout(function () {
-          if (global[delivery] > timestamp) {
+          if (commonHelper.getReqStored(req, delivery) > timestamp) {
             return callback({abort: true});
           }
           async.parallel([
@@ -327,12 +327,12 @@ module.exports = function (req, cities, callback) {
     requests: ['parseCities', function (results, callback) {
       var opts = _.extend({}, deliveryData.calcUrl);
       opts.uri += 'sel[]=2&sel[]=5&sel[]=12&';
-      getCalcResult(requests, timestamp, opts, callback);
+      getCalcResult(requests, req, timestamp, opts, callback);
     }],
     internationalRequests: ['parseCities', function (results, callback) {
       var opts = _.extend({}, deliveryData.calcUrl);
       opts.uri += 'sel[]=2&sel[]=6&sel[]=19&';
-      getCalcResult(intRequests, timestamp, opts, callback);
+      getCalcResult(intRequests, req, timestamp, opts, callback);
     }]
   }, function (err, results) {
     logger.tariffsInfoLog(delivery, results.requests, 'getTariffs');

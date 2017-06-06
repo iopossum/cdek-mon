@@ -27,9 +27,6 @@ class Notify {
     var title = "Ошибка получения данных";
     if (err) {
       switch (err.status) {
-        case -1:
-          title = 'Не запущен api-сервер';
-          break;
         case 404:
           title = 'Неверная конфигурация сервера';
           break;
