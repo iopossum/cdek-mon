@@ -19,6 +19,7 @@
     background-color: white;
     position: relative;
     padding-top: 12px;
+    min-width: 900px;
     .header-background {
         background-color: #D5ECFF;
         height: 30px;
@@ -63,6 +64,8 @@
             }
             td {
                 font-size: 13px;
+                //word-wrap: break-word;
+                //word-break: break-all;
             }
         }
     }
