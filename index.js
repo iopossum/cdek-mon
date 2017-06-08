@@ -40,10 +40,10 @@ var exitHandler = function (options, err) {
     setTimeout(function () {
       if (server && server.close) {
         server.close(function () {
-          process.exit();
+          process.exit(0);
         });
       } else {
-        process.exit();
+        process.exit(0);
       }
     }, 1000);
   }
