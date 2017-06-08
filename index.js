@@ -37,7 +37,7 @@ var exitHandler = function (options, err) {
     logger.error(err);
   }
   if (options.exit) {
-    setTimeout(function () {
+    //setTimeout(function () {
       if (server && server.close) {
         server.close(function () {
           process.exit(0);
@@ -45,7 +45,7 @@ var exitHandler = function (options, err) {
       } else {
         process.exit(0);
       }
-    }, 1000);
+    //}, 1000);
   }
 };
 
