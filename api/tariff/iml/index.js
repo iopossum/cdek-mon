@@ -64,17 +64,27 @@ var fillAllCitiesFromIml = function (callback) {
             success: false
         };
         if (err) {
-            result.message = commonHelper.getResponseError(err);
-            return callback(null, result);
+            return callback(commonHelper.getCityJsonError(err));
         }
         var $ = cheerio.load(body);
 
         var text = $($('script')).text();
         var findAndClean = parseJsonVariable(text, "var pickpoints =");
-        pickpoints = JSON.parse(findAndClean); // все возможные ПВЗ в системе iml
+        try {
+          pickpoints = JSON.parse(findAndClean); // все возможные ПВЗ в системе iml
+        } catch (e) {}
+        if (!pickpoints.length) {
+          return callback(commonHelper.getCityJsonError(new Error("Не удалось получить список все возможные ПВЗ")));
+        }
 
         var findExceptReg = parseJsonVariable(text, "var exceptRegions =");
-        var exceptRegions = JSON.parse(findExceptReg); // ПВЗ исключения в системе iml
+        var exceptRegions = [];
+        try {
+          exceptRegions = JSON.parse(findExceptReg); // ПВЗ исключения в системе iml
+        } catch (e) {}
+        if (!exceptRegions.length) {
+          return callback(commonHelper.getCityJsonError(new Error("Не удалось получить список ПВЗ исключений в системе iml")));
+        }
 
         /* следующие строки взяты из логики которая зашита в iml.ru */
         var newExceptRegions = [];
@@ -261,9 +271,7 @@ module.exports = function (req, cities, callback) {
   var timestamp = callback ? new Date().getTime*2 : commonHelper.getReqStored(req, delivery);
   async.auto({
     getCitiesFromIml : function (callback) {
-        fillAllCitiesFromIml(function(err, result) {
-            callback(null, result);
-        }); // вытаскиваем с сайта iml данные по городам.
+        fillAllCitiesFromIml(callback); // вытаскиваем с сайта iml данные по городам.
     },
     getCities: ['getCitiesFromIml', function (results, callback) {
       async.mapSeries(cities, function (city, callback) {

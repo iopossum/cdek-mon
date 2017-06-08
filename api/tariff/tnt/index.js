@@ -97,6 +97,9 @@ var getCity = function (city, cityFull, condition, callback) {
       if (country === 'Russia') {
         country = "Russian Federation";
       }
+      if (region === 'Russia') {
+        region = "Russian Federation";
+      }
       var founds = commonHelper.findInArray(json, city, 'city', true);
       var foundsWithRegion = [];
       if (founds.length > 1) {
@@ -147,7 +150,7 @@ var getFullCity = function (tntCity) {
 
 var hackCity = function (eng, trim) {
   eng = eng.replace(/shch/gi, 'sch');
-  eng = eng.replace(/Ye/gi, 'e');
+  eng = eng.replace(/^Ye/i, 'e');
   eng = eng.replace(/^r-n /i, '');
   eng = eng.replace(/yo/gi, 'e');
   eng = eng.replace(/x/gi, 'ks');
@@ -174,6 +177,7 @@ var hackCity = function (eng, trim) {
   if (/ий/.test(trim)) {
     eng = eng.replace(/y$/i, "ij");
     eng = eng.replace(/y /i, "ij ");
+    eng = eng.replace(/iy/i, "ij");
   }
   if (/льн/.test(trim)) {
     eng = eng.replace(/ln/i, "l'n");
@@ -183,6 +187,15 @@ var hackCity = function (eng, trim) {
     if (splits.length > 1) {
       eng = splits[0];
     }
+  }
+  if (eng === 'Rostov-on-Don') {
+    eng = 'Rostov-na-donu';
+  }
+  if (eng === 'Petropavlovsk-Kamchatskiij') {
+    eng = 'Petropavlovsk-kamchatsk';
+  }
+  if (eng === 'St Petersburg') {
+    eng = 'St. Petersburg';
   }
   return eng;
 };
@@ -327,6 +340,14 @@ module.exports = function (req, cities, callback) {
             }
             if (!b) {
               item.error = commonHelper.getResponseError(new Error("Пустой ответ от севрера"));
+              return callback(null, item);
+            }
+            if (b.errors) {
+              if (b.errors[0]) {
+                item.error = commonHelper.getResponseError(b.errors[0].clientmessage);
+              } else {
+                item.error = commonHelper.getResponseError(new Error("Отсутствует обязательный параметр quote"));
+              }
               return callback(null, item);
             }
             if (!b.quote) {
