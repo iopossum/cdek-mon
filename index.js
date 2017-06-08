@@ -56,6 +56,8 @@ process.on('exit', exitHandler.bind(null, {exit: true}));
 //catches ctrl+c event
 process.on('SIGINT', exitHandler.bind(null, {exit: true}));
 
+process.on("SIGUSR1", exitHandler.bind(null, {exit: true}));
+
 // Persist sessions with mongoStore
 app.use(['/api*'], session({
   secret: 'cdek-secret',
