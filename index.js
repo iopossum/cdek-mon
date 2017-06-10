@@ -91,7 +91,7 @@ app.post('/api/tariff/news', cors(), require('./api/news'));
 
 //require('./api/tariff')(
 //  {session: {delivery: {}}, body: {
-//    deliveries: ['ponyexpress'],
+//    deliveries: ['majorexpress'],
 //    cities: [
       //{from: 'Пушкино, Московская обл.', to: 'Москва'},
       //{from: 'Москва', to: 'Sydney', countryTo: 'Australia'},

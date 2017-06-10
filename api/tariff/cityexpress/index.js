@@ -7,6 +7,7 @@ var cheerio = require('cheerio');
 var config = require('../../../conf');
 var _ = require('underscore');
 var logger = require('../../helpers/logger');
+var countries = ['казахстан', 'белоруссия', 'беларусь', 'украина'];
 var delivery = 'cityexpress';
 
 var getReq = function (from, to, opts) {
@@ -57,10 +58,7 @@ var parseCity = function (string) {
 var getCity = function (city, country, callback) {
   var deliveryData = deliveryHelper.get(delivery);
   var opts = Object.assign({}, deliveryData.citiesUrl);
-  var trim = country;
-  if (!trim) {
-    trim = commonHelper.getCity(city);
-  }
+  var trim = commonHelper.getCity(city);
   async.retry(config.retryOpts, function (callback) {
     opts.json = {
       contextKey: "City",
@@ -98,7 +96,7 @@ var getCity = function (city, country, callback) {
     });
     b.d = commonHelper.findInArray(b.d, trim, 'name', true);
     if (!b.d.length) {
-      result.message = commonHelper.getCityNoResultError();
+      result.message = commonHelper.getCityNoResultError(trim);
     } else if (b.d.length === 1) {
       result.foundCities = b.d;
       result.success = true;
@@ -108,7 +106,10 @@ var getCity = function (city, country, callback) {
       if (region) {
         founds = commonHelper.findInArray(b.d, region, 'name');
       }
-      if (trim.toLowerCase() === 'новосибирск') {
+      if (!founds.length && country) {
+        founds = commonHelper.findInArray(b.d, country, 'name');
+      }
+      if (trim.toLowerCase() === 'новосибирск' || /аэропорт/gi.test(b.d[0].name)) {
         result.foundCities = founds.length ? founds : [b.d[1]];
       } else {
         result.foundCities = founds.length ? founds : [b.d[0]];
@@ -163,6 +164,24 @@ module.exports = function (req, cities, callback) {
             callback(null, city);
           });
         }
+        if (city.countryFrom && countries.indexOf(city.countryFrom.toLowerCase()) === -1) {
+          if (!city.fromEngName) {
+            city.error = commonHelper.CITYFROMNOTFOUND;
+            return async.nextTick(function () {
+              callback(null, city);
+            });
+          }
+          city.useEngFrom = true;
+        }
+        if (city.countryTo && countries.indexOf(city.countryTo.toLowerCase()) === -1) {
+          if (!city.toEngName) {
+            city.error = commonHelper.CITYTONOTFOUND;
+            return async.nextTick(function () {
+              callback(null, city);
+            });
+          }
+          city.useEngTo = true;
+        }
         setTimeout(function () {
           if (commonHelper.getReqStored(req, delivery) > timestamp) {
             return callback({abort: true});
@@ -172,13 +191,13 @@ module.exports = function (req, cities, callback) {
               if (typeof  cityObj[city.from + city.countryFrom] !== 'undefined') {
                 return callback(null);
               }
-              getCity(city.from, city.countryFrom, callback);
+              getCity(city.useEngFrom ? city.fromEngName : city.from, city.countryFrom, callback);
             },
             function (callback) {
               if (typeof  cityObj[city.to + city.countryTo] !== 'undefined') {
                 return callback(null);
               }
-              getCity(city.to, city.countryTo, callback);
+              getCity(city.useEngTo ? city.toEngName : city.to, city.countryTo, callback);
             }
           ], function (err, foundCities) { //ошибки быть не может
             if (typeof  cityObj[city.from + city.countryFrom] === 'undefined') {

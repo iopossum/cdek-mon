@@ -175,7 +175,7 @@ module.exports = function (req, cities, callback) {
   async.auto({
     getCities: function (callback) {
       async.retry(config.retryOpts, function (callback) {
-        var nightmare = commonHelper.getNightmare();
+        /*var nightmare = commonHelper.getNightmare();
         nightmare.goto(deliveryData.citiesUrl.uri)
           .wait('.calc')
           .evaluate(function () {
@@ -190,11 +190,24 @@ module.exports = function (req, cities, callback) {
           })
           .catch(function (error) {
             callback(new Error(commonHelper.getResponseError(error)), []);
-          });
-      }, function (err, results) {
-        async.nextTick(function () {
-          callback(err, results || []);
-        });
+          });*/
+        var opts = _.extend({}, deliveryData.citiesUrl);
+        request(opts, callback);
+      }, function (err, resp, body) {
+        if (err) {
+          return callback(commonHelper.getCityJsonError(err));
+        }
+        var regRegions = /window\.regions = (.*);/i;
+        var regDeps = /window\.warehousesCityLinks = (.*);/i;
+        var result = {
+          regions: [],
+          departments: []
+        };
+        try {
+          result.regions = JSON.parse(body.match(regRegions)[1]);
+          result.departments = JSON.parse(body.match(regDeps)[1]);
+        } catch (e) {}
+        callback(!result.regions.length ? commonHelper.getCityJsonError(new Error("Массив городов пустой или отсутствует")) : null, result);
       });
     },
     parseCities: ['getCities', function (results, callback) {

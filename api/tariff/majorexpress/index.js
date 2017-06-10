@@ -198,7 +198,6 @@ var getCity = function (city, cityEng, country, callback) {
     callback(null, result);
   });
 };
-
 module.exports = function (req, cities, callback) {
   var deliveryData = deliveryHelper.get(delivery);
   var requests = [];
@@ -208,7 +207,7 @@ module.exports = function (req, cities, callback) {
   async.auto({
     getCountries: function (callback) {
 
-      async.retry(config.retryOpts, function (callback) {
+      /*async.retry(config.retryOpts, function (callback) {
         var nightmare = commonHelper.getNightmare();
         nightmare.goto(deliveryData.calcUrl.uri)
           .realMousedown('#ContentPlaceHolder1_cbProduct_B-1')
@@ -256,6 +255,56 @@ module.exports = function (req, cities, callback) {
         async.nextTick(function () {
           callback(err, results);
         });
+      });*/
+      async.retry(config.retryOpts, function (callback) {
+        var opts = _.extend({}, deliveryData.calcUrl);
+        opts.form = _.extend({}, formData);
+        opts.form.ContentPlaceHolder1_cbProduct_VI = 1;
+        opts.form.ctl00$ContentPlaceHolder1$cbProduct = 'Экспресс-доставка';
+        opts.form.ctl00$ContentPlaceHolder1$cbProduct$DDD$L = 1;
+        opts.form.__EVENTTARGET = 'ctl00$ContentPlaceHolder1$cbProduct';
+        opts.form.__EVENTARGUMENT = '';
+
+        delete opts.form.__CALLBACKID;
+        delete opts.form.__CALLBACKPARAM;
+
+        opts.followAllRedirects = true;
+        request(opts, callback);
+      }, function (err, resp, body) {
+        if (err) {
+          return callback(commonHelper.getCountriesError(err));
+        }
+        var reg = /dxo\.itemsValue=(.*);/gi;
+        var reg2 = /dxo\.itemsValue=(.*);/i;
+        var matches = body.match(reg);
+        var labels = [];
+        var result = {
+          from: [],
+          to: []
+        };
+        try {
+          result.from = JSON.parse(matches[1].match(reg2)[1]);
+          result.to = JSON.parse(matches[2].match(reg2)[1]);
+        } catch (e) {}
+        var $ = cheerio.load(body);
+        var tds = $('#ContentPlaceHolder1_cbCountryTo_DDD_L_LBT').find('tr');
+        tds.each(function (index, item) {
+          labels.push($(item).text().trim().toLowerCase());
+        });
+        var temp = labels.slice(0, result.from.length).map(function (item, index) {
+          return {
+            id: result.from[index],
+            name: item
+          }
+        });
+        result.from = temp;
+        result.to = labels.map(function (item, index) {
+          return {
+            id: result.to[index],
+            name: item
+          }
+        });
+        callback(!result.from.length || !result.to.length ? commonHelper.getCountriesError(new Error("Возможно изменилась структура сайта")) : null, result);
       });
 
     },

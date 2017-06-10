@@ -371,7 +371,8 @@ module.exports = function (req, cities, callback) {
                 },
                 req: {
                   city_from: fromCity.city_id + '|' + fromCity.city_owner_id,
-                  city_to: toCity.city_id + '|' + toCity.city_owner_id
+                  city_to: toCity.city_id + '|' + toCity.city_owner_id,
+                  Nature: 15
                 },
                 delivery: delivery,
                 tariffs: []

@@ -152,8 +152,11 @@ var hackCity = function (eng, trim) {
   eng = eng.replace(/shch/gi, 'sch');
   eng = eng.replace(/^Ye/i, 'e');
   eng = eng.replace(/^r-n /i, '');
-  eng = eng.replace(/yo/gi, 'e');
   eng = eng.replace(/x/gi, 'ks');
+
+  if (!/ Yo/.test(eng) && !/^Yo/.test(eng)) {
+    eng = eng.replace(/yo/gi, 'e');
+  }
 
   if (/viciebsk/gi.test(eng)) {
     eng = 'Vitebsk';
