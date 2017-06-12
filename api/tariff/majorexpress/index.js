@@ -207,7 +207,7 @@ module.exports = function (req, cities, callback) {
   async.auto({
     getCountries: function (callback) {
 
-      /*async.retry(config.retryOpts, function (callback) {
+      async.retry(config.retryOpts, function (callback) {
         var nightmare = commonHelper.getNightmare();
         nightmare.goto(deliveryData.calcUrl.uri)
           .realMousedown('#ContentPlaceHolder1_cbProduct_B-1')
@@ -255,8 +255,8 @@ module.exports = function (req, cities, callback) {
         async.nextTick(function () {
           callback(err, results);
         });
-      });*/
-      async.retry(config.retryOpts, function (callback) {
+      });
+      /*async.retry(config.retryOpts, function (callback) {
         var opts = _.extend({}, deliveryData.calcUrl);
         opts.form = _.extend({}, formData);
         opts.form.ContentPlaceHolder1_cbProduct_VI = 1;
@@ -305,7 +305,7 @@ module.exports = function (req, cities, callback) {
           }
         });
         callback(!result.from.length || !result.to.length ? commonHelper.getCountriesError(new Error("Возможно изменилась структура сайта")) : null, result);
-      });
+      });*/
 
     },
     getCities: ['getCountries', function (results, callback) {
