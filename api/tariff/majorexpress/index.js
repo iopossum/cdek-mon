@@ -438,63 +438,85 @@ module.exports = function (req, cities, callback) {
             });
           }
 
-          var nightmare = commonHelper.getNightmare();
-          nightmare.goto(deliveryData.calcUrl.uri)
-            .realMousedown('#ContentPlaceHolder1_cbProduct_B-1')
-            .wait('#ContentPlaceHolder1_cbProduct_DDD_L_LBT')
-            .realMousedown('#ContentPlaceHolder1_cbProduct_DDD_L_LBI0T0')
-            .realClick('#ContentPlaceHolder1_cbProduct_DDD_L_LBI0T0')
-            .wait('#ContentPlaceHolder1_cbPackage')
-            .insert('input#ContentPlaceHolder1_tbCalcWeight_Raw', item.weight)
-            .insert('input#ContentPlaceHolder1_tbCalcWeight_I', item.weight)
-            .evaluate(function (item) {
-              document.querySelector('input#ContentPlaceHolder1_cbCountryFrom_VI').value = item.req.countryFromId;
-              document.querySelector('input#ContentPlaceHolder1_cbCountryTo_VI').value = item.req.countryToId;
-              document.querySelector('input#ContentPlaceHolder1_cbCountryFrom_I').value = item.req.countryFromName;
-              document.querySelector('input#ContentPlaceHolder1_cbCountryTo_I').value = item.req.countryToName;
+          async.retry(config.retryOpts, function (callback) {
+            var nightmare = commonHelper.getNightmare();
+            nightmare.goto(deliveryData.calcUrl.uri)
+              .realMousedown('#ContentPlaceHolder1_cbProduct_B-1')
+              .wait('#ContentPlaceHolder1_cbProduct_DDD_L_LBT')
+              .realMousedown('#ContentPlaceHolder1_cbProduct_DDD_L_LBI0T0')
+              .realClick('#ContentPlaceHolder1_cbProduct_DDD_L_LBI0T0')
+              .wait('#ContentPlaceHolder1_cbPackage')
+              .insert('input#ContentPlaceHolder1_tbCalcWeight_Raw', item.weight)
+              .insert('input#ContentPlaceHolder1_tbCalcWeight_I', item.weight)
+              .evaluate(function (item) {
+                document.querySelector('input#ContentPlaceHolder1_cbCountryFrom_VI').value = item.req.countryFromId;
+                document.querySelector('input#ContentPlaceHolder1_cbCountryTo_VI').value = item.req.countryToId;
+                document.querySelector('input#ContentPlaceHolder1_cbCountryFrom_I').value = item.req.countryFromName;
+                document.querySelector('input#ContentPlaceHolder1_cbCountryTo_I').value = item.req.countryToName;
 
-              document.querySelector('input#ContentPlaceHolder1_cbCityFrom_I').value = item.req.cityFrom;
-              document.querySelector('input#ContentPlaceHolder1_cbCityFrom_VI').value = item.req.cityFromId;
-              document.querySelector('input#ContentPlaceHolder1_cbCityTo_I').value = item.req.cityTo;
-              document.querySelector('input#ContentPlaceHolder1_cbCityTo_VI').value = item.req.cityToId;
-              return false;
-            }, item) // <-- that's how you pass parameters from Node scope to browser scope)
-            .realClick('#ContentPlaceHolder1_btnCalc')
-            .wait(3000)
-            .wait('#ContentPlaceHolder1_cbPackage')
-            //.inject('js', process.cwd() + '/node_modules/jquery/dist/jquery.js')
-            //.screenshot(process.cwd() + '/temp2.png')
-            .evaluate(function (item) {
-              var spans = null;
-              var int = false;
-              try {
-                spans = document.querySelector('#ContentPlaceHolder1_gvCalc').querySelector('table').querySelectorAll('span');
-              } catch (e) {}
-              if (!spans) {
+                document.querySelector('input#ContentPlaceHolder1_cbCityFrom_I').value = item.req.cityFrom;
+                document.querySelector('input#ContentPlaceHolder1_cbCityFrom_VI').value = item.req.cityFromId;
+                document.querySelector('input#ContentPlaceHolder1_cbCityTo_I').value = item.req.cityTo;
+                document.querySelector('input#ContentPlaceHolder1_cbCityTo_VI').value = item.req.cityToId;
+                return false;
+              }, item) // <-- that's how you pass parameters from Node scope to browser scope)
+              .realClick('#ContentPlaceHolder1_btnCalc')
+              .wait(3000)
+              .wait('#ContentPlaceHolder1_cbPackage')
+              .evaluate(function (item) {
+                document.querySelector('input#ContentPlaceHolder1_cbCountryFrom_VI').value = item.req.countryFromId;
+                document.querySelector('input#ContentPlaceHolder1_cbCountryTo_VI').value = item.req.countryToId;
+                document.querySelector('input#ContentPlaceHolder1_cbCountryFrom_I').value = item.req.countryFromName;
+                document.querySelector('input#ContentPlaceHolder1_cbCountryTo_I').value = item.req.countryToName;
+
+                document.querySelector('input#ContentPlaceHolder1_cbCityFrom_I').value = item.req.cityFrom;
+                document.querySelector('input#ContentPlaceHolder1_cbCityFrom_VI').value = item.req.cityFromId;
+                document.querySelector('input#ContentPlaceHolder1_cbCityTo_I').value = item.req.cityTo;
+                document.querySelector('input#ContentPlaceHolder1_cbCityTo_VI').value = item.req.cityToId;
+                return false;
+              }, item) // <-- that's how you pass parameters from Node scope to browser scope)
+              .realClick('#ContentPlaceHolder1_btnCalc')
+              .wait(3000)
+              .wait('#ContentPlaceHolder1_cbPackage')
+              //.inject('js', process.cwd() + '/node_modules/jquery/dist/jquery.js')
+              //.screenshot(process.cwd() + '/temp2.png')
+              .evaluate(function (item) {
+                var spans = null;
+                var int = false;
                 try {
-                  spans = document.querySelector('#ContentPlaceHolder1_gvInterCalc').querySelector('table').querySelectorAll('span');
-                  int = true;
-                } catch (e) {
+                  spans = document.querySelector('#ContentPlaceHolder1_gvCalc').querySelector('table').querySelectorAll('span');
+                } catch (e) {}
+                if (!spans) {
+                  try {
+                    spans = document.querySelector('#ContentPlaceHolder1_gvInterCalc').querySelector('table').querySelectorAll('span');
+                    int = true;
+                  } catch (e) {
+                  }
                 }
-              }
-              if (!spans) {
-                item.error = "По указанным направлениям ничего не найдено";
+                if (!spans) {
+                  item.error = "По указанным направлениям ничего не найдено";
+                  return item;
+                }
+                item.tariffs = [{
+                  cost: int ? spans[2].innerText.trim() + '$' : spans[4].innerText.trim(),
+                  deliveryTime: int ? '' : spans[8].innerText.trim()
+                }];
                 return item;
-              }
-              item.tariffs = [{
-                cost: int ? spans[2].innerText.trim() + '$' : spans[4].innerText.trim(),
-                deliveryTime: int ? '' : spans[8].innerText.trim()
-              }];
-              return item;
-            }, item)
-            .end()
-            .then(function (result) {
-              callback(null, result);
-            })
-            .catch(function (error) {
-              item.error = commonHelper.getResultJsonError(new Error(error));
-              callback(null, item);
-            });
+              }, item)
+              .end()
+              .then(function (result) {
+                callback(null, result);
+              })
+              .catch(function (error) {
+                callback(error, item);
+              });
+          }, function (err, result) {
+            if (err) {
+              item.error = commonHelper.getResultJsonError(new Error(err));
+              return callback(null, item);
+            }
+            callback(null, result);
+          });
         }, commonHelper.randomInteger(500, 1000));
       }, callback);
     }],
