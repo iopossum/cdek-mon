@@ -71,5 +71,8 @@ exports.saveReqStore = function (req, delivery, value) {
 };
 
 exports.getReqStored = function (req, delivery) {
+  if (!req.session) {
+    return 0;
+  }
   return exports.getStored(delivery + req.session.id);
 };
