@@ -1,15 +1,23 @@
 <div class="container" style="padding-top: 40px">
 	<div class="col-lg-6 col-md-8 col-sm-10 col-xs-12">
 		<div class="form-group">
-			<ui-select multiple ng-model="tariffs.filter.targets" theme="bootstrap">
-				<ui-select-match placeholder="Все сд">{{$item.name}}</ui-select-match>
-				<ui-select-choices repeat="target in tariffs.targets | filter:$select.search">
+			<ui-select ng-model="tariffs.filter.country" theme="bootstrap" on-select="tariffs.filter.targets = []">
+				<ui-select-match placeholder="Страна">{{$select.selected.name}}</ui-select-match>
+				<ui-select-choices repeat="target.id as target in tariffs.countries | filter:$select.search">
 					{{target.name}}
 				</ui-select-choices>
 			</ui-select>
 		</div>
 		<div class="form-group">
-			<span>Направления</span>
+			<ui-select multiple ng-model="tariffs.filter.targets" theme="bootstrap">
+				<ui-select-match placeholder="Все сд">{{$item.name}}</ui-select-match>
+				<ui-select-choices repeat="target in tariffs.targets | filter:{country: tariffs.filter.country}">
+					{{target.name}}
+				</ui-select-choices>
+			</ui-select>
+		</div>
+		<div class="form-group">
+			<span>Направления <a href="/">(Пример файла)</a></span>
 			<button type="button" class="btn btn-default" ng-click="tariffs.inputButtonClick($event)">Выбрать файл</button>
 			<input type="file" class="hide" ng-model="tariffs.filter.cityInput" name="cityInput" input-file ng-change="tariffs.chooseCities()" />
 			<span class="text-primary" ng-if="tariffs.filter.cities.length">Выбрано {{tariffs.filter.cities.length}} направлений</span>

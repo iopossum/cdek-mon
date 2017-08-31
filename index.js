@@ -88,6 +88,7 @@ app.post('/api/tariff/one', cors(), require('./api/tariff/one'));
 app.get('/api/tariff/ping', cors(), require('./api/tariff/ping'));
 app.post('/api/tariff/cities', cors(), require('./api/tariff/city'));
 app.post('/api/tariff/news', cors(), require('./api/news'));
+app.get('/api/settings', cors(), require('./api/settings'));
 
 //require('./api/tariff')(
 //  {session: {delivery: {}}, body: {

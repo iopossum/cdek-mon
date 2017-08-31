@@ -30,34 +30,16 @@ class Tariff {
         params: {action: 'cities'},
         method: 'POST',
         isArray: true
+      },
+      settings: {
+        url: [hostName, 'api', 'settings'].join('/'),
+        method: 'GET',
+        isArray: false,
+        cache: 'cache'
       }
     });
-    this.targets = [
-      {id: 'cdek', name: 'CDEK'},
-      {id: 'emspost', name: 'EMSPost'},
-      {id: 'majorexpress', name: 'Major-express'},
-      {id: 'spsr', name: 'Spsr'},
-      {id: 'dpd', name: 'DPD'},
-      {id: 'dhl', name: 'DHL'},
-      {id: 'dimex', name: 'Dimex'},
-      {id: 'flippost', name: 'Flippost'},
-      {id: 'ponyexpress', name: 'Ponyexpress'},
-      {id: 'tnt', name: 'TNT'},
-      {id: 'ups', name: 'UPS'},
-      {id: 'cse', name: 'CSE'},
-      {id: 'garantpost', name: 'Garantpost'},
-      {id: 'cityexpress', name: 'Cityexpress'},
-      {id: 'fedex', name: 'Fedex'},
-      {id: 'dellin', name: 'Dellin'},
-      {id: 'pecom', name: 'Pecom'},
-      {id: 'vozovoz', name: 'Vozovoz'},
-      {id: 'baikalsr', name: 'Baikalsr'},
-      {id: 'kit', name: 'TK-kit'},
-      {id: 'rateksib', name: 'Rateksib'},
-      {id: 'expressauto', name: 'Expressauto'},
-      {id: 'jde', name: 'Jde'},
-      {id: 'iml', name: 'Iml'}
-    ];
+    this.targets = [];
+    this.countries = [];
   }
 
   request(data) {
@@ -80,8 +62,21 @@ class Tariff {
     return this.resource.cities(data).$promise;
   }
 
+  settings(data) {
+    return this.resource.settings(data).$promise;
+  }
+
+  setSettings(settings) {
+    this.targets = settings.deliveries;
+    this.countries = settings.countries;
+  }
+
   getTargets() {
     return this.targets;
+  }
+
+  getCountries() {
+    return this.countries;
   }
 
   getTargetsObj() {

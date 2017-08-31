@@ -18,6 +18,9 @@ class TariffsCtrl {
       }
       array.push(i);
     }
+    for (var i=20; i<=100; i+=10) {
+      array.push(i);
+    }
     this.results = [];
     this.errors = [];
     this.loading = {
@@ -33,6 +36,8 @@ class TariffsCtrl {
     this.tariffService = Tariff;
     this.dynamic = 0;
     this.targets = Tariff.getTargets();
+    this.countries = Tariff.getCountries();
+    this.filter.country = this.countries[0].id;
     this.requestedTargets = [];
     this.targetsObj = Tariff.getTargetsObj();
 
@@ -216,14 +221,14 @@ class TariffsCtrl {
     if (!this.filter.cities.length) {
       return this.notify.warning("Укажите города");
     }
+    var that = this;
     this.loading.main = true;
     this.dynamic = 0;
-    var targets = this.filter.targets.length ? this.filter.targets : this.targets;
+    var targets = this.filter.targets.length ? this.filter.targets : this.targets.filter(function (item) { return item.country === that.filter.country;});
     var obj = {
       weights: this.filter.weights,
       deliveries: targets.map(function (item) {return item.id;})
     };
-    var that = this;
     this.requestedTargets = targets;
     this.results = [];
     this.errors = [];

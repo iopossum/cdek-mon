@@ -15,8 +15,8 @@ var getReq = function (from, to) {
   return {
     Action: 'GetTarifList',
     orderType: 1,
-    FromCity: from.id,
-    ToCity: to.id,
+    FromCity: from.code,
+    ToCity: to.code,
     'Package[0][weight]': 1,
     'Package[0][length]': 1,
     'Package[0][width]': 1,
@@ -63,15 +63,15 @@ var getCity = function (city, country, callback) {
       result.message = commonHelper.getCityJsonError(new Error("Неверный формат ответа, отсутствует параметр js.Content"), trim);
       return callback(null, result);
     }
-    if (!json.js.Content.geonames) {
-      result.message = commonHelper.getCityJsonError(new Error("Неверный формат ответа, отсутствует параметр js.Content.geonames"), trim);
+    if (!json.js.Content.result) {
+      result.message = commonHelper.getCityJsonError(new Error("Неверный формат ответа, отсутствует параметр js.Content.result"), trim);
       return callback(null, result);
     }
-    if (!Array.isArray(json.js.Content.geonames)) {
-      result.message = commonHelper.getCityJsonError(new Error("Неверный формат ответа, js.Content.geonames - не массив"), trim);
+    if (!Array.isArray(json.js.Content.result)) {
+      result.message = commonHelper.getCityJsonError(new Error("Неверный формат ответа, js.Content.result - не массив"), trim);
       return callback(null, result);
     }
-    var cities = commonHelper.findInArray(json.js.Content.geonames, trim, 'name', true);
+    var cities = commonHelper.findInArray(json.js.Content.result, trim, 'name', true);
     if (!cities.length) {
       result.message = commonHelper.getCityNoResultError(trim);
     } else if (cities.length === 1) {

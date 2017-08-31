@@ -185,6 +185,10 @@ module.exports = function makeWebpackConfig() {
       "window.Tether": "tether",
       Hammer: 'hammerjs/hammer'
     }),
+    new CopyWebpackPlugin([{
+      from: __dirname + '/example.xlsx',
+      to: __dirname + '/dist/example.xlsx'
+    }])
     /*new webpack.LoaderOptionsPlugin({
       test: /\.scss$/i,
       options: {
