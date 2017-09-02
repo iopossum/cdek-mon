@@ -243,26 +243,28 @@ var targets = [
     name: 'Pochta',
     country: 'ru',
     calcUrl: {method: 'POST', uri: 'https://www.pochta.ru/portal-portlet/delegate/calculator/v1/api/delivery.time.cost.get'},
-    newsUrl: {method: 'GET', uri: 'https://www.baikalsr.ru/json/news.json?'},
-    baseUrl: 'https://www.baikalsr.ru'
+    citiesUrl: {method: 'GET', uri: 'https://www.pochta.ru/nsi/v1/countries/by.name/'},
+    baseUrl: 'https://www.pochta.ru'
   },
   {
     id: 'dpdby',
     name: 'DPD',
     country: 'by',
-    calcUrl: {method: 'POST', uri: 'https://www.baikalsr.ru/json/api_calculator.json'},
-    citiesUrl: {method: 'GET', uri: 'https://www.baikalsr.ru/json/api_fias_cities.json?text='},
-    newsUrl: {method: 'GET', uri: 'https://www.baikalsr.ru/json/news.json?'},
-    baseUrl: 'https://www.baikalsr.ru'
+    calcUrl: {method: 'POST', uri: 'http://mydpd.dpd.by/ols/calc/calc.do2'},
+    calcInternationalUrl: {method: 'POST', uri: 'http://mydpd.dpd.by/ols/calcint/offire.do2'},
+    citiesUrl: {method: 'POST', uri: 'http://mydpd.dpd.by/ols/calc/cities.do2'},
+    citiesInternationalUrl: {method: 'POST', uri: 'http://mydpd.dpd.by/ols/calcint/city_ru.do2'},
+    countriesUrl: {method: 'GET', uri: 'http://mydpd.dpd.by/ols/calcint/show.do2'},
+    newsUrl: {method: 'GET', uri: 'http://mydpd.dpd.by/dpd/o-dpd/informacionnyj-centr/novosti.do2'},
+    baseUrl: 'http://mydpd.dpd.by'
   },
   {
     id: 'nashapochta',
     name: 'Nashapochta',
     country: 'by',
-    calcUrl: {method: 'POST', uri: 'https://www.baikalsr.ru/json/api_calculator.json'},
-    citiesUrl: {method: 'GET', uri: 'https://www.baikalsr.ru/json/api_fias_cities.json?text='},
-    newsUrl: {method: 'GET', uri: 'https://www.baikalsr.ru/json/news.json?'},
-    baseUrl: 'https://www.baikalsr.ru'
+    calcUrl: {method: 'POST', uri: 'https://nashapochta.by/calculator/'},
+    citiesUrl: {method: 'GET', uri: 'https://nashapochta.by/ajax/cities.php'},
+    baseUrl: 'https://nashapochta.by'
   },
   {
     id: 'globel24',

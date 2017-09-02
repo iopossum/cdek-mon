@@ -15,11 +15,15 @@ exports.COUNTRYFROMRUSSIA = 'Отправления возможны тольк�
 exports.POSTCODEFROMNOTFOUND = 'Не удалось получить индекс города отправления';
 exports.POSTCODETONOTFOUND = 'Не удалось получить индекс города получения';
 
+exports.CITIESBY = 'Отправления возможны только по Беларуси';
+
 exports.DATEFORMATREG = /^\s*((0?[1-9]|[12][0-9]|3[01])\.(0?[1-9]|1[012])\.\d{4})([\d\D]*)/;
 exports.COSTREG = /[^0-9,]/g;
+exports.COSTREGDOT = /[^0-9,\.]/g;
 exports.DELIVERYTIMEREG = /[^0-9-]/g;
 
 exports.RUSSIA = ['россия', 'российская', 'рф', 'russia'];
+exports.BY = ['беларусь', 'белоруссия'];
 exports.SNG = ['казахстан', 'армения', 'беларусь', 'белоруссия', 'кыргызстан', 'киргизия'];
 
 exports.randomInteger = function (min, max) {
@@ -134,8 +138,12 @@ exports.getCityJsonError = function (err, city) {
   return mes;
 };
 
-exports.getCountriesError = function (err) {
-  return "Не удалось получить страны с сайта. " + (err.message ? 'Ошибка: ' + err.message : '');
+exports.getCountriesError = function (err, country) {
+  var mes = "Не удалось получить страны с сайта. " + (err.message ? 'Ошибка: ' + err.message : '');
+  if (country) {
+    mes = "Не удалось получить страну " + country.toUpperCase() + " с сайта. " + (err.message ? 'Ошибка: ' + err.message : '');
+  }
+  return mes;
 };
 
 exports.getResultJsonError = function (err) {
@@ -148,8 +156,9 @@ exports.getCityNoResultError = function (city) {
   return "Не удалось получить города с сайта. Такого города " + city.toUpperCase() + " нет в БД сайта.";
 };
 
-exports.getCountryNoResultError = function () {
-  return "Не удалось получить страны с сайта. Такой страны нет в БД сайта.";
+exports.getCountryNoResultError = function (country) {
+  country = country || '';
+  return "Не удалось получить страны с сайта. Такой страны " + country.toUpperCase() + " нет в БД сайта.";
 };
 
 exports.getNoResultError = function () {
