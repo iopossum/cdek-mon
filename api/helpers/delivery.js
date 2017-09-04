@@ -284,15 +284,14 @@ var targets = [
     newsUrl: {method: 'GET', uri: 'http://autolight.by/autolight_express/infocentr/newscompany/'},
     baseUrl: 'http://autolight.by'
   },
-  /*{
+  {
     id: 'vozimby',
     name: 'Vozim',
     country: 'by',
-    calcUrl: {method: 'POST', uri: 'https://www.baikalsr.ru/json/api_calculator.json'},
-    citiesUrl: {method: 'GET', uri: 'https://www.baikalsr.ru/json/api_fias_cities.json?text='},
-    newsUrl: {method: 'GET', uri: 'https://www.baikalsr.ru/json/news.json?'},
-    baseUrl: 'https://www.baikalsr.ru'
-  }*/
+    calcUrl: {method: 'POST', uri: 'http://api.vozim.by/calculator'},
+    citiesUrl: {method: 'GET', uri: 'http://api.vozim.by/location'},
+    baseUrl: 'http://vozim.by'
+  }
 ];
 
 var targetObj = _.indexBy(targets, 'id');
