@@ -7,88 +7,22 @@ var cheerio = require('cheerio');
 var config = require('../../../conf');
 var _ = require('underscore');
 var logger = require('../../helpers/logger');
-var delivery = 'nashapochtaby';
+var delivery = 'globel24by';
 
 var getReq = function (from, to) {
   from = from || {};
   to = to || {};
   return {
-    'city_ot[name]': from.label,
-    'city_ot[id]': from.id,
-    'city_do[name]': to.label,
-    'city_do[id]': to.id,
-    length: '0,01',
-    width: '0,01',
-    height: '0,01',
-    sender: 15,
-    delivery: 'OTD_OTD',
-    kind: 1531,
-    cod: '',
-    declared: '',
-    submit: 'Рассчитать стоимость'
+    pvt_max:15,
+    cityMatrixID:28,
+    extRatesID:29,
+    maxWeightAgreements:100,
+    'form-FROM': from.id,
+    'form-WHERE': to.id,
+    'form-WEIGHT':0,
+    'form-COST': '',
+    submit: 'Рассчитать'
   };
-};
-
-var getServiceName = function (service) {
-  var result = '';
-  switch (service) {
-    case 'OTD_OTD':
-      result = 'СС';
-      break;
-    case 'OTD_DV':
-      result = 'СД';
-      break;
-    case 'DV_OTD':
-      result = 'ДС';
-      break;
-    case 'DV_DV':
-      result = 'ДД';
-      break;
-  }
-  return result;
-};
-
-var filterArray = function (array, value, key) {
-  key = key || 'name';
-  array = array || [];
-  var reg = new RegExp("(^|-[^_0-9a-zA-Zа-яёА-ЯЁ])" + value + "([^_0-9a-zA-Zа-яёА-ЯЁ-]|$)", "i");
-  var ar = commonHelper.findInArray(array, value, key, true);
-  return ar.filter(function (item) {
-    if (!item[key]) {
-      return false;
-    }
-    return item[key].match(reg);
-  });
-};
-
-var calcResults = function (req, service, callback) {
-  var deliveryData = deliveryHelper.get(delivery);
-  var opts = _.extend({}, deliveryData.calcUrl);
-  setTimeout(function () {
-    async.retry(config.retryOpts, function (callback) {
-      opts.form = _.extend({}, req);
-      opts.form.delivery = service;
-      opts.rejectUnauthorized = false;
-      request(opts, callback)
-    }, function (err, r, b) {
-      var result = {};
-      if (err) {
-        result.error = commonHelper.getResponseError(err);
-        return callback(null, result);
-      }
-      var $ = cheerio.load(b);
-      if (!$('.result-sum').length) {
-        result.error = commonHelper.getNoResultError();
-        return callback(null, result);
-      }
-      result.tariff = {
-        cost: $('.result-sum').text().trim().replace(commonHelper.COSTREGDOT, '').replace(/\.$/, ''),
-        deliveryTime: '',
-        service: getServiceName(service)
-      };
-      return callback(null, result);
-    });
-  }, commonHelper.randomInteger(500, 1000));
 };
 
 module.exports = function (req, cities, callback) {
@@ -99,21 +33,26 @@ module.exports = function (req, cities, callback) {
     getCities: function (callback) {
       async.retry(config.retryOpts, function (callback) {
         var opts = _.extend({}, deliveryData.citiesUrl);
-        opts.rejectUnauthorized = false;
         request(opts, callback);
       }, function (err, r, b) {
         if (err) {
           return callback(commonHelper.getCityJsonError(err));
         }
-        var json = null;
-        try {
-          json = JSON.parse(b);
-        } catch (e) {}
-
-        if (!json) {
+        var $ = cheerio.load(b);
+        if (!$('#form-FROM').length) {
           return callback(commonHelper.getCityJsonError(new Error("Неверный ответ от сервера, нет городов")));
         }
-        callback(null, json);
+        if (!$('#form-WHERE').length) {
+          return callback(commonHelper.getCityJsonError(new Error("Неверный ответ от сервера, нет городов")));
+        }
+        var result = {from: [], to: []};
+        $('#form-FROM').find('option').each(function (i, item) {
+          result.from.push({id: $(item).attr('value'), name: $(item).text().trim()});
+        });
+        $('#form-WHERE').find('option').each(function (i, item) {
+          result.to.push({id: $(item).attr('value'), name: $(item).text().trim()});
+        });
+        callback(null, result);
       });
     },
     parseCities: ['getCities', function (results, callback) {
@@ -130,11 +69,9 @@ module.exports = function (req, cities, callback) {
           requests = requests.concat(commonHelper.getResponseArray(req.body.weights, item, delivery, item.error));
         } else {
           var trimFrom = commonHelper.getCity(item.from);
-          var foundsFrom = filterArray(results.getCities, trimFrom, 'label');
-          foundsFrom.splice(4, foundsFrom.length);
+          var foundsFrom = commonHelper.findInArray(results.getCities.from, trimFrom, 'name', true);
           var trimTo = commonHelper.getCity(item.to);
-          var foundsTo = filterArray(results.getCities, trimTo, 'label');
-          foundsTo.splice(4, foundsTo.length);
+          var foundsTo = commonHelper.findInArray(results.getCities.to, trimTo, 'name', true);
           if (!foundsFrom.length) {
             item.error = commonHelper.CITYFROMNOTFOUND;
             requests = requests.concat(commonHelper.getResponseArray(req.body.weights, item, delivery, item.error));
@@ -148,8 +85,8 @@ module.exports = function (req, cities, callback) {
                   city: {
                     initialCityFrom: item.from,
                     initialCityTo: item.to,
-                    from: fromCity.type + " " + fromCity.label,
-                    to: toCity.type + " " + toCity.label,
+                    from: fromCity.name,
+                    to: toCity.name,
                     countryFrom: item.countryFrom,
                     countryTo: item.countryTo
                   },
@@ -166,14 +103,14 @@ module.exports = function (req, cities, callback) {
         req.body.weights.forEach(function (weight) {
           var obj = commonHelper.deepClone(item);
           obj.weight = weight;
-          obj.req.weight = weight;
+          obj.req['form-WEIGHT'] = weight;
           requests.push(obj);
         });
       });
       callback(null);
     }],
     requests: ['parseCities', function (results, callback) {
-      async.mapLimit(requests, 1, function (item, callback) {
+      async.mapLimit(requests, 2, function (item, callback) {
         if (commonHelper.getReqStored(req, delivery) > timestamp) {
           return callback({abort: true});
         }
@@ -183,36 +120,41 @@ module.exports = function (req, cities, callback) {
           });
         }
         setTimeout(function () {
-          async.parallel([
-            function (callback) {
-              calcResults(item.req, 'OTD_OTD', callback);
-            },
-            function (callback) {
-              calcResults(item.req, 'OTD_DV', callback);
-            },
-            function (callback) {
-              calcResults(item.req, 'DV_OTD', callback);
-            },
-            function (callback) {
-              calcResults(item.req, 'DV_DV', callback);
+          var opts = _.extend({}, deliveryData.calcUrl);
+          async.retry(config.retryOpts, function (callback) {
+            opts.form = item.req;
+            request(opts, callback)
+          }, function (err, r, b) {
+            if (err || !b) {
+              item.error = commonHelper.getResponseError(err);
+              return callback(null, item);
             }
-          ], function (err, results) {
-            if (results[0].tariff) {
-              item.tariffs.push(results[0].tariff);
+            var $ = cheerio.load(b);
+            if (!$('.sum').length) {
+              item.error = commonHelper.getNoResultError();
+              return callback(null, item);
             }
-            if (results[1].tariff) {
-              item.tariffs.push(results[1].tariff);
+            var sum = $($('.sum')[0]).text().trim().replace(commonHelper.COSTREGDOT, '').replace(/\.$/, '');
+            if (sum.length) {
+              item.tariffs.push({
+                cost: sum,
+                deliveryTime: '',
+                service: 'ДС'
+              })
             }
-            if (results[2].tariff) {
-              item.tariffs.push(results[2].tariff);
-            }
-            if (results[3].tariff) {
-              item.tariffs.push(results[3].tariff);
+            sum = $($('.sum')[1]).text().trim().replace(commonHelper.COSTREGDOT, '').replace(/\.$/, '');
+            if (sum.length) {
+              item.tariffs.push({
+                cost: sum,
+                deliveryTime: '',
+                service: 'ДД'
+              })
             }
             if (!item.tariffs.length) {
-              item.error = results[0].error || results[1].error || results[2].error || results[3].error;
+              item.error = commonHelper.getNoResultError();
+              return callback(null, item);
             }
-            callback(null, item);
+            return callback(null, item);
           });
         }, commonHelper.randomInteger(500, 1000));
       }, callback);

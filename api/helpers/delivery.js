@@ -259,7 +259,7 @@ var targets = [
     baseUrl: 'http://mydpd.dpd.by'
   },
   {
-    id: 'nashapochta',
+    id: 'nashapochtaby',
     name: 'Nashapochta',
     country: 'by',
     calcUrl: {method: 'POST', uri: 'https://nashapochta.by/calculator/'},
@@ -267,32 +267,32 @@ var targets = [
     baseUrl: 'https://nashapochta.by'
   },
   {
-    id: 'globel24',
+    id: 'globel24by',
     name: 'Globel24',
     country: 'by',
-    calcUrl: {method: 'POST', uri: 'https://www.baikalsr.ru/json/api_calculator.json'},
-    citiesUrl: {method: 'GET', uri: 'https://www.baikalsr.ru/json/api_fias_cities.json?text='},
-    newsUrl: {method: 'GET', uri: 'https://www.baikalsr.ru/json/news.json?'},
-    baseUrl: 'https://www.baikalsr.ru'
+    calcUrl: {method: 'POST', uri: 'http://globel24.by/local/components/db.calc/globel_calc/templates/.default/ajax/ajax.php'},
+    citiesUrl: {method: 'GET', uri: 'http://globel24.by/rates/calculator/'},
+    newsUrl: {method: 'GET', uri: 'http://globel24.by/about/news/'},
+    baseUrl: 'http://globel24.by'
   },
   {
-    id: 'autolight',
+    id: 'autolightby',
     name: 'Autolight',
     country: 'by',
-    calcUrl: {method: 'POST', uri: 'https://www.baikalsr.ru/json/api_calculator.json'},
-    citiesUrl: {method: 'GET', uri: 'https://www.baikalsr.ru/json/api_fias_cities.json?text='},
-    newsUrl: {method: 'GET', uri: 'https://www.baikalsr.ru/json/news.json?'},
-    baseUrl: 'https://www.baikalsr.ru'
+    calcUrl: {method: 'POST', uri: 'http://autolight.by/m/my_calc/calculate.php'},
+    citiesUrl: {method: 'GET', uri: 'http://autolight.by/m/my_calc/cities_ajax.php?'},
+    newsUrl: {method: 'GET', uri: 'http://autolight.by/autolight_express/infocentr/newscompany/'},
+    baseUrl: 'http://autolight.by'
   },
-  {
-    id: 'vozim',
+  /*{
+    id: 'vozimby',
     name: 'Vozim',
     country: 'by',
     calcUrl: {method: 'POST', uri: 'https://www.baikalsr.ru/json/api_calculator.json'},
     citiesUrl: {method: 'GET', uri: 'https://www.baikalsr.ru/json/api_fias_cities.json?text='},
     newsUrl: {method: 'GET', uri: 'https://www.baikalsr.ru/json/news.json?'},
     baseUrl: 'https://www.baikalsr.ru'
-  }
+  }*/
 ];
 
 var targetObj = _.indexBy(targets, 'id');
