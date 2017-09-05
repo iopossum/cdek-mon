@@ -26,13 +26,14 @@ var getReq = function (from, to) {
   }
 };
 
-var getCity = function (city, country, callback) {
+var getCity = function (city, country, cookie, callback) {
   var deliveryData = deliveryHelper.get(delivery);
   var opts = Object.assign({}, deliveryData.citiesUrl);
   var trim = commonHelper.getCity(city);
-  opts.body = 'Action=GetLocationList&city=' + escape(trim);
+  opts.body = 'Action=GetLocationList&city=' + escape(trim) + '&utm_referrer=&';
   opts.followAllRedirects = true;
   opts.jar = true;
+  opts.headers.Cookie = 'ipp_uid1=' + cookie.uid1 + '; ipp_uid2=' + cookie.uid2 + '; ipp_key=' + cookie.key + ';';
   async.retry(config.retryOpts, function (callback) {
     request(opts, callback)
   }, function (err, r, b) {
@@ -99,7 +100,24 @@ module.exports = function (req, cities, callback) {
   var cityObj = {};
   var timestamp = callback ? new Date().getTime*2 : commonHelper.getReqStored(req, delivery);
   async.auto({
-    getCities: function (callback) {
+    getCookie: function (callback) {
+      var deliveryData = deliveryHelper.get(delivery);
+      var opts = Object.assign({}, deliveryData.cookieUrl);
+      opts.followAllRedirects = true;
+      opts.jar = true;
+      async.retry(config.retryOpts, function (callback) {
+        request(opts, callback)
+      }, function (err, r, b) {
+        if (err) {
+          return callback(commonHelper.getResponseError(err));
+        }
+        var ipp1Reg = /ipp_uid1=(.{13});/;
+        var ipp2Reg = /ipp_uid2=(.{41});/;
+        var ippKeyReg = /ipp_key=(.{38});/;
+        callback(null, {uid1: b.match(ipp1Reg)[1], uid2: b.match(ipp2Reg)[1], key: b.match(ippKeyReg)[1]});
+      });
+    },
+    getCities: ['getCookie', function (results, callback) {
       async.mapSeries(cities, function (city, callback) {
         if (!city.from || !city.to) {
           city.error = commonHelper.CITIESREQUIRED;
@@ -116,13 +134,13 @@ module.exports = function (req, cities, callback) {
               if (typeof  cityObj[city.from + city.countryFrom] !== 'undefined') {
                 return callback(null);
               }
-              getCity(city.from, city.countryFrom, callback);
+              getCity(city.from, city.countryFrom, results.getCookie, callback);
             },
             function (callback) {
               if (typeof  cityObj[city.to + city.countryTo] !== 'undefined') {
                 return callback(null);
               }
-              getCity(city.to, city.countryTo, callback);
+              getCity(city.to, city.countryTo, results.getCookie, callback);
             }
           ], function (err, foundCities) { //ошибки быть не может
             if (typeof  cityObj[city.from + city.countryFrom] === 'undefined') {
@@ -137,7 +155,7 @@ module.exports = function (req, cities, callback) {
           });
         }, commonHelper.randomInteger(500, 1000));
       }, callback);
-    },
+    }],
     parseCities: ['getCities', function (results, callback) {
       logger.tariffsInfoLog(delivery, results.getCities, 'getCities');
       var tempRequests = [];
@@ -194,6 +212,7 @@ module.exports = function (req, cities, callback) {
           opts.body += (key + '=' + item.req[key] + '&');
         }
         opts.jar = true;
+        opts.headers.Cookie = 'ipp_uid1=' + results.getCookie.uid1 + '; ipp_uid2=' + results.getCookie.uid2 + '; ipp_key=' + results.getCookie.key + ';';
         setTimeout(function () {
           async.retry(config.retryOpts, function (callback) {
             request(opts, callback)
@@ -245,7 +264,6 @@ module.exports = function (req, cities, callback) {
       }, callback);
     }]
   }, function (err, results) {
-    logger.tariffsInfoLog(delivery, results.requests, 'getTariffs');
     commonHelper.saveResults(req, err, {
       delivery: delivery,
       timestamp: timestamp,
