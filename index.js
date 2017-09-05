@@ -4,6 +4,7 @@ var cors = require('cors');
 var bodyParser = require('body-parser');
 var methodOverride = require('method-override');
 var helmet = require('helmet');
+var moment = require('moment');
 var timeout = require('connect-timeout'); //express v4
 var config = require('./conf');
 var session = require('express-session');
@@ -34,7 +35,7 @@ app.use('/', express.static(__dirname + '/dist'));
 var exitHandler = function (options, err) {
   if (err) {
     console.error(err.stack);
-    logger.error(err);
+    logger.error(moment().format("DD.MM.YYYY HH:mm") + ": " + err.stack);
   }
   if (options.exit) {
     //setTimeout(function () {
@@ -90,10 +91,10 @@ app.post('/api/tariff/cities', cors(), require('./api/tariff/city'));
 app.post('/api/tariff/news', cors(), require('./api/news'));
 app.get('/api/settings', cors(), require('./api/settings'));
 
-//require('./api/tariff')(
-//  {session: {delivery: {}}, body: {
-//    deliveries: ['majorexpress'],
-//    cities: [
+require('./api/tariff')(
+  {session: {delivery: {}}, body: {
+    deliveries: ['vozimby'],
+    cities: [
       //{from: 'Пушкино, Московская обл.', to: 'Москва'},
       //{from: 'Москва', to: 'Sydney', countryTo: 'Australia'},
       //{from: 'Новосибирск', to: 'Москва', postcodeFrom: '630000', countryFromEngShort: 'RU', countryToEngShort: 'RU', postcodeTo: '119002', fromGooglePlaceId: 'ChIJl03MkOHl30IRhenT4XMGOps', toGooglePlaceId: 'ChIJybDUc_xKtUYRTM9XV8zWRD0', fromEngName: "Novosibirsk", fromEngFullName: "Novosibirsk, Novosibirsk Oblast, Russia", toEngName: "Moscow", toEngFullName: "Moscow, Russia"},
@@ -103,12 +104,15 @@ app.get('/api/settings', cors(), require('./api/settings'));
       //{from: 'Челябинск', to: 'Владивосток'},
       //{from: 'Москва', to: 'Бангкок'},
       //{from: 'Москва', to: 'Абай', countryTo: 'Казахстан'},
-      //{from: 'Москва', to: '', countryTo: 'Азербайджан'}
-//    ],
-//    weights: [1]
-//  }},
-//  {json: function () {}}
-//);
+      //{from: 'Москва', postcodeFrom: '630000', to: '', countryTo: 'Азербайджан'},
+      //{from: 'Москва', postcodeFrom: '630000', to: '', countryTo: 'Австралия'},
+      {from: 'Минск', postcodeFrom: '119002', to: 'Гомель', countryFrom: 'Беларусь', countryTo: 'Беларусь'}
+      //{from: 'Минск', postcodeFrom: '119002', to: 'Москва', countryFrom: 'Беларусь', countryTo: ''}
+    ],
+    weights: [1]
+  }},
+  {json: function () {}}
+);
 
 //require('./api/news')(
 //  {session: {delivery: {}}, body: {delivery: 'baikalsr', date: require('moment')().add(-3, 'month')}},
