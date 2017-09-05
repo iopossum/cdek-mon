@@ -7,6 +7,7 @@ var cheerio = require('cheerio');
 var config = require('../../../conf');
 var _ = require('underscore');
 var logger = require('../../helpers/logger');
+var moment = require('moment');
 var delivery = 'vozimby';
 
 var getReq = function (from, to) {
@@ -25,21 +26,15 @@ var getReq = function (from, to) {
   };
 };
 
-var getServiceName = function (service) {
+var getDeliveryTime = function (days) {
   var result = '';
-  switch (service) {
-    case 'OTD_OTD':
-      result = 'СС';
-      break;
-    case 'OTD_DV':
-      result = 'СД';
-      break;
-    case 'DV_OTD':
-      result = 'ДС';
-      break;
-    case 'DV_DV':
-      result = 'ДД';
-      break;
+  if (!days) {
+    return result;
+  }
+  var splits = days.split("-");
+  result = 1;
+  if (splits.length > 1) {
+    result = moment(splits[1], 'DD.MM.YYYY').diff(moment(splits[0], 'DD.MM.YYYY'), 'days') + 1;
   }
   return result;
 };
@@ -108,8 +103,8 @@ module.exports = function (req, cities, callback) {
                   city: {
                     initialCityFrom: item.from,
                     initialCityTo: item.to,
-                    from: fromCity.type + " " + fromCity.label,
-                    to: toCity.type + " " + toCity.label,
+                    from: fromCity,
+                    to: toCity,
                     countryFrom: item.countryFrom,
                     countryTo: item.countryTo
                   },
@@ -167,18 +162,20 @@ module.exports = function (req, cities, callback) {
               if (['custom', 'minimal'].indexOf(key) === -1 && json[key].enabled) {
                 item.tariffs.push({
                   cost: json[key].cost,
-                  deliveryTime: '',
+                  deliveryTime: getDeliveryTime(json[key].days),
                   service: ''
                 });
               }
             }
-            return callback(null, result);
+            if (!item.tariffs.length) {
+              item.error = commonHelper.getNoResultError();
+            }
+            return callback(null, item);
           });
         }, commonHelper.randomInteger(500, 1000));
       }, callback);
     }]
   }, function (err, results) {
-    console.log(results.requests);
     commonHelper.saveResults(req, err, {
       delivery: delivery,
       timestamp: timestamp,
