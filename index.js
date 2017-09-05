@@ -91,10 +91,10 @@ app.post('/api/tariff/cities', cors(), require('./api/tariff/city'));
 app.post('/api/tariff/news', cors(), require('./api/news'));
 app.get('/api/settings', cors(), require('./api/settings'));
 
-require('./api/tariff')(
-  {session: {delivery: {}}, body: {
-    deliveries: ['vozimby'],
-    cities: [
+//require('./api/tariff')(
+//  {session: {delivery: {}}, body: {
+//    deliveries: ['vozimby'],
+//    cities: [
       //{from: 'Пушкино, Московская обл.', to: 'Москва'},
       //{from: 'Москва', to: 'Sydney', countryTo: 'Australia'},
       //{from: 'Новосибирск', to: 'Москва', postcodeFrom: '630000', countryFromEngShort: 'RU', countryToEngShort: 'RU', postcodeTo: '119002', fromGooglePlaceId: 'ChIJl03MkOHl30IRhenT4XMGOps', toGooglePlaceId: 'ChIJybDUc_xKtUYRTM9XV8zWRD0', fromEngName: "Novosibirsk", fromEngFullName: "Novosibirsk, Novosibirsk Oblast, Russia", toEngName: "Moscow", toEngFullName: "Moscow, Russia"},
@@ -106,13 +106,13 @@ require('./api/tariff')(
       //{from: 'Москва', to: 'Абай', countryTo: 'Казахстан'},
       //{from: 'Москва', postcodeFrom: '630000', to: '', countryTo: 'Азербайджан'},
       //{from: 'Москва', postcodeFrom: '630000', to: '', countryTo: 'Австралия'},
-      {from: 'Минск', postcodeFrom: '119002', to: 'Гомель', countryFrom: 'Беларусь', countryTo: 'Беларусь'}
+      //{from: 'Минск', postcodeFrom: '119002', to: 'Гомель', countryFrom: 'Беларусь', countryTo: 'Беларусь'}
       //{from: 'Минск', postcodeFrom: '119002', to: 'Москва', countryFrom: 'Беларусь', countryTo: ''}
-    ],
-    weights: [1]
-  }},
-  {json: function () {}}
-);
+//    ],
+//    weights: [1]
+//  }},
+//  {json: function () {}}
+//);
 
 //require('./api/news')(
 //  {session: {delivery: {}}, body: {delivery: 'baikalsr', date: require('moment')().add(-3, 'month')}},
