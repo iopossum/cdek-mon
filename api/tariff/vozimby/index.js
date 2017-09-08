@@ -26,6 +26,25 @@ var getReq = function (from, to) {
   };
 };
 
+var getService = function (type) {
+  var result = '';
+  if (!type) {
+    return result;
+  }
+  switch (type) {
+    case '1':
+      result = 'Экспресс';
+      break;
+    case '2':
+      result = 'Стандарт';
+      break;
+    case '3':
+      result = 'Эконом';
+      break;
+  }
+  return result;
+};
+
 var getDeliveryTime = function (days) {
   var result = '';
   if (!days) {
@@ -163,7 +182,7 @@ module.exports = function (req, cities, callback) {
                 item.tariffs.push({
                   cost: json[key].cost,
                   deliveryTime: getDeliveryTime(json[key].days),
-                  service: ''
+                  service: getService(key)
                 });
               }
             }
