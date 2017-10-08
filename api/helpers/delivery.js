@@ -291,7 +291,45 @@ var targets = [
     calcUrl: {method: 'POST', uri: 'http://api.vozim.by/calculator'},
     citiesUrl: {method: 'GET', uri: 'http://api.vozim.by/location'},
     baseUrl: 'http://vozim.by'
-  }
+  },
+  {
+    id: 'alemtatkz',
+    name: 'Alemtat',
+    country: 'kz',
+    apiUrl: {method: 'POST', uri: 'http://www.alemtat.kz/api.php'},
+    countriesUrl: {method: 'POST', uri: 'http://www.alemtat.kz/calc/cis.php'},
+    baseUrl: 'http://www.alemtat.kz'
+  },
+  {
+    id: 'exlinekz',
+    name: 'Exline',
+    country: 'kz',
+    calcUrl: {method: 'GET', uri: 'https://api.exline.systems/public/v1/calculate?'},
+    deliveryUrl: {method: 'GET', uri: 'https://api.exline.systems/public/v1/trails?'},
+    citiesFromUrl: {method: 'GET', uri: 'https://api.exline.systems/public/v1/regions/origin?title='},
+    citiesToUrl: {method: 'GET', uri: 'https://api.exline.systems/public/v1/regions/destination?title='},
+    baseUrl: 'https://www.exline.kz'
+  },
+  {
+    id: 'avislogisticskz',
+    name: 'Avislogistics',
+    country: 'kz',
+    calcUrl: {method: 'POST', uri: 'http://avislogistics.kz/system/sendcalc.html'},
+    citiesUrl: {method: 'GET', uri: 'http://avislogistics.kz/ru/calc.html'},
+    baseUrl: 'http://avislogistics.kz'
+  },
+  {
+    id: 'dpdkz',
+    name: 'DPD',
+    country: 'kz',
+    calcUrl: {method: 'POST', uri: 'http://mydpd.dpd.kz/ols/calc/calc.do2'},
+    calcInternationalUrl: {method: 'POST', uri: 'http://mydpd.dpd.kz/ols/calcint/offire.do2'},
+    citiesUrl: {method: 'POST', uri: 'http://mydpd.dpd.kz/ols/calc/cities.do2'},
+    citiesInternationalUrl: {method: 'POST', uri: 'http://mydpd.dpd.kz/ols/calcint/city_ru.do2'},
+    countriesUrl: {method: 'GET', uri: 'http://mydpd.dpd.kz/ols/calcint/show.do2'},
+    newsUrl: {method: 'GET', uri: 'http://mydpd.dpd.kz/dpd/o-dpd/informacionnyj-centr/novosti.do2'},
+    baseUrl: 'http://mydpd.dpd.kz'
+  },
 ];
 
 var targetObj = _.indexBy(targets, 'id');
@@ -303,7 +341,8 @@ exports.list = function () {
 exports.countries = function () {
   return [
     {id: 'ru', name: 'Россия'},
-    {id: 'by', name: 'Беларусь'}
+    {id: 'by', name: 'Беларусь'},
+    {id: 'kz', name: 'Казахстан'}
   ]
 };
 

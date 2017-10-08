@@ -234,7 +234,7 @@ class TariffsCtrl {
     this.errors = [];
     async.series([
       function (callback) {
-        var intersection = _.intersection(obj.deliveries, ['dhl', 'tnt', 'fedex', 'ups', 'majorexpress', 'cityexpress', 'pochta']);
+        var intersection = _.intersection(obj.deliveries, ['dhl', 'tnt', 'fedex', 'ups', 'majorexpress', 'cityexpress', 'pochta', 'avislogisticskz']);
         if (intersection && intersection.length) {
           return that.getGoogleIds(callback);
         }
@@ -314,7 +314,7 @@ class TariffsCtrl {
     var total = Object.keys(requests).length;
     Object.keys(requests).forEach(function (key, index) {
       async.eachSeries(requests[key].requests, function (item, callback) {
-        that.tariffService.one({delivery: key, requests: [item]}).then(that.repeatResponse.bind(that), that.notify.error).finally(function () {
+        that.tariffService.one({delivery: key, requests: [item]}).then(that.repeatResponse.bind(that), that.notify.error.bind(that)).finally(function () {
           callback(null);
         });
       }, function () {
