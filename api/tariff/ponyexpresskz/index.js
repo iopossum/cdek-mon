@@ -7,13 +7,13 @@ var cheerio = require('cheerio');
 var config = require('../../../conf');
 var _ = require('underscore');
 var logger = require('../../helpers/logger');
-var delivery = 'ponyexpress';
+var delivery = 'ponyexpresskz';
 
 var getReq = function (from, to, isCountry) {
   return {
-    'parcel[currency_id]': 4,
+    'parcel[currency_id]': 6,
     'parcel[tips_iblock_code]': 'form_tips',
-    'parcel[tips_section_code]': 'pegas',
+    'parcel[tips_section_code]': 'pegas_kz',
     'parcel[direction]': isCountry ? 'outer' : 'inner',
     'parcel[from_country]': isCountry ? from : '',
     'parcel[from_city]': !isCountry ? from : '',
@@ -95,7 +95,21 @@ module.exports = function (req, cities, callback) {
   var cityObj = {};
   var cityIntObj = {};
   var timestamp = callback ? new Date().getTime*2 : commonHelper.getReqStored(req, delivery);
-  var sng = ['азербайджан', 'армения', 'беларусь', 'казахстан', 'кыргызстан', 'молдавия', 'молдова', 'узбекистан', 'украина', 'латвия', 'литва', 'эстония', 'грузия'];
+  var sng = commonHelper.SNG.concat(commonHelper.RUSSIA).concat(['азербайджан', 'армения', 'беларусь', 'казахстан', 'кыргызстан', 'молдавия', 'молдова', 'узбекистан', 'украина', 'латвия', 'литва', 'эстония', 'грузия']);
+  cities.forEach(function (item) {
+    item.countryFrom = item.countryFrom || 'Россия';
+    item.countryTo = item.countryTo || 'Россия';
+    if (sng.indexOf(item.countryFrom.toLowerCase()) === -1) {
+      item.isFromInternational = true;
+    } else if (item.countryFrom.toLowerCase() === 'казахстан') {
+      item.fromKz = true;
+    }
+    if (sng.indexOf(item.countryTo.toLowerCase()) === -1) {
+      item.isToInternational = true;
+    } else if (item.countryTo.toLowerCase() === 'казахстан') {
+      item.toKz = true;
+    }
+  });
   async.auto({
     getCities: [function (callback) {
       async.mapSeries(cities, function (city, callback) {
@@ -119,24 +133,6 @@ module.exports = function (req, cities, callback) {
             });
           }
         }
-        if (city.countryTo) {
-          if (city.countryTo.toLowerCase() === 'белоруссия') {
-            city.countryTo = 'беларусь';
-          }
-          if (sng.indexOf(city.countryTo.toLowerCase()) > -1) {
-            city.inititalCountryTo = city.countryTo;
-            city.countryTo = '';
-          }
-        }
-        if (city.countryFrom) {
-          if (city.countryFrom.toLowerCase() === 'белоруссия') {
-            city.countryFrom = 'беларусь';
-          }
-          if (sng.indexOf(city.countryFrom.toLowerCase()) > -1) {
-            city.inititalCountryFrom = city.countryFrom;
-            city.countryFrom = '';
-          }
-        }
         setTimeout(function () {
           if (commonHelper.getReqStored(req, delivery) > timestamp) {
             return callback({abort: true});
@@ -146,7 +142,7 @@ module.exports = function (req, cities, callback) {
             to: city.to,
             isCountry: false
           };
-          if (city.countryFrom || city.countryTo) {
+          if (city.isFromInternational || city.isToInternational) {
             cityOpts.from = city.countryFrom || "Россия";
             cityOpts.to = city.countryTo || "Россия";
             cityOpts.isCountry = true;
@@ -157,10 +153,8 @@ module.exports = function (req, cities, callback) {
                 if (typeof cityIntObj[city.from + city.countryFrom] !== 'undefined') {
                   return callback(null);
                 }
-              } else {
-                if (typeof cityObj[city.from + city.countryFrom] !== 'undefined') {
-                  return callback(null);
-                }
+              } else if (typeof cityObj[city.from + city.countryFrom] !== 'undefined') {
+                return callback(null);
               }
               getCity(cityOpts.from, cityOpts.isCountry, callback);
             },
@@ -169,10 +163,8 @@ module.exports = function (req, cities, callback) {
                 if (typeof cityIntObj[city.to + city.countryTo] !== 'undefined') {
                   return callback(null);
                 }
-              } else {
-                if (typeof cityObj[city.to + city.countryTo] !== 'undefined') {
-                  return callback(null);
-                }
+              } else if (typeof cityObj[city.to + city.countryTo] !== 'undefined') {
+                return callback(null);
               }
               getCity(cityOpts.to, cityOpts.isCountry, callback);
             }
@@ -195,14 +187,13 @@ module.exports = function (req, cities, callback) {
               }
               city.fromJson = cityObj[city.from + city.countryFrom];
               city.toJson = cityObj[city.to + city.countryTo];
-            }
+            };
             callback(null, city);
           });
         }, commonHelper.randomInteger(500, 1000));
       }, callback);
     }],
     parseCities: ['getCities', function (results, callback) {
-      logger.tariffsInfoLog(delivery, results.getCities, 'getCities');
       var tempRequests = [];
       results.getCities.forEach(function (item) {
         if (item.error) {
@@ -283,7 +274,7 @@ module.exports = function (req, cities, callback) {
             for (var key in json.result) {
               item.tariffs.push({
                 service: json.result[key].servise,
-                cost: json.result[key].tariffvat,
+                cost: json.result[key].tariff,
                 deliveryTime: json.result[key].delivery
               });
             }
@@ -296,7 +287,6 @@ module.exports = function (req, cities, callback) {
       }, callback);
     }]
   }, function (err, results) {
-    logger.tariffsInfoLog(delivery, results.requests, 'getTariffs');
     commonHelper.saveResults(req, err, {
       delivery: delivery,
       timestamp: timestamp,

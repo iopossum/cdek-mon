@@ -330,6 +330,24 @@ var targets = [
     newsUrl: {method: 'GET', uri: 'http://mydpd.dpd.kz/dpd/o-dpd/informacionnyj-centr/novosti.do2'},
     baseUrl: 'http://mydpd.dpd.kz'
   },
+  {
+    id: 'ponyexpresskz',
+    name: 'Ponyexpress',
+    country: 'kz',
+    calcUrl: {method: 'POST', uri: 'http://ponyexpress.kz/local/ajax/tariff.php'},
+    citiesUrl: {method: 'GET', uri: 'http://ponyexpress.kz/autocomplete/city?term='},
+    countriesUrl: {method: 'GET', uri: 'http//ponyexpress.kz/autocomplete/country?term='},
+    newsUrl: {method: 'GET', uri: 'http://ponyexpress.kz/about/press-center/news/'},
+    baseUrl: 'http://ponyexpress.kz'
+  },
+  {
+    id: 'postexpresskz',
+    name: 'Postexpress',
+    country: 'kz',
+    calcUrl: {method: 'POST', uri: 'http://postexpress.baseinform.com/API/index.php/calc/'},
+    citiesUrl: {method: 'GET', uri: 'http://postexpress.baseinform.com/API/index.php/towns/get_towns'},
+    baseUrl: 'http://postexpress.kz'
+  }
 ];
 
 var targetObj = _.indexBy(targets, 'id');
