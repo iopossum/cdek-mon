@@ -347,6 +347,23 @@ var targets = [
     calcUrl: {method: 'POST', uri: 'http://postexpress.baseinform.com/API/index.php/calc/'},
     citiesUrl: {method: 'GET', uri: 'http://postexpress.baseinform.com/API/index.php/towns/get_towns'},
     baseUrl: 'http://postexpress.kz'
+  },
+  {
+    id: 'vivipostkz',
+    name: 'Vivipost',
+    country: 'kz',
+    apiUrl: {method: 'POST', uri: 'http://vivipost.kz/bitrix/templates/innet_corp2_6/components/dev/empty/calculator2/ajax.php'},
+    baseUrl: 'http://vivipost.kz'
+  },
+  {
+    id: 'rikakz',
+    name: 'Rika',
+    country: 'kz',
+    calcUrl: {method: 'POST', uri: 'http://rika.kz/calc/?type=kz'},
+    calcInternationalUrl: {method: 'POST', uri: 'http://rika.kz/calc/?type=world'},
+    citiesUrl: {method: 'GET', uri: 'http://rika.kz/calc/?type=kz'},
+    countriesUrl: {method: 'GET', uri: 'http://rika.kz/calc/?type=world'},
+    baseUrl: 'http://rika.kz'
   }
 ];
 

@@ -13,34 +13,104 @@ var getReq = function (from, to) {
   from = from || {};
   to = to || {};
   return {
-    countryFrom: from.countryId,
-    countryTo: to.countryId,
-    cityFrom: from.id,
-    cityTo: to.id,
-    contentType: 'd63c7d7b-8ab3-11e5-80e5-0cc47a30d628',
-    ves: 1,
-    tarif: '',
-    addService: ''
+    "route": {
+      "from": from,
+      "to": to
+    },
+    "tos":{
+      "from":"doors",
+      "to":"doors"
+    },
+    "load":"parcel",
+    "rate":"standart",
+    "type":"tare",
+    "fizjur":"fiz",
+    "clientId":"",
+    "length":5,
+    "width":5,
+    "height":5,
+    "weight":1,
+    "volumetric":0.025,
+    "estimated":1,
+    "declared":10000,
+    "parts":1,
+    "zone":0,
+    "service":5
   }
 };
 
-var filterCity = function (city, engCity, array) {
+var getServiceName = function (req, name) {
+  var result = '';
+  if (req.tos.from === 'doors' && req.tos.to === 'doors') {
+    result = 'ДД: ';
+  } else if (req.tos.from === 'doors' && req.tos.to === 'office') {
+    result = 'ДC: ';
+  } else if (req.tos.from === 'office' && req.tos.to === 'doors') {
+    result = 'CД: ';
+  } else {
+    result = 'СC: ';
+  }
+  return result + name;
+};
+
+var getCityName = function (city) {
+  var result = city.display || '';
+  if (city.region) {
+    result += (', ' + city.region);
+  }
+  return result;
+};
+
+var getPrice = function (req, response) {
+  var c = {
+    base: 0,
+    extra: 0,
+    insure: 0,
+    total: 0,
+    maxdeliverydays: 0,
+    zone: 0
+  };
+  if(typeof response.individual_rates === 'undefined'){ //Нет индивидуальных тарифов - считаем стандартно
+    c.insure = Math.round(.007 * req.declared); // Комиссия
+    c.base = Number(response.price); // Стоимость отправки
+    c.fuelSurcharge = Math.round(response.price * 0.1); // Топливный сбор
+    c.total = Number(c.insure) + Number(c.base) + Number(c.fuelSurcharge);
+    c.discount = 0;
+  }
+  else { // Есть индивидуальные тарифы - считаем по ним
+    var indRates = response.individual_rates;
+    var estimated = 1;
+    var topliv_international = Number(response.price)*indRates.index_topliv_international;
+    var topliv_local = estimated <= 30 ? Number(response.price)*indRates.index_topliv_local: 0;
+    var topliv_freight = estimated > 30 ? Math.round(Number(response.price)*indRates.index_topliv_freight) : 0;
+    var declared_stoim = Math.round(req.declared*indRates.index_declared_stoim);
+    var discount = Math.round(Number(Number(response.price)+topliv_international+topliv_local+declared_stoim+topliv_freight)*indRates.index_discount);
+    var OC = Number(response.price)+(topliv_international+topliv_local+declared_stoim+topliv_freight)-discount;
+    c.insure = declared_stoim; // Комиссия
+    c.base = Number(response.price); // Стоимость отправки
+    c.fuelSurcharge = Math.round(estimated <= 30 ? topliv_local : topliv_freight) // Топливный сбор
+    c.total = Math.round(OC);
+    c.discount = discount
+  }
+  return c.total;
+};
+
+var filterCity = function (city, array) {
   var trim = commonHelper.getCity(city);
-  var founds = commonHelper.findInArray(array, trim, 'name', true);
-  if (!founds.length && engCity) {
-    trim = commonHelper.getCity(engCity);
-    founds = commonHelper.findInArray(array, trim, 'name', true);
+  var region = commonHelper.getRegionName(city);
+  var founds = commonHelper.findInArray(array, trim, 'value', true);
+  var foundsWithRegion = [];
+  if (region) {
+    foundsWithRegion = commonHelper.findInArray(founds.length ? founds : array, region, 'region');
   }
-  return founds;
+  return foundsWithRegion.length ? foundsWithRegion.splice(0, 3) : founds.splice(0, 3);
 };
 
-var getCalcResult = function (item, service, callback) {
+var getCalcResult = function (req, service, callback) {
   setTimeout(function () {
-    var copyReq = _.extend({}, item.req);
-    copyReq.tarif = service.id;
     var deliveryData = deliveryHelper.get(delivery);
     var opts = _.extend({}, deliveryData.calcUrl);
-    opts.form = copyReq;
+    opts.json = req;
     async.retry(config.retryOpts, function (callback) {
       opts.followAllRedirects = true;
       request(opts, callback)
@@ -52,19 +122,14 @@ var getCalcResult = function (item, service, callback) {
         result.error = commonHelper.getResultJsonError(err);
         return callback(null, result);
       }
-      if (!b) {
-        result.error = commonHelper.getNoResultError();
-        return callback(null, result);
-      }
-      var intValue = parseInt(b, 10);
-      if (isNaN(intValue) || !intValue) {
-        result.error = commonHelper.getNoResultError();
+      if (b.result !== 'success') {
+        result.error = commonHelper.getResultJsonError(new Error("result отличный от success: " + b.result));
         return callback(null, result);
       }
       result.tariff = {
-        service: service.name,
-        cost: b,
-        deliveryTime: ''
+        service: getServiceName(req, service.name),
+        cost: getPrice(req, b),
+        deliveryTime: b.maxdeliverydays || ''
       };
       result.success = true;
       return callback(null, result);
@@ -73,7 +138,6 @@ var getCalcResult = function (item, service, callback) {
 };
 
 module.exports = function (req, cities, callback) {
-  var deliveryData = deliveryHelper.get(delivery);
   var requests = [];
   var timestamp = callback ? new Date().getTime*2 : commonHelper.getReqStored(req, delivery);
   cities.forEach(function (item) {
@@ -101,40 +165,18 @@ module.exports = function (req, cities, callback) {
         if (!Array.isArray(json)) {
           return callback(new Error(commonHelper.getCityJsonError(new Error("Неверный ответ. Отсутствует массив"))));
         }
-
         callback(null, json);
       });
     },
     parseCities: ['getCities', function (results, callback) {
-      var countryObj = _.indexBy(results.getCities.cities, 'value');
       for (var i=0; i<cities.length; i++) {
         if (!cities[i].from || !cities[i].to) {
           cities[i].error = commonHelper.CITIESREQUIRED;
           requests = requests.concat(commonHelper.getResponseArray(req.body.weights, cities[i], delivery, cities[i].error));
           continue;
         }
-        if (!countryObj[cities[i].countryFrom.toUpperCase()]) {
-          cities[i].error = commonHelper.COUNTRYFROMNOTFOUND;
-          requests = requests.concat(commonHelper.getResponseArray(req.body.weights, cities[i], delivery, cities[i].error));
-          continue;
-        }
-        if (!countryObj[cities[i].countryTo.toUpperCase()]) {
-          cities[i].error = commonHelper.COUNTRYNOTFOUND;
-          requests = requests.concat(commonHelper.getResponseArray(req.body.weights, cities[i], delivery, cities[i].error));
-          continue;
-        }
-        if (!countryObj[cities[i].countryFrom.toUpperCase()].cities.length) {
-          cities[i].error = commonHelper.CITYFROMNOTFOUND;
-          requests = requests.concat(commonHelper.getResponseArray(req.body.weights, cities[i], delivery, cities[i].error));
-          continue;
-        }
-        if (!countryObj[cities[i].countryTo.toUpperCase()].cities.length) {
-          cities[i].error = commonHelper.CITYTONOTFOUND;
-          requests = requests.concat(commonHelper.getResponseArray(req.body.weights, cities[i], delivery, cities[i].error));
-          continue;
-        }
-        var foundsFrom = filterCity(cities[i].from, cities[i].fromEngName, countryObj[cities[i].countryFrom.toUpperCase()].cities);
-        var foundsTo = filterCity(cities[i].to, cities[i].toEngName, countryObj[cities[i].countryTo.toUpperCase()].cities);
+        var foundsFrom = filterCity(cities[i].from, results.getCities);
+        var foundsTo = filterCity(cities[i].to, results.getCities);
 
         if (!foundsFrom.length) {
           cities[i].error = commonHelper.CITYFROMNOTFOUND;
@@ -155,8 +197,8 @@ module.exports = function (req, cities, callback) {
               city: {
                 initialCityFrom: cities[i].from,
                 initialCityTo: cities[i].to,
-                from: fromCity.name,
-                to: toCity.name,
+                from: getCityName(fromCity),
+                to: getCityName(toCity),
                 countryFrom: cities[i].countryFrom,
                 countryTo: cities[i].countryTo
               },
@@ -171,7 +213,7 @@ module.exports = function (req, cities, callback) {
           req.body.weights.forEach(function (weight) {
             var obj = commonHelper.deepClone(item);
             obj.weight = weight;
-            obj.req['ves'] = weight;
+            obj.req['weight'] = weight;
             requests.push(obj);
           });
         });
@@ -189,16 +231,56 @@ module.exports = function (req, cities, callback) {
             callback(null, item);
           });
         }
-        async.mapLimit(results.getCities.services, 2, function (service, cb) {
-          getCalcResult(item, service, cb);
+        var services = [
+          {rate: "standart", name: "Стандарт"},
+          {rate: "express", name: "Экспресс"}
+        ];
+        async.mapLimit(services, 2, function (service, cb) {
+          async.parallel([
+            function (cb) {
+              var copy = commonHelper.deepClone(item.req);
+              copy.service = service.rate === 'standart' ? 5 : 6;
+              getCalcResult(copy, service, cb);
+            },
+            function (cb) {
+              if (!item.req.route.from.office) {
+                return cb(null, {});
+              }
+              var copy = commonHelper.deepClone(item.req);
+              copy.tos.from = 'office';
+              copy.service = service.rate === 'standart' ? 3 : 4;
+              getCalcResult(copy, service, cb);
+            },
+            function (cb) {
+              if (!item.req.route.to.office) {
+                return cb(null, {});
+              }
+              var copy = commonHelper.deepClone(item.req);
+              copy.tos.to = 'office';
+              copy.service = service.rate === 'standart' ? 3 : 4;
+              getCalcResult(copy, service, cb);
+            },
+            function (cb) {
+              if (!item.req.route.from.office && !item.req.route.to.office) {
+                return cb(null, {});
+              }
+              var copy = commonHelper.deepClone(item.req);
+              copy.tos.from = 'office';
+              copy.tos.to = 'office';
+              copy.service = service.rate === 'standart' ? 1 : 2;
+              getCalcResult(copy, service, cb);
+            }
+          ], cb);
         }, function (err, tariffs) {
           var errors = [];
-          tariffs.forEach(function (trf) {
-            if (trf.success) {
-              item.tariffs.push(trf.tariff);
-            } else {
-              errors.push(trf.error);
-            }
+          tariffs.forEach(function (srvTariffs) {
+            srvTariffs.forEach(function (trf) {
+              if (trf.success) {
+                item.tariffs.push(trf.tariff);
+              } else {
+                errors.push(trf.error);
+              }
+            });
           });
           if (!item.tariffs.length) {
             item.error = errors[0];

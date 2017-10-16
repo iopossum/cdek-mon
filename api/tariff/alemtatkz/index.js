@@ -225,6 +225,7 @@ var getIndex = function ($LocalCode) {
 };
 
 var getZone = function ($From, $To) {
+  //hell from site
   var zones = [
     [0, 2, 4, 2, 1, 4, 2, 4, 4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 4, 4, 4, 4, 1, 4, 4, 1, 1, 4, 4, 4, 4, 4, 4, 1, 4, 4, 2, 4, 4, 4, 5],
     [3, 0, 5, 3, 3, 5, 2, 4, 4, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 3, 3, 3, 5, 5, 5, 2, 5, 2, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5],
@@ -377,9 +378,6 @@ var findKzCity = function (city, array) {
   var trim = commonHelper.getCity(city);
   var founds = commonHelper.findInArray(array, trim, 'LocalityName', true);
   var foundsWithRegion = [];
-  if (!founds.length) {
-    return founds;
-  }
   if (founds.length > 1) {
     var region = commonHelper.getRegionName(city);
     if (region) {
