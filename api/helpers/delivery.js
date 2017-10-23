@@ -364,6 +364,14 @@ var targets = [
     citiesUrl: {method: 'GET', uri: 'http://rika.kz/calc/?type=kz'},
     countriesUrl: {method: 'GET', uri: 'http://rika.kz/calc/?type=world'},
     baseUrl: 'http://rika.kz'
+  },
+  {
+    id: 'spdexkz',
+    name: 'Spdex',
+    country: 'kz',
+    citiesUrl: {method: 'GET', uri: 'http://mypost.spdex.kz/api/Cities?filter=%7B%22order%22:%22name%22,%22include%22:%5B%22cityCountry%22,%22citySite%22%5D%7D'},
+    calcUrl: {method: 'GET', uri: 'http://mypost.spdex.kz/RateCalc.html'},
+    baseUrl: 'http://spdex.kz'
   }
 ];
 
