@@ -372,6 +372,22 @@ var targets = [
     citiesUrl: {method: 'GET', uri: 'http://mypost.spdex.kz/api/Cities?filter=%7B%22order%22:%22name%22,%22include%22:%5B%22cityCountry%22,%22citySite%22%5D%7D'},
     calcUrl: {method: 'GET', uri: 'http://mypost.spdex.kz/RateCalc.html'},
     baseUrl: 'http://spdex.kz'
+  },
+  {
+    id: 'blitspostkz',
+    name: 'Blitspost',
+    country: 'kz',
+    citiesUrl: {method: 'GET', uri: 'http://api.blitspost.work/public/v1/regions/origin?title=', json: true},
+    calcUrl: {method: 'GET', uri: 'http://api.blitspost.work/public/v1/calculate?', json: true},
+    baseUrl: 'http://blitspost.kz'
+  },
+  {
+    id: 'postkz',
+    name: 'Post.kz',
+    country: 'kz',
+    citiesUrl: {method: 'GET', uri: 'http://api.blitspost.work/public/v1/regions/origin?title=', json: true},
+    calcUrl: {method: 'GET', uri: 'https://post.kz/mail/calc'},
+    baseUrl: 'https://post.kz'
   }
 ];
 

@@ -91,9 +91,9 @@ app.post('/api/tariff/cities', cors(), require('./api/tariff/city'));
 app.post('/api/tariff/news', cors(), require('./api/news'));
 app.get('/api/settings', cors(), require('./api/settings'));
 
-require('./api/tariff')(
+/*require('./api/tariff')(
   {session: {delivery: {}}, body: {
-    deliveries: ['dpdkz'],
+    deliveries: ['postkz'],
     cities: [
       //{from: 'Пушкино, Московская обл.', to: 'Москва'},
       //{from: 'Москва', to: 'Sydney', countryTo: 'Australia'},
@@ -109,14 +109,16 @@ require('./api/tariff')(
       //{from: 'Минск', postcodeFrom: '119002', to: 'Гомель', countryFrom: 'Беларусь', countryTo: 'Беларусь'}
       //{from: 'Минск', postcodeFrom: '119002', to: 'Москва', countryFrom: 'Беларусь', countryTo: ''},
       // {from: 'Сидней', to: 'Астана', countryFrom: 'Австралия', countryTo: 'Казахстан'},
+      // {from: 'Алматы', to: 'Актау', countryFrom: 'Казахстан', countryTo: 'Казахстан'},
       {from: 'Алматы', to: 'Москва', countryFrom: 'Казахстан', countryTo: ''},
       // {from: 'Алматы', to: 'Абакан', countryFrom: 'Казахстан', countryTo: ''},
       // {from: 'Алматы', to: 'Минск', countryFrom: 'Казахстан', countryTo: 'Беларусь'},
     ],
     weights: [1]
   }},
+  {status: function () {return {json: function () {}}}},
   {json: function () {}}
-);
+);*/
 
 //require('./api/news')(
 //  {session: {delivery: {}}, body: {delivery: 'baikalsr', date: require('moment')().add(-3, 'month')}},
