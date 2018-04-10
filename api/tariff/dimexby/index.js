@@ -149,12 +149,13 @@ var getCalcResult = function (requests, req, timestamp, isInternational, callbac
           return callback(null, item);
         }
         var $ = cheerio.load(b);
+        var serviceName = item.service && typeof item.service !== 'boolean' ? ' ' + item.service : '';
         var trs = $('table').find('tr');
         if (trs[4]) {
           var tds = $(trs[4]).find('td');
           if (tds.length) {
             item.tariffs.push({
-              service: $($(trs[2]).find('td')[1]).text() + (item.service ? ' ' + item.service : ''),
+              service: $($(trs[2]).find('td')[1]).text() + serviceName,
               cost: $(tds[8]).text().replace(" ", ""),
               deliveryTime: $(tds[0]).text()
             });
@@ -168,7 +169,7 @@ var getCalcResult = function (requests, req, timestamp, isInternational, callbac
               service = $($(trs[i]).find('td')[0]).text();
             }
             item.tariffs.push({
-              service: service + ' ' + (tds.length > 4 ? $(tds[1]).text() : $(tds[0]).text()) + (item.service ? ' ' + item.service : ''),
+              service: service + ' ' + (tds.length > 4 ? $(tds[1]).text() : $(tds[0]).text()) + serviceName,
               cost: $(tds[tds.length > 4 ? 4 : 3]).text().replace(" ", ""),
               deliveryTime: ''
             });
@@ -336,6 +337,7 @@ module.exports = function (req, cities, callback) {
                   countryTo: item.countryTo
                 },
                 req: getReq(fromCity, toCity),
+                service: item.from !== item.to,
                 delivery: delivery,
                 tariffs: []
               });
@@ -345,6 +347,14 @@ module.exports = function (req, cities, callback) {
       });
       tempRequests.forEach(function (item) {
         req.body.weights.forEach(function (weight) {
+          if (item.service && weight <= 1) {
+            var obj2 = commonHelper.deepClone(item);
+            obj2.weight = weight;
+            obj2.req.massa = weight;
+            obj2.req.declarv = 'd';
+            obj2.service = '(документы)';
+            requests.push(obj2);
+          }
           var obj = commonHelper.deepClone(item);
           obj.weight = weight;
           obj.req.massa = weight;
@@ -353,6 +363,14 @@ module.exports = function (req, cities, callback) {
       });
       tempIntRequests.forEach(function (item) {
         req.body.weights.forEach(function (weight) {
+          if (weight <= 1) {
+            var obj2 = commonHelper.deepClone(item);
+            obj2.weight = weight;
+            obj2.req.massa = weight;
+            obj2.req.declarv = 'd';
+            obj2.service = '(документы)';
+            intRequests.push(obj2);
+          }
           var obj = commonHelper.deepClone(item);
           obj.weight = weight;
           obj.req.massa = weight;

@@ -368,6 +368,14 @@ module.exports = function (req, cities, callback) {
       });
       tempRequests.forEach(function (item) {
         req.body.weights.forEach(function (weight) {
+          if (!item.service && weight <= 1) {
+            var obj2 = commonHelper.deepClone(item);
+            obj2.weight = weight;
+            obj2.req.massa = weight;
+            obj2.req.declarv = 'd';
+            obj2.service = '(документы)';
+            requests.push(obj2);
+          }
           var obj = commonHelper.deepClone(item);
           obj.weight = weight;
           obj.req.massa = weight;
@@ -376,6 +384,14 @@ module.exports = function (req, cities, callback) {
       });
       tempIntRequests.forEach(function (item) {
         req.body.weights.forEach(function (weight) {
+          if (weight <= 1) {
+            var obj2 = commonHelper.deepClone(item);
+            obj2.weight = weight;
+            obj2.req.massa = weight;
+            obj2.req.declarv = 'd';
+            obj2.service = '(документы)';
+            intRequests.push(obj2);
+          }
           var obj = commonHelper.deepClone(item);
           obj.weight = weight;
           obj.req.massa = weight;
