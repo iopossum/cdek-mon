@@ -205,7 +205,7 @@ module.exports = function (req, cities, callback) {
       requests = requests.concat(results.requests);
       callback();
     });
-  }, 2);
+  }, 1);
 
   q.drain = function() {
     commonHelper.saveResults(req, null, {

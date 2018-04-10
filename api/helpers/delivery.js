@@ -293,6 +293,14 @@ var targets = [
     baseUrl: 'http://vozim.by'
   },
   {
+    id: 'dimexby',
+    name: 'Dimex',
+    country: 'by',
+    calcUrl: {method: 'GET', uri: 'http://bel.tech-dimex.ru/calculator/calcestnew?'},
+    citiesUrl: {method: 'GET', uri: 'http://bel.tech-dimex.ru/calculator/autocompletecity?'},
+    countriesUrl: {method: 'POST', uri: 'http://bel.tech-dimex.ru/calculator/getajaxForm'}
+  },
+  {
     id: 'alemtatkz',
     name: 'Alemtat',
     country: 'kz',
@@ -388,6 +396,21 @@ var targets = [
     citiesUrl: {method: 'GET', uri: 'http://api.blitspost.work/public/v1/regions/origin?title=', json: true},
     calcUrl: {method: 'GET', uri: 'https://post.kz/mail/calc'},
     baseUrl: 'https://post.kz'
+  },
+  {
+    id: 'dhlkz',
+    name: 'DHL',
+    country: 'kz',
+    calcUrl: {method: 'GET', uri: 'http://dct.dhl.com/data/quotation/?', json: true},
+    citiesUrl: {method: 'GET', uri: 'http://dct.dhl.com/data/postLoc?', json: true}
+  },
+  {
+    id: 'dimexkz',
+    name: 'Dimex',
+    country: 'kz',
+    calcUrl: {method: 'GET', uri: 'http://kzh.tech-dimex.ru/calculator/calcestnew?'},
+    citiesUrl: {method: 'GET', uri: 'http://kzh.tech-dimex.ru/calculator/autocompletecity?'},
+    countriesUrl: {method: 'POST', uri: 'http://kzh.tech-dimex.ru/calculator/getajaxForm'}
   }
 ];
 
@@ -416,4 +439,23 @@ exports.get = function (id) {
     }
   }
   return targetObj[id];
+};
+
+exports.dimexCountryChanger = function (country) {
+  if (!country) {
+    return country;
+  }
+  if (country.toLowerCase() === 'южная корея') {
+    country = 'Корея (Южная)';
+  }
+  if (country.toLowerCase() === 'белоруссия') {
+    country = 'Беларусь';
+  }
+  if (country.toLowerCase() === 'молдавия') {
+    country = 'Молдова';
+  }
+  if (country.toLowerCase() === 'ирландия') {
+    country = 'Ирландия, республика';
+  }
+  return country;
 };

@@ -35,7 +35,7 @@ app.use('/', express.static(__dirname + '/dist'));
 var exitHandler = function (options, err) {
   if (err) {
     console.error(err.stack);
-    logger.error(moment().format("DD.MM.YYYY HH:mm") + ": " + err.stack);
+    // logger.error(moment().format("DD.MM.YYYY HH:mm") + ": " + err.stack);
   }
   if (options.exit) {
     //setTimeout(function () {
@@ -93,7 +93,7 @@ app.get('/api/settings', cors(), require('./api/settings'));
 
 /*require('./api/tariff')(
   {session: {delivery: {}}, body: {
-    deliveries: ['postkz'],
+    deliveries: ['dimexkz'],
     cities: [
       //{from: 'Пушкино, Московская обл.', to: 'Москва'},
       //{from: 'Москва', to: 'Sydney', countryTo: 'Australia'},
@@ -107,10 +107,14 @@ app.get('/api/settings', cors(), require('./api/settings'));
       //{from: 'Москва', postcodeFrom: '630000', to: '', countryTo: 'Азербайджан'},
       //{from: 'Москва', postcodeFrom: '630000', to: '', countryTo: 'Австралия'},
       //{from: 'Минск', postcodeFrom: '119002', to: 'Гомель', countryFrom: 'Беларусь', countryTo: 'Беларусь'}
-      //{from: 'Минск', postcodeFrom: '119002', to: 'Москва', countryFrom: 'Беларусь', countryTo: ''},
+      // {from: 'Минск', postcodeFrom: '119002', to: 'Москва', countryFrom: 'Беларусь', countryTo: ''},
+      // {from: 'Минск', postcodeFrom: '119002', to: 'Минск', countryFrom: 'Беларусь', countryTo: 'Беларусь'},
       // {from: 'Сидней', to: 'Астана', countryFrom: 'Австралия', countryTo: 'Казахстан'},
-      // {from: 'Алматы', to: 'Актау', countryFrom: 'Казахстан', countryTo: 'Казахстан'},
-      {from: 'Алматы', to: 'Москва', countryFrom: 'Казахстан', countryTo: ''},
+      {from: 'Алматы', to: 'Астана', countryFrom: 'Казахстан', countryTo: 'Казахстан'},
+      // {from: 'Алматы', to: 'Алматы', countryFrom: 'Казахстан', countryTo: 'Казахстан'},
+      // {from: 'Алматы', to: 'Москва', countryFrom: 'Казахстан', countryTo: ''},
+      // {from: 'Астана', to: 'Москва', countryFrom: 'Казахстан', countryTo: '', countryFromEngShort: 'KZ', countryToEngShort: 'RU', fromEngName: 'Astana', toEngName: 'Moscow'},
+      // {from: 'Астана', to: 'Киев', countryFrom: 'Казахстан', countryTo: 'Украина'},
       // {from: 'Алматы', to: 'Абакан', countryFrom: 'Казахстан', countryTo: ''},
       // {from: 'Алматы', to: 'Минск', countryFrom: 'Казахстан', countryTo: 'Беларусь'},
     ],
