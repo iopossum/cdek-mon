@@ -25,8 +25,8 @@ exports.getNightmare = function () {
     loadTimeout: 30000,
     gotoTimeout: 30000,
     waitTimeout: 30000,
-    show: true,
-    openDevTools: true
+    // show: true,
+    // openDevTools: true
   });
   nightmare.viewport(1000, 1000)
     .useragent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36");

@@ -347,7 +347,7 @@ module.exports = function (req, cities, callback) {
       });
       tempRequests.forEach(function (item) {
         req.body.weights.forEach(function (weight) {
-          if (item.service && weight <= 1) {
+          if (item.service && weight <= 5) {
             var obj2 = commonHelper.deepClone(item);
             obj2.weight = weight;
             obj2.req.massa = weight;
@@ -363,7 +363,7 @@ module.exports = function (req, cities, callback) {
       });
       tempIntRequests.forEach(function (item) {
         req.body.weights.forEach(function (weight) {
-          if (weight <= 1) {
+          if (weight <= 5) {
             var obj2 = commonHelper.deepClone(item);
             obj2.weight = weight;
             obj2.req.massa = weight;

@@ -92,7 +92,7 @@ app.get('/api/settings', cors(), require('./api/settings'));
 
 /*require('./api/tariff')(
   {session: {delivery: {}}, body: {
-    deliveries: ['dimexkz'],
+    deliveries: ['postkz'],
     cities: [
       //{from: 'Пушкино, Московская обл.', to: 'Москва'},
       //{from: 'Москва', to: 'Sydney', countryTo: 'Australia'},
@@ -111,13 +111,13 @@ app.get('/api/settings', cors(), require('./api/settings'));
       // {from: 'Сидней', to: 'Астана', countryFrom: 'Австралия', countryTo: 'Казахстан'},
       // {from: 'Алматы', to: 'Астана', countryFrom: 'Казахстан', countryTo: 'Казахстан'},
       // {from: 'Алматы', to: 'Алматы', countryFrom: 'Казахстан', countryTo: 'Казахстан'},
-      // {from: 'Алматы', to: 'Москва', countryFrom: 'Казахстан', countryTo: ''},
-      {from: 'Астана', to: 'Москва', countryFrom: 'Казахстан', countryTo: '', countryFromEngShort: 'KZ', countryToEngShort: 'RU', fromEngName: 'Astana', toEngName: 'Moscow'},
+      {from: 'Алматы', to: 'Москва', countryFrom: 'Казахстан', countryTo: ''},
+      // {from: 'Астана', to: 'Москва', countryFrom: 'Казахстан', countryTo: '', countryFromEngShort: 'KZ', countryToEngShort: 'RU', fromEngName: 'Astana', toEngName: 'Moscow'},
       // {from: 'Астана', to: 'Киев', countryFrom: 'Казахстан', countryTo: 'Украина'},
       // {from: 'Алматы', to: 'Абакан', countryFrom: 'Казахстан', countryTo: ''},
       // {from: 'Алматы', to: 'Минск', countryFrom: 'Казахстан', countryTo: 'Беларусь'},
     ],
-    weights: [1]
+    weights: [2]
   }},
   {status: function () {return {json: function () {}}}},
   {json: function () {}}

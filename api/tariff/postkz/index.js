@@ -9,10 +9,108 @@ var _ = require('underscore');
 var logger = require('../../helpers/logger');
 var delivery = 'postkz';
 
+var getResult = function (nightmare, next, service) {
+  var args = {
+    next: next,
+    service: service
+  };
+  return nightmare
+    .wait(function () {
+      return $('.pkz-preloader_active').css('display') === 'none';
+    })
+    .evaluate(function (args) {
+      var trs = $('.calc__block__2__options').find('tbody').find('tr');
+      var tariffs = [];
+      trs.each(function (i, tr) {
+        if (!$(tr).hasClass('ng-hide')) {
+          var tds = $(tr).find('td');
+          tariffs.push({
+            service: $(tds[1]).text().trim() + (args.service ? ' (' + args.service + ')' : ''),
+            cost: $(tds[2]).text().trim(),
+            deliveryTime: $(tds[3]).text().trim()
+          });
+        }
+      });
+      if (args.next !== null) {
+        $($('.calc__radios__item')[args.next]).click();
+      }
+      return tariffs;
+    }, args);
+};
+
+var getMaxWeights = function (nightmare) {
+  var result = {};
+  return nightmare
+    .wait(function () {
+      return $('.pkz-preloader_active').css('display') === 'none';
+    })
+    .evaluate(function () {
+      var input = $('.calc__weight__input');
+      return input.attr('max');
+    })
+    .then(function (value) {
+      result.parcel = parseFloat(value);
+      return nightmare
+        .evaluate(function () {
+          $($('.calc__radios__item')[0]).click();
+        })
+        .wait(function () {
+          return $('.pkz-preloader_active').css('display') === 'none';
+        })
+        .evaluate(function () {
+          var input = $('.calc__weight__input');
+          return input.attr('max');
+        });
+    })
+    .then(function (value) {
+      result.doc = parseFloat(value);
+      return nightmare
+        .evaluate(function () {
+          var links = $('.calc__breadcrumb__item');
+          $(links[1]).click();
+          return false;
+        })
+        .wait(function () {
+          return $('.pkz-preloader_active').css('display') === 'none';
+        })
+        .evaluate(function () {
+          var input = $('.calc__weight__input');
+          return input.attr('max');
+        });
+    })
+    .then(function (value) {
+      result.docInt = parseFloat(value);
+      return nightmare
+        .evaluate(function () {
+          $($('.calc__radios__item')[1]).click();
+        })
+        .wait(function () {
+          return $('.pkz-preloader_active').css('display') === 'none';
+        })
+        .evaluate(function () {
+          var input = $('.calc__weight__input');
+          return input.attr('max');
+        });
+    })
+    .then(function (value) {
+      result.parcelInt = parseFloat(value);
+      return nightmare
+        .evaluate(function () {
+          var links = $('.calc__breadcrumb__item');
+          $(links[0]).click();
+          return false;
+        });
+    })
+    .then(function () {
+      return Promise.resolve(result);
+    });
+};
+
 module.exports = function (req, cities, callback) {
   var deliveryData = deliveryHelper.get(delivery);
   var requests = [];
   var timestamp = callback ? new Date().getTime*2 : commonHelper.getReqStored(req, delivery);
+  var maxWeights = null;
   var q = async.queue(function(task, callback) {
     if (commonHelper.getReqStored(req, delivery) > timestamp) {
       return callback({abort: true});
@@ -21,12 +119,24 @@ module.exports = function (req, cities, callback) {
     var item = _.extend(task);
     item.fromTrim = commonHelper.getCity(item.city.from);
     item.toTrim = item.city.toKz ? commonHelper.getCity(item.city.to) : commonHelper.getCity(item.city.countryTo);
+    var parcelKey = !item.city.toKz ? 'parcelInt' : 'parcel';
+    var docKey = !item.city.toKz ? 'docInt' : 'doc';
     nightmare.goto(deliveryData.calcUrl.uri)
       .wait('.calc__block')
       .wait(function () {
         return $('.pkz-preloader_active').css('display') === 'none';
       })
       .then(function () {
+        if (!maxWeights) {
+          return getMaxWeights(nightmare);
+        } else {
+          return Promise.resolve();
+        }
+      })
+      .then(function (max) {
+        if (max) {
+          maxWeights = max;
+        }
         if (!task.city.toKz) {
           return nightmare.evaluate(function () {
             var links = $('.calc__breadcrumb__item');
@@ -96,6 +206,14 @@ module.exports = function (req, cities, callback) {
               return Promise.reject({message: commonHelper.getCityNoResultError(item.to), manual: true});
             });
         }
+        if (task.weight > maxWeights[parcelKey]) {
+          return nightmare
+            .end()
+            .then(function () {
+              delete task.req;
+              return Promise.reject({message: "Максимальный вес " + maxWeights[parcelKey], manual: true});
+            });
+        }
         return nightmare
           .wait(function () {
             return $('.pkz-preloader_active').css('display') === 'none';
@@ -109,99 +227,76 @@ module.exports = function (req, cities, callback) {
           .wait(function () {
             return $('.pkz-preloader_active').css('display') === 'none';
           })
-          .evaluate(function (item) {
+          .evaluate(function () {
             $($('.calc__radios__item')[2]).click();
-          }, item)
+          })
           .wait(function () {
             return $('.pkz-preloader_active').css('display') === 'none';
           })
-          .evaluate(function (item) {
-            var trs = $('.calc__block__2__options').find('tbody').find('tr');
-            var tariffs = [];
-            trs.each(function (i, tr) {
-              if (!$(tr).hasClass('ng-hide')) {
-                var tds = $(tr).find('td');
-                tariffs.push({
-                  service: $(tds[1]).text().trim(),
-                  cost: $(tds[2]).text().trim(),
-                  deliveryTime: $(tds[3]).text().trim()
-                });
+          .evaluate(function () {
+            $($('.calc__radios__item')[1]).click();
+          });
+      })
+      .then(function () {
+        if (task.weight > maxWeights[docKey]) {
+          return getResult(nightmare, 3)
+            .then(function (tariffs) {
+              task.tariffs = task.tariffs.concat(tariffs);
+              return getResult(nightmare, item.city.toKz ? 4 : null);
+            })
+            .then(function (tariffs) {
+              task.tariffs = task.tariffs.concat(tariffs);
+              if (item.city.toKz) {
+                return getResult(nightmare, null);
+              } else {
+                return Promise.resolve([]);
               }
-            });
-            return tariffs;
-          }, item)
+            })
+        } else {
+          return getResult(nightmare, 0)
+            .then(function (tariffs) {
+              task.tariffs = task.tariffs.concat(tariffs);
+              return getResult(nightmare, 3, 'документы');
+            })
+            .then(function (tariffs) {
+              task.tariffs = task.tariffs.concat(tariffs);
+              return getResult(nightmare, 1, 'документы');
+            })
+            .then(function (tariffs) {
+              task.tariffs = task.tariffs.concat(tariffs);
+              return getResult(nightmare, item.city.toKz ? 4 : null);
+            })
+            .then(function (tariffs) {
+              task.tariffs = task.tariffs.concat(tariffs);
+              if (item.city.toKz) {
+                return getResult(nightmare, null);
+              } else {
+                return Promise.resolve([]);
+              }
+            })
+        }
       })
       .then(function (tariffs) {
         task.tariffs = task.tariffs.concat(tariffs);
-        return nightmare
-          .evaluate(function (item) {
-            $($('.calc__radios__item')[3]).click();
-          }, item)
-          .wait(function () {
-            return $('.pkz-preloader_active').css('display') === 'none';
-          })
-          .evaluate(function (item) {
-            var trs = $('.calc__block__2__options').find('tbody').find('tr');
-            var tariffs = [];
-            trs.each(function (i, tr) {
-              if (!$(tr).hasClass('ng-hide')) {
-                var tds = $(tr).find('td');
-                tariffs.push({
-                  service: $(tds[1]).text().trim(),
-                  cost: $(tds[2]).text().trim(),
-                  deliveryTime: $(tds[3]).text().trim()
-                });
-              }
-            });
-            return tariffs;
-          }, item)
-      })
-      .then(function (tariffs) {
-        task.tariffs = task.tariffs.concat(tariffs);
-        if (!task.city.toKz) {
-          return nightmare.end();
+        if (!task.tariffs.length) {
+          task.error = commonHelper.getNoResultError();
         }
-        return nightmare
-          .evaluate(function (item) {
-            $($('.calc__radios__item')[4]).click();
-          }, item)
-          .wait(function () {
-            return $('.pkz-preloader_active').css('display') === 'none';
-          })
-          .evaluate(function (item) {
-            var trs = $('.calc__block__2__options').find('tbody').find('tr');
-            var tariffs = [];
-            trs.each(function (i, tr) {
-              if (!$(tr).hasClass('ng-hide')) {
-                var tds = $(tr).find('td');
-                tariffs.push({
-                  service: $(tds[1]).text().trim(),
-                  cost: $(tds[2]).text().trim(),
-                  deliveryTime: $(tds[3]).text().trim()
-                });
-              }
-            });
-            return tariffs;
-          }, item)
-          .end();
-      })
-      .then(function (tariffs) {
-        if (tariffs) {
-          task.tariffs = task.tariffs.concat(tariffs);
-        }
+        console.log(task.tariffs);
         requests.push(task);
         callback();
+        return nightmare.end();
       })
       .catch(function (error) {
-        nightmare.end();
         task.error = error.message || "Внутренняя ошибка nightmare";
         requests.push(task);
         callback();
+        return nightmare.end();
       });
 
-  }, 2);
+  }, 1);
 
   q.drain = function() {
+    console.log(requests);
     commonHelper.saveResults(req, null, {
       delivery: delivery,
       timestamp: timestamp,
