@@ -301,6 +301,13 @@ var targets = [
     countriesUrl: {method: 'POST', uri: 'http://bel.tech-dimex.ru/calculator/getajaxForm'}
   },
   {
+    id: 'belpostby',
+    name: 'Belpost',
+    country: 'by',
+    calcUrl: {method: 'GET', uri: 'http://tarifikator.belpost.by/forms/internal/ems.php'},
+    calcInternationalUrl: {method: 'GET', uri: 'http://tarifikator.belpost.by/forms/international/ems.php'}
+  },
+  {
     id: 'alemtatkz',
     name: 'Alemtat',
     country: 'kz',
