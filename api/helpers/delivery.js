@@ -308,6 +308,20 @@ var targets = [
     calcInternationalUrl: {method: 'GET', uri: 'http://tarifikator.belpost.by/forms/international/ems.php'}
   },
   {
+    id: 'korexby',
+    name: 'Korex',
+    country: 'by',
+    calcUrl: {method: 'POST', uri: 'http://korex.by/ajax/calc.php', json: true},
+    citiesUrl: {method: 'POST', uri: 'http://korex.by/ajax/search_address.php', json: true}
+  },
+  {
+    id: 'ponyexpressby',
+    name: 'Ponyexpress',
+    country: 'by',
+    calcUrl: {method: 'POST', uri: 'http://ponyexpress.by/local/ajax/courier.php', json: true},
+    citiesUrl: {method: 'GET', uri: 'http://ponyexpress.by/autocomplete/city?term=', json: true}
+  },
+  {
     id: 'alemtatkz',
     name: 'Alemtat',
     country: 'kz',
