@@ -174,7 +174,7 @@ module.exports = function (req, cities, callback) {
           return nightmare
             .end()
             .then(function () {
-              return Promise.reject({message: commonHelper.getCityNoResultError(item.from), manual: true});
+              return Promise.reject({message: commonHelper.getCityNoResultError(item.fromTrim), manual: true});
             });
         }
         return nightmare
@@ -203,7 +203,7 @@ module.exports = function (req, cities, callback) {
           return nightmare
             .end()
             .then(function () {
-              return Promise.reject({message: commonHelper.getCityNoResultError(item.to), manual: true});
+              return Promise.reject({message: commonHelper.getCityNoResultError(item.toTrim), manual: true});
             });
         }
         if (task.weight > maxWeights[parcelKey]) {
@@ -281,7 +281,6 @@ module.exports = function (req, cities, callback) {
         if (!task.tariffs.length) {
           task.error = commonHelper.getNoResultError();
         }
-        console.log(task.tariffs);
         requests.push(task);
         callback();
         return nightmare.end();
@@ -296,7 +295,6 @@ module.exports = function (req, cities, callback) {
   }, 1);
 
   q.drain = function() {
-    console.log(requests);
     commonHelper.saveResults(req, null, {
       delivery: delivery,
       timestamp: timestamp,
