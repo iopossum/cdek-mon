@@ -1,7 +1,20 @@
-var async = require('async');
-var _ = require('underscore');
-var async = require('async');
-var commonHelper = require('../../../../api/helpers/common-safe');
+const async = require('async');
+const _ = require('underscore');
+import { NativeEventSource, EventSourcePolyfill } from 'event-source-polyfill';
+import { v4 as uuidv4 } from 'uuid';
+const EventSource = NativeEventSource || EventSourcePolyfill;
+
+const pluralize = (num, array) => {
+  const mod = num % 10;
+  let result = array[2];
+  if (mod === 1 && num % 11 !== 0) {
+    result = array[0];
+  } else if ([2,3,4].indexOf(mod) > -1) {
+    result = array[1];
+  }
+  return result;
+};
+
 class TariffsCtrl {
 
   constructor($scope, $rootScope, Tariff, Notify, Xls, bsLoadingOverlayService) {
@@ -10,15 +23,14 @@ class TariffsCtrl {
       weights: [],
       targets: []
     };
-    var array = [];
-    var that = this;
-    for (var i=1; i<=10; i++) {
-      if (i===1) {
+    const array = [];
+    for (let i = 1; i <= 10; i++) {
+      if (i === 1) {
         array.push(0.5);
       }
       array.push(i);
     }
-    for (var i=20; i<=100; i+=10) {
+    for (let i = 20; i <= 100; i += 10) {
       array.push(i);
     }
     this.results = [];
@@ -46,6 +58,8 @@ class TariffsCtrl {
       direction: 'asc'
     };
 
+    this.sessionID = uuidv4();
+
     this.acService;
     this.placeService;
     this.geocoder;
@@ -57,9 +71,9 @@ class TariffsCtrl {
       console.error(e);
     }
 
-    var weightStr = localStorage.weights;
+    const weightStr = localStorage.weights;
     if (weightStr) {
-      var json = null;
+      let json = null;
       try {
         json = JSON.parse(weightStr);
       } catch (e) {
@@ -69,27 +83,26 @@ class TariffsCtrl {
         this.filter.weights = json;
       }
     }
+
+    window.addEventListener('beforeunload', (e) => {
+      navigator.sendBeacon(`http://localhost:5000/api/beacon?sessionID=${this.sessionID}`, {});
+    });
   }
 
   setSort () {
-    var results = [];
-    var that = this;
+    let results = [];
     switch (this.sort.name) {
       case 'delivery':
-        results = _.sortBy(this.results, function (item) {
-          return item.delivery;
-        });
+        results = _.sortBy(this.results, (item) => item.delivery);
         break;
       case 'weight':
-        results = _.sortBy(this.results, function (item) {
-          return item.weight;
-        });
+        results = _.sortBy(this.results, (item) => item.weight);
         break;
     }
-    var needReverse = this.sort.direction === 'desc' && results.length;
+    let needReverse = this.sort.direction === 'desc' && results.length;
     if (needReverse) {
-      var value = results[0][this.sort.name];
-      if (results.every(function (item) {return item[that.sort.name] === value;})) {
+      const value = results[0][this.sort.name];
+      if (results.every((item) => item[this.sort.name] === value)) {
         needReverse = false;
       }
     }
@@ -176,17 +189,11 @@ class TariffsCtrl {
   }
 
   receiveTariffs(res) {
-    var that = this;
-    res.forEach(function (item) {
+    res.forEach((item) => {
       if (!item.error) {
-        //item.tariffs.forEach(function (tariff) {
-        //  var obj = Object.assign(item);
-        //  obj.tariff = tariff;
-        //  delete obj.tariffs;
-          that.results.push(item);
-        //});
+        this.results.push(item);
       } else {
-        that.errors.push(item);
+        this.errors.push(item);
       }
     });
   }
@@ -200,11 +207,9 @@ class TariffsCtrl {
   }
 
   addWeight($item) {
-    var item = parseFloat($item);
+    const item = parseFloat($item);
     if (isNaN(item)) {
-      this.filter.weights = this.filter.weights.filter(function (it) {
-        return it !== $item;
-      });
+      this.filter.weights = this.filter.weights.filter((it) => it !== $item);
       return false;
     }
     localStorage.weights = JSON.stringify(this.filter.weights);
@@ -249,11 +254,44 @@ class TariffsCtrl {
       }
     ], function (err, cities) {
       obj.cities = cities[1];
-      that.tariffService.request(obj).then(function (res) {
-        that.pingTariffs();
-      }, function (err) {
-        that.notify.error(err);
+      const es1 = new EventSource(`http://localhost:5000/api/tariff/request?data=${JSON.stringify(obj)}&sessionID=${that.sessionID}`);
+      es1.addEventListener("message", ({ data }) => {
+        const parsedData = JSON.parse(data);
+        that.$scope.$apply(() => {
+          const obj = {};
+          parsedData.forEach(v => obj[v.delivery] = 1);
+          that.dynamic = that.dynamic + Object.keys(obj).length;
+          that.receiveTariffs(parsedData);
+        });
       });
+      es1.addEventListener("error", function () {
+        that.notify.error({ status: 500, data: {title: "Соединение с сервером потеряно. Ожидается реконнект"} });
+      });
+      es1.addEventListener("eventFinish", ({ data }) => {
+        es1.close();
+        that.$scope.$apply(() => {
+          that.loading.main = false;
+          that.requestedTargets = [];
+          that.dynamic = 0;
+          that.receiveTariffs(JSON.parse(data));
+        });
+      });
+      es1.addEventListener("eventError", (event) => {
+        try {
+          that.notify.error({ status: 500, data: JSON.parse(event.data) });
+        } catch(e) {}
+        es1.close();
+        that.$scope.$apply(() => {
+          that.loading.main = false;
+          that.requestedTargets = [];
+        });
+      });
+
+      // that.tariffService.request(obj).then(function (res) {
+      //   that.pingTariffs();
+      // }, function (err) {
+      //   that.notify.error(err);
+      // });
     });
 
   }
@@ -264,26 +302,28 @@ class TariffsCtrl {
   }
 
   repeatResponse (res) {
-    var that = this;
-    res.forEach(function (item) {
-      var key = that.getCityKey(item);
+    res.forEach((item) => {
+      const key = this.getCityKey(item);
       if (!item.error) {
-        var resFilter = that.results.filter(function (resItem) {
-          return that.getCityKey(resItem) === key;
+        const resFiltered = this.results.filter((resItem) => {
+          return this.getCityKey(resItem) === key;
         });
-        if (!resFilter.length) {
-          that.results.push(item);
+        if (!resFiltered.length) {
+          this.results.push(item);
+          this.errors = this.errors.filter((resItem) => {
+            return this.getCityKey(resItem) !== key;
+          });
         } else {
-          _.extend(resFilter[0], item);
+          _.extend(resFiltered[0], item);
         }
       } else {
-        var errFilter = that.errors.filter(function (resItem) {
-          return that.getCityKey(resItem) === key;
+        const errFiltered = this.errors.filter((resItem) => {
+          return this.getCityKey(resItem) === key;
         });
-        if (!errFilter.length) {
-          that.errors.push(item);
+        if (!errFiltered.length) {
+          this.errors.push(item);
         } else {
-          _.extend(errFilter[0], item);
+          _.extend(errFiltered[0], item);
         }
       }
     });
@@ -293,14 +333,13 @@ class TariffsCtrl {
   repeatAll() {
     this.loading.errors = true;
     this.bsLoadingOverlayService.start();
-    var that = this;
-    var requests = {};
-    this.errors.forEach(function (item) {
+    let requests = {};
+    this.errors.forEach((item) => {
       if (item.req) {
         requests[item.delivery] = requests[item.delivery] || {};
         requests[item.delivery].delivery = item.delivery;
         requests[item.delivery].requests = requests[item.delivery].requests || [];
-        var copy = _.clone(item.city);
+        const copy = _.clone(item.city);
         copy.from = copy.initialCityFrom || copy.from;
         copy.to = copy.initialCityTo || copy.to;
         copy.countryFrom = copy.initialCountryFrom || copy.countryFrom;
@@ -311,32 +350,30 @@ class TariffsCtrl {
         });
       }
     });
-    var total = Object.keys(requests).length;
-    Object.keys(requests).forEach(function (key, index) {
-      async.eachSeries(requests[key].requests, function (item, callback) {
-        that.tariffService.one({delivery: key, requests: [item]}).then(that.repeatResponse.bind(that), that.notify.error.bind(that)).finally(function () {
+    async.eachSeries(Object.keys(requests), (key, callback) => {
+      this.tariffService.one({delivery: key, requests: requests[key].requests})
+        .then(this.repeatResponse.bind(this), this.notify.error.bind(this.notify))
+        .finally(() =>  {
           callback(null);
         });
-      }, function () {
-        if (total === index + 1) {
-          that.loading.errors = false;
-          that.bsLoadingOverlayService.stop();
-        }
-      });
+    }, () => {
+      this.loading.errors = false;
+      this.bsLoadingOverlayService.stop();
     });
   }
 
   repeat(item) {
     item.loading = true;
-    var that = this;
-    var copy = _.clone(item.city);
+    const copy = _.clone(item.city);
     copy.from = copy.initialCityFrom || copy.from;
     copy.to = copy.initialCityTo || copy.to;
     copy.countryFrom = copy.initialCountryFrom || copy.countryFrom;
     copy.countryTo = copy.initialCountryTo || copy.countryTo;
-    this.tariffService.one({delivery: item.delivery, requests: [{city: copy, weight: item.weight}]}).then(that.repeatResponse.bind(that), that.notify.error).finally(function () {
-      item.loading = false;
-    });
+    this.tariffService.one({delivery: item.delivery, requests: [{city: copy, weight: item.weight}]})
+      .then(this.repeatResponse.bind(this), this.notify.error.bind(this.notify))
+      .finally(() => {
+        item.loading = false;
+      });
   }
 
   downloadFile () {
@@ -344,10 +381,10 @@ class TariffsCtrl {
   }
 
   getCdekIds (callback) {
-    var that = this;
-    this.tariffService.cities({cities: this.filter.cities}).then(function (res) {
-      callback(null, res);
-    });
+    this.tariffService.cities({cities: this.filter.cities})
+      .then(function (res) {
+        callback(null, res);
+      });
   }
 
   getGoogleIds (callback) {
@@ -522,15 +559,18 @@ class TariffsCtrl {
   }
 
   handleFile (f) {
-    var reader = new FileReader();
-    var that = this;
-    reader.onload = function(e) {
-      that.$scope.$apply(function () {
-        that.filter.cities = that.xls.readCities(e.target.result);
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      this.$scope.$apply(() => {
+        this.filter.cities = this.xls.readCities(e.target.result);
       });
     };
     reader.readAsBinaryString(f);
   }
+
+  pluralizeCities (value) {
+    return `${value} ${pluralize(value, ['направление', 'направления', 'направлений'])}`;
+  };
 
 }
 

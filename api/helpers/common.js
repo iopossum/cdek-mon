@@ -1,10 +1,15 @@
-var request = require('request');
-var Nightmare = require('nightmare');
-var realMouse = require('nightmare-real-mouse');
-var _ = require('underscore');
-var commonSafe = require('./common-safe');
-var NodeTtl = require( "node-ttl" );
-var ttl = new NodeTtl({ttl: 60*60*24});
+const request = require('request');
+const Nightmare = require('nightmare');
+const realMouse = require('nightmare-real-mouse');
+const _ = require('underscore');
+const commonSafe = require('./common-safe');
+const Store = require('./store');
+const NodeTtl = require( "node-ttl" );
+const cfg = require('../../conf');
+const async = require('promise-async');
+const fetch = require('cross-fetch');
+const puppeteer = require('puppeteer');
+const ttl = new NodeTtl({ttl: 60*60*24});
 _.extend(exports, commonSafe);
 
 // add the plugin
@@ -12,12 +17,124 @@ realMouse(Nightmare);
 request.defaults({
   timeout : 5000,
   headers: {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36'
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.135 Safari/537.36'
   },
-  maxRedirects:20
+  maxRedirects: 20
 });
 
+exports.getBrowser = async () => {
+  return await puppeteer.launch({
+    ignoreHTTPSErrors: true,
+    defaultViewport: {
+      width: 1280,
+      height: 1024
+    },
+    args: [
+      '--no-sandbox',
+      '--disable-setuid-sandbox'
+    ]
+  });
+};
+
+exports.newPage = async (browser) => {
+  const page = await browser.newPage();
+  await page.emulate({
+    viewport: {
+      width: 1280,
+      height: 1024
+    },
+    userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.135 Safari/537.36'
+  });
+  return page;
+};
+
+exports.waitForWrapper = async (page, selector, opts = {}, message) => {
+  try {
+    await page.waitFor(selector, opts);
+  } catch(e) {
+    throw new Error(message || this.getContentChangedMessage(selector))
+  }
+};
+
+exports.closeBrowser = async (browser) => {
+  if (browser) {
+    try {
+      await browser.close();
+    } catch (e) {
+    }
+  }
+};
+
+exports.closePage = async (page) => {
+  if (page) {
+    try {
+      await page.close();
+    } catch (e) {
+    }
+  }
+};
+
 exports.request = request;
+
+const requestPromise = (opts) => {
+  return new Promise((resolve, reject) => {
+    if (opts.body) {
+      opts.body = JSON.stringify(opts.body);
+    }
+    request(opts, (err, response, body) => {
+      err ? reject(err) : resolve({ response, body })
+    });
+  });
+};
+
+exports.requestWrapper = ({json, noReject, sessionID, ...opts}) => {
+  return new Promise((resolve, reject) => {
+    setTimeout(async () => {
+      if (sessionID && !Store.getRequest(sessionID)) {
+        return reject({ abort: true });
+      }
+      try {
+        const retryRes = await async.retry(cfg.request.retryOpts, async (callback) => {
+          if (sessionID && !Store.getRequest(sessionID)) {
+            return callback({ abort: true });
+          }
+          /*try {
+            const fetchRes = await fetch(opts.uri || opts.url, opts);
+            if (sessionID && !Store.getRequest(sessionID)) {
+              return reject({ abort: true });
+            }
+            let body = null;
+            if (json) {
+              body = await fetchRes.json();
+            } else {
+              body = await fetchRes.text();
+              const match = body.match(/(bad gateway)|(403 Forbidden)|(token mismatch)/i);
+              if (match) {
+                return callback(new Error(match[1] || match[2] || match[3]));
+              }
+            }
+            callback(null, {body, response: fetchRes});
+          } catch (e) {
+            callback(e);
+          }*/
+          console.log(opts)
+          try {
+            const res = await requestPromise(opts);
+            if (sessionID && !Store.getRequest(sessionID)) {
+              return reject({ abort: true });
+            }
+            callback(null, res);
+          } catch (e) {
+            callback(e);
+          }
+        });
+        resolve(retryRes);
+      } catch (e) {
+        noReject && !e.abort ? resolve({error: e}) : reject(e);
+      }
+    }, this.randomInteger(cfg.request.delay.min, cfg.request.delay.max));
+  });
+};
 
 exports.getNightmare = function () {
   var nightmare = new Nightmare({
@@ -31,6 +148,14 @@ exports.getNightmare = function () {
   nightmare.viewport(1000, 1000)
     .useragent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36");
   return nightmare;
+};
+
+exports.allResultsError = function ({ cities, weights, deliveryKey, error }) {
+  let array = [];
+  cities.forEach(function (item) {
+    array = array.concat(exports.getResponseArray(weights, item, deliveryKey, error.message || error.stack || error));
+  });
+  return array;
 };
 
 exports.saveResults = function (req, err, opts) {

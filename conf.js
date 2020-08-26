@@ -1,6 +1,13 @@
 module.exports = {
-  retryOpts: {
-    times: 10, interval: 500
+  request: {
+    delay: {
+      min: 1000,
+      max: 2000
+    },
+    retryOpts: {
+      times: 2,
+      interval: 1000
+    },
   },
   rootFolder: __dirname,
   mongo: {

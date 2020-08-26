@@ -113,16 +113,20 @@ exports.getResponseObject = function (cityItem, delivery, weight, error) {
   }
 };
 
-exports.findInArray = function (array, value, key, exactly) {
+exports.findInArray = (array, value, key, exactly) => {
   key = key || 'name';
   array = array || [];
-  var reg = exactly ? new RegExp("(^|[^_0-9a-zA-Zа-яёА-ЯЁ])" + value + "([^_0-9a-zA-Zа-яёА-ЯЁ-]|$)", "i") : new RegExp(value, 'gi');
+  const reg = this.findInArrayRegExp(value, exactly);
   return array.filter(function (item) {
     if (!item[key]) {
       return false;
     }
     return item[key].match(reg);
   });
+};
+
+exports.findInArrayRegExp = function (value, exactly) {
+  return exactly ? new RegExp("(^|[^_0-9a-zA-Zа-яёА-ЯЁ])" + value + "([^_0-9a-zA-Zа-яёА-ЯЁ-]|$)", "i") : new RegExp(value, 'gi');
 };
 
 exports.getServicesError = function (err) {
@@ -169,6 +173,14 @@ exports.getCountryNoResultError = function (country) {
 
 exports.getNoResultError = function () {
   return "По указанным направлениям ничего не найдено";
+};
+
+exports.getContentChangedMessage = function (selector) {
+  return `Контент сайта изменился. Selector: ${selector}`;
+};
+
+exports.getJSONChangedMessage = function (selector) {
+  return `Формат ответа изменился. Запрос: ${selector}`;
 };
 
 exports.getUnavailableError = function (err) {

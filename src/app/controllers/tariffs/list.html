@@ -20,7 +20,7 @@
 			<span>Направления <a href="/example.xlsx" download>(Пример файла)</a></span>
 			<button type="button" class="btn btn-default" ng-click="tariffs.inputButtonClick($event)">Выбрать файл</button>
 			<input type="file" class="hide" ng-model="tariffs.filter.cityInput" name="cityInput" input-file ng-change="tariffs.chooseCities()" />
-			<span class="text-primary" ng-if="tariffs.filter.cities.length">Выбрано {{tariffs.filter.cities.length}} направлений</span>
+			<span class="text-primary" ng-if="tariffs.filter.cities.length">Выбрано {{tariffs.pluralizeCities(tariffs.filter.cities.length)}}</span>
 		</div>
 		<div class="form-group">
 			<label>Вес</label>

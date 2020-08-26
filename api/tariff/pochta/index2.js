@@ -1,36 +1,14 @@
-const { get } = require('../../helpers/delivery');
-const {
-  COUNTRYFROMRUSSIA,
-  CITYFROMREQUIRED,
-  CITIESREQUIRED,
-  CITYFROMNOTFOUND,
-  CITYTONOTFOUND,
-  DELIVERYTIMEREG,
-  CITYORCOUNTRYTOREQUIRED,
-  COSTREG,
-  request,
-  requestWrapper,
-  getCityJsonError,
-  getCity,
-  allResultsError,
-  getBrowser,
-  newPage,
-  closeBrowser,
-  closePage,
-  waitForWrapper,
-  getContentChangedMessage,
-  findInArray,
-  createTariff,
-  getJSONChangedMessage,
-  getRegionName,
-  getNoResultError
-} = require('../../helpers/common');
-const Store = require('../../helpers/store');
-const async = require('promise-async');
-const cheerio = require('cheerio');
-const config = require('../../../conf');
-const _ = require('underscore');
-const logger = require('../../helpers/logger');
+var responseHelper = require('../../helpers/response');
+var deliveryHelper = require('../../helpers/delivery');
+var commonHelper = require('../../helpers/common');
+var async = require('async');
+var request = commonHelper.request;
+var cheerio = require('cheerio');
+var config = require('../../../conf');
+var _ = require('underscore');
+var moment = require('moment');
+var logger = require('../../helpers/logger');
+var delivery = 'pochta';
 
 function decimalAdjust(e, t, n) {
   return void 0 === n || 0 == +n ? Math[e](t) : (t = +t, n = +n, isNaN(t) || "number" != typeof n || n % 1 != 0 ? NaN : (t = t.toString().split("e"), t = Math[e](+(t[0] + "e" + (t[1] ? +t[1] - n : -n))), +((t = t.toString().split("e"))[0] + "e" + (t[1] ? +t[1] + n : n))))
@@ -200,39 +178,10 @@ var calcResults = function (req, service, callback) {
   });
 };
 
-const getCities = async (cities) => {
-  try {
-    const results = await async.mapSeries(cities, (city, callback) => {
-      if (!city.from) {
-        city.error = CITYFROMREQUIRED;
-        return callback(null, city);
-      }
-      if (city.countryFrom) {
-        city.error = COUNTRYFROMRUSSIA;
-        return callback(null, city);
-      }
-      if (!city.to && !city.countryTo) {
-        city.error = CITYORCOUNTRYTOREQUIRED;
-        return callback(null, city);
-      }
-      if (countriesObj[city.countryTo.toUpperCase()]) {
-        city.countryToCode = countriesObj[city.countryTo.toUpperCase()].code;
-        return callback(null, city);
-      }
-    });
-  } catch(e) {
-    
-  }
-};
-
-module.exports = async function ({ deliveryKey, weights, cities, req}) {
-  const delivery = get(deliveryKey);
-  let requests = [];
-
-  await getCities(cities);
-  return false;
-
-  const countriesObj = {};
+module.exports = function (req, cities, callback) {
+  var requests = [];
+  var timestamp = callback ? new Date().getTime*2 : commonHelper.getReqStored(req, delivery);
+  var countriesObj = {};
   async.auto({
     getCities: [function (callback) {
       async.mapSeries(cities, function (city, callback) {

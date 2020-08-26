@@ -24,7 +24,7 @@ class Notify {
   }
 
   error(err, options) {
-    var title = "Ошибка получения данных";
+    let title = "Ошибка получения данных";
     if (err) {
       switch (err.status) {
         case 404:

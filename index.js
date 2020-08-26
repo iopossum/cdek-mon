@@ -12,6 +12,9 @@ var mongoStore = require('connect-mongo')(session);
 var mongoose = require('mongoose');
 var cookieParser = require('cookie-parser');
 var logger = require('./api/helpers/logger');
+const { createResponse } = require('./api/helpers/response');
+const Store = require('./api/helpers/store');
+
 var server;
 
 // Connect to database
@@ -32,21 +35,16 @@ app.use('/', express.static(__dirname + '/dist'));
 //app.use('/news', express.static(__dirname + '/dist'));
 
 
-var exitHandler = function (options, err) {
+const exitHandler = function (options, err) {
   if (err) {
     console.log(err);
     logger.error(moment().format("DD.MM.YYYY HH:mm") + ": " + err.stack);
   }
   if (options.exit) {
-    //setTimeout(function () {
-      if (server && server.close) {
-        server.close(function () {
-          process.exit(0);
-        });
-      } else {
-        process.exit(0);
-      }
-    //}, 1000);
+    if (server && server.close) {
+      server.close();
+    }
+    process.exit(0);
   }
 };
 
@@ -65,31 +63,59 @@ app.use(['/api*'], session({
   cookie: {path: '/', httpOnly: true, secure: false, maxAge: null },
   resave: true,
   saveUninitialized: true,
+  rolling: false
   /*store: new mongoStore({
     mongooseConnection: mongoose.connection,
     stringify:false
   })*/
 }));
 
-app.use('/api*', function (req, res, next) {
-  if (!req.session.delivery) {
-    var targets = require('./api/helpers/delivery').list();
-    var obj = {};
-    targets.forEach(function (item) {
-      obj[item.id] = {complete: false, results: []};
-    });
-    req.session.delivery = obj;
+app.use(function (err, req, res, next) {
+  const contentType = req.headers['content-type'];
+  if (req.xhr || (!contentType || contentType && contentType.indexOf('json') > -1)) {
+    createResponse(res, err);
+  } else {
+    next(err);
   }
-  next();
 });
 
 app.options('/api/*', cors());
 app.post('/api/tariff/request', cors(), require('./api/tariff'));
+app.get('/api/tariff/request', require('./api/tariff'));
 app.post('/api/tariff/one', cors(), require('./api/tariff/one'));
 app.get('/api/tariff/ping', cors(), require('./api/tariff/ping'));
 app.post('/api/tariff/cities', cors(), require('./api/tariff/city'));
 app.post('/api/tariff/news', cors(), require('./api/news'));
 app.get('/api/settings', cors(), require('./api/settings'));
+app.post('/api/beacon', cors(), (req, res) => {
+  Store.delete(req);
+  res.end();
+});
+
+require('./api/tariff')(
+  {
+    headers: {},
+    query: {
+      data: JSON.stringify({
+        deliveries: ['pochta'],
+        cities: [
+          {from: 'Новосибирск', to: 'Москва'},
+        ],
+        weights: [1]
+      })
+    },
+    socket: {
+      setTimeout: function () {},
+    },
+  },
+  {
+    end: function () {},
+    set: function () {},
+    write: (v) => console.log(v),
+    on: function () {},
+    flushHeaders: function () {},
+  },
+);
 
 /*require('./api/tariff')(
   {session: {delivery: {}}, body: {

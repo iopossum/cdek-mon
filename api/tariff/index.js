@@ -1,53 +1,104 @@
-var responseHelper = require('../helpers/response');
-var commonHelper = require('../helpers/common');
-var config = require('../../conf');
-var _ = require('underscore');
+const { asyncMiddleware, eventError, eventFinish, eventData } = require('../helpers/response');
+const Store = require('../helpers/store');
+const { RUSSIA } = require('../helpers/common');
 
-var emspost = require('./emspost');
-var majorexpress = require('./majorexpress');
-var spsr = require('./spsr');
-var dpd = require('./dpd');
+module.exports = asyncMiddleware(async (req, res) => {
 
-module.exports = function (req, res) {
-  if (!req.body.cities) {
-    return responseHelper.createResponse(res, new Error("Cities is required"));
-  }
-  if (!req.body.cities.length) {
-    return responseHelper.createResponse(res, new Error("Cities is required"));
-  }
-  if (!req.body.weights) {
-    return responseHelper.createResponse(res, new Error("Weights is required"));
-  }
-  if (!req.body.weights.length) {
-    return responseHelper.createResponse(res, new Error("Weights is required"));
-  }
-  if (!req.body.deliveries) {
-    return responseHelper.createResponse(res, new Error("Delivery is required"));
-  }
-  if (!req.body.deliveries.length) {
-    return responseHelper.createResponse(res, new Error("Delivery is required"));
-  }
-  var targets = require('../helpers/delivery').list();
-  var obj = {};
-  targets.forEach(function (item) {
-    obj[item.id] = {complete: false, results: []};
-    commonHelper.saveReqStore(req, item.id, new Date().getTime());
+  const end = () => {
+    Store.delete(req);
+    res.end();
+  };
+
+  res.set({
+    'Content-Type': 'text/event-stream; charset=utf-8',
+    'Cache-Control': 'no-cache',
+    "Access-Control-Allow-Origin": "*"
   });
-  req.session.delivery = obj;
-  req.body.cities.forEach(function (item) {
-    if (item.countryFrom && commonHelper.RUSSIA.indexOf(item.countryFrom.toLowerCase()) > -1) {
+
+  const padding = new Array(2049);
+  res.write(":" + padding.join(" ") + "\n"); // 2kB padding for IE
+  res.write("retry: 2000\n");
+
+  const lastEventId = Number(req.headers["last-event-id"]) || Number(req.query.lastEventId);
+
+  res.flushHeaders(); // flush the headers to establish SSE with client
+
+  let data = null;
+  try {
+    data = JSON.parse(req.query.data);
+  } catch(e) {
+    eventError(res, new Error('Неверные данные запроса.'));
+  }
+
+  if (!data) {
+    return end();
+  }
+
+  if (!data.cities) {
+    return eventError(res, new Error('Укажите направления'), end);
+  }
+  if (!data.cities.length) {
+    return eventError(res, new Error('Укажите направления'), end);
+  }
+  if (!data.weights) {
+    return eventError(res, new Error('Выберите вес'), end);
+  }
+  if (!data.weights.length) {
+    return eventError(res, new Error('Выберите вес'), end);
+  }
+  if (!data.deliveries) {
+    return eventError(res, new Error('Укажите службы доставки'), end);
+  }
+  if (!data.deliveries.length) {
+    return eventError(res, new Error('Укажите службы доставки'), end);
+  }
+  data.cities.forEach(function (item) {
+    if (item.countryFrom && RUSSIA.indexOf(item.countryFrom.toLowerCase()) > -1) {
       item.countryFrom = '';
     }
-    if (item.countryTo && commonHelper.RUSSIA.indexOf(item.countryTo.toLowerCase()) > -1) {
+    if (item.countryTo && RUSSIA.indexOf(item.countryTo.toLowerCase()) > -1) {
       item.countryTo = '';
     }
   });
-  for (var i=0; i<req.body.deliveries.length; i++) {
-    var item = req.body.deliveries[i];
-    var cities = commonHelper.cloneArray(req.body.cities);
-    try {
-      require('./' + item)(req, cities);
-    } catch (e) {}
+
+  req.socket.setTimeout(1000 * 60 * 60); // 1 Час
+
+  // If client closes connection, stop sending events
+  res.on('close', () => {
+    Store.setTTL(req, -1);
+    res.end();
+  });
+
+  const wasRequest = Store.getRequest(req);
+  if (wasRequest && wasRequest.results && wasRequest.results.length) {
+    eventData(res, wasRequest.results);
+    Store.setResults(req, []);
   }
-  return res.json(responseHelper.success());
-};
+
+  Store.update(req);
+
+  for (let i = 0; i < data.deliveries.length; i++) {
+    const item = data.deliveries[i];
+    if (!wasRequest || wasRequest && wasRequest.completed.indexOf(item) === -1) {
+      require('./' + item)({deliveryKey: item, ...data, req})
+        .then((results) => {
+          const storedTTL = Store.getTTL(req);
+          if (storedTTL >= -1) {
+            Store.completeOne(req, item);
+            if (storedTTL === -1) {
+              Store.setResults(req, results);
+            } else if (storedTTL) {
+              const isEnd = Store.getRequest(req).completed.length === data.deliveries.length;
+              if (isEnd) {
+                eventFinish(res);
+              }
+              eventData(res, results);
+              if (isEnd) {
+                end();
+              }
+            }
+          }
+        });
+    }
+  }
+});

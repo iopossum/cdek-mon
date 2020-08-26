@@ -1,49 +1,31 @@
-var responseHelper = require('../helpers/response');
-var commonHelper = require('../helpers/common');
-var config = require('../../conf');
-var _ = require('underscore');
-var async = require('async');
+const { createResponse } = require('../helpers/response');
+const async = require('promise-async');
 
-var emspost = require('./emspost');
-var majorexpress = require('./majorexpress');
-var spsr = require('./spsr');
-var dpd = require('./dpd');
-
-module.exports = function (req, res) {
+module.exports = async function (req, res) {
   if (!req.body.requests) {
-    return responseHelper.createResponse(res, new Error("Requests is required"));
+    return createResponse(res, new Error("Requests is required"));
   }
   if (!req.body.requests.length) {
-    return responseHelper.createResponse(res, new Error("Requests is required"));
+    return createResponse(res, new Error("Requests is required"));
   }
   if (!req.body.delivery) {
-    return responseHelper.createResponse(res, new Error("Delivery is required"));
+    return createResponse(res, new Error("Delivery is required"));
   }
-  var array = [];
-  var delivery = req.body.delivery;
-  async.each(req.body.requests, function (item, callback) {
-    var response = function (err, results) {
-      if (results) {
+  let array = [];
+  const delivery = req.body.delivery;
+  try {
+    await async.each(req.body.requests, async (item, callback) => {
+      const cities = [{...item.city}];
+      try {
+        const results = await require('./' + delivery)({deliveryKey: delivery, cities, weights: [item.weight], req});
         array = array.concat(results);
+        callback(null, results);
+      } catch (e) {
+        callback(new Error("Delivery is not found"));
       }
-      callback(err);
-    };
-    var cities = [item.city];
-    var req = {
-      body: {
-        delivery: delivery,
-        weights: [item.weight]
-      }
-    };
-    try {
-      require('./' + delivery)(req, cities, response);
-    } catch (e) {
-      response(new Error("Delivery is not found"));
-    }
-  }, function (err) {
-    if (err) {
-      return responseHelper.createResponse(res, err, 500);
-    }
-    return res.json(array);
-  });
+    });
+    res.json(array);
+  } catch(e) {
+    createResponse(res, e, 500);
+  }
 };

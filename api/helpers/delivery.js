@@ -1,25 +1,24 @@
-var _ = require('underscore');
+const _ = require('underscore');
 
-var targets = [
+const targets = [
   {
     id: 'cdek',
     name: 'CDEK',
     country: 'ru',
-    cookieUrl: {method: 'GET', uri: 'https://www.cdek.ru/calculator.html'},
-    calcUrl: {method: 'POST', uri: 'https://www.cdek.ru/ajax.php?JsHttpRequest=0-xml'},
-    citiesUrl: {method: 'POST', uri: 'https://www.cdek.ru/ajax.php?JsHttpRequest=0-xml'}
+    cookieUrl: {method: 'GET', uri: 'https://cdek.ru/calculate?utm_referrer=', followAllRedirects: true},
+    calcUrl: {method: 'POST', uri: 'https://cdek.ru/graphql'},
   },
   {
-    id: 'emspost',
-    name: 'EMSPost',
+    id: 'pochta',
+    name: 'Pochta.ru',
     country: 'ru',
-    /*calcUrl: {method: 'POST', uri: 'http://www.emspost.ru/default.aspx/MakeCalculation'},*/ //old
     calcUrl: {method: 'POST', uri: 'http://www.emspost.ru/default.aspx/getConditions'},
     calcInternationalUrl: {method: 'POST', uri: 'http://www.emspost.ru/default.aspx/getForeignPrice'},
-    citiesUrl: {method: 'GET', uri: 'http://www.emspost.ru/ru/'},
+    citiesUrl: {method: 'GET', uri: 'https://www.pochta.ru/suggestions/v1/suggestion.find-addresses'},
     newsUrl: {method: 'GET', uri: 'http://www.emspost.ru/ru/'},
     rssUrl: {method: 'GET', uri: 'http://www.emspost.ru'}
   },
+  /*,
   {
     id: 'majorexpress',
     name: 'Major-express',
@@ -28,13 +27,13 @@ var targets = [
     citiesUrl: {method: 'POST', uri: 'https://major-express.ru/calculator.aspx'},
     newsUrl: {method: 'GET', uri: 'https://www.major-express.ru/News.aspx'}
   },
-  /*{
+  /!*{
     id: 'spsr',
     calcUrl: {method: 'POST', uri: 'http://www.spsr.ru/ru/system/ajax'},
     citiesUrl: {method: 'GET', uri: 'http://www.spsr.ru/ru/service/calculator?q=/spsr/cc_autocomplete/'},
     newsUrl: {method: 'GET', uri: 'http://www.spsr.ru/ru/news'},
     calcGetUrl: {method: 'GET', uri: 'http://www.spsr.ru/ru/service/calculator'}
-  },*/
+  },*!/
   {
     id: 'spsr',
     name: 'Spsr',
@@ -245,7 +244,7 @@ var targets = [
     calcUrl: {method: 'POST', uri: 'https://www.pochta.ru/portal-portlet/delegate/calculator/v1/api/delivery.time.cost.get'},
     citiesUrl: {method: 'GET', uri: 'https://www.pochta.ru/nsi/v1/countries/by.name/'},
     baseUrl: 'https://www.pochta.ru'
-  },
+  },*/
   {
     id: 'dpdby',
     name: 'DPD',
@@ -435,7 +434,7 @@ var targets = [
   }
 ];
 
-var targetObj = _.indexBy(targets, 'id');
+const targetObj = _.indexBy(targets, 'id');
 
 exports.list = function () {
   return targets;
@@ -451,10 +450,10 @@ exports.countries = function () {
 
 exports.get = function (id) {
   if (targetObj[id]) {
-    for (var key in targetObj[id]) {
+    for (let key in targetObj[id]) {
       if (targetObj[id][key] instanceof Object) {
         targetObj[id][key].headers = {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.81 Safari/537.36'
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.135 Safari/537.36'
         }
       }
     }
