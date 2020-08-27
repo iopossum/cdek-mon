@@ -1,6 +1,6 @@
 let AppDirective = () => {
   return {
-    template: require('../app.html'),
+    template: require('../app.html').default,
     controller: 'AppCtrl',
     controllerAs: 'app'
   }

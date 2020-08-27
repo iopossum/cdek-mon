@@ -12,9 +12,9 @@ const targets = [
     id: 'pochta',
     name: 'Pochta.ru',
     country: 'ru',
-    calcUrl: {method: 'POST', uri: 'http://www.emspost.ru/default.aspx/getConditions'},
-    calcInternationalUrl: {method: 'POST', uri: 'http://www.emspost.ru/default.aspx/getForeignPrice'},
-    citiesUrl: {method: 'GET', uri: 'https://www.pochta.ru/suggestions/v1/suggestion.find-addresses'},
+    cookieUrl: {method: 'GET', uri: 'https://www.pochta.ru/parcels'},
+    calcUrl: {method: 'POST', uri: 'https://www.pochta.ru/portal-portlet/delegate/calculator/v1/api/delivery.time.cost.get'},
+    citiesUrl: {method: 'POST', uri: 'https://www.pochta.ru/suggestions/v1/suggestion.find-addresses'},
     newsUrl: {method: 'GET', uri: 'http://www.emspost.ru/ru/'},
     rssUrl: {method: 'GET', uri: 'http://www.emspost.ru'}
   },

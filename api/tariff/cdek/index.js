@@ -11,6 +11,7 @@ const {
   getCity,
   allResultsError,
   getBrowser,
+  shouldAbort,
   newPage,
   closeBrowser,
   closePage,
@@ -163,7 +164,7 @@ module.exports = async function ({ deliveryKey, weights, cities, req}) {
           results.push(result);
           continue;
         }
-        if (!req.query.sessionID || Store.getRequest(req)) {
+        if (!shouldAbort(req)) {
           await getResult(delivery, result, browser);
           results.push(result);
         }

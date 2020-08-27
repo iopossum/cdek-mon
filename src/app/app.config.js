@@ -18,7 +18,7 @@ export default function routing($stateProvider, $urlRouterProvider, $locationPro
   $stateProvider
     .state('news', {
       url: '/news',
-      template: require('./controllers/news/list.html'),
+      template: require('./controllers/news/list.html').default,
       controller: 'NewsCtrl',
       controllerAs: 'news',
       title: 'Новости',
@@ -28,7 +28,7 @@ export default function routing($stateProvider, $urlRouterProvider, $locationPro
     })
     .state('tariffs', {
       url: '/tariffs',
-      template: require('./controllers/tariffs/list.html'),
+      template: require('./controllers/tariffs/list.html').default,
       controller: 'TariffsCtrl',
       controllerAs: 'tariffs',
       title: 'Тарифы',

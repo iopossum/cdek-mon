@@ -8,11 +8,8 @@ var moment = require('moment');
 var timeout = require('connect-timeout'); //express v4
 var config = require('./conf');
 var session = require('express-session');
-var mongoStore = require('connect-mongo')(session);
-var mongoose = require('mongoose');
-var cookieParser = require('cookie-parser');
 var logger = require('./api/helpers/logger');
-const { createResponse } = require('./api/helpers/response');
+import { createResponse } from './api/helpers/response';
 const Store = require('./api/helpers/store');
 
 var server;
@@ -84,7 +81,6 @@ app.post('/api/tariff/request', cors(), require('./api/tariff'));
 app.get('/api/tariff/request', require('./api/tariff'));
 app.post('/api/tariff/one', cors(), require('./api/tariff/one'));
 app.get('/api/tariff/ping', cors(), require('./api/tariff/ping'));
-app.post('/api/tariff/cities', cors(), require('./api/tariff/city'));
 app.post('/api/tariff/news', cors(), require('./api/news'));
 app.get('/api/settings', cors(), require('./api/settings'));
 app.post('/api/beacon', cors(), (req, res) => {
@@ -99,7 +95,7 @@ require('./api/tariff')(
       data: JSON.stringify({
         deliveries: ['pochta'],
         cities: [
-          {from: 'Новосибирск', to: 'Москва'},
+          {from: 'Москва', to: 'Новосибирск'},
         ],
         weights: [1]
       })

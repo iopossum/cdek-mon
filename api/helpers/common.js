@@ -8,6 +8,7 @@ const NodeTtl = require( "node-ttl" );
 const cfg = require('../../conf');
 const async = require('promise-async');
 const fetch = require('cross-fetch');
+const { Headers } = require('node-fetch');
 const puppeteer = require('puppeteer');
 const ttl = new NodeTtl({ttl: 60*60*24});
 _.extend(exports, commonSafe);
@@ -21,6 +22,10 @@ request.defaults({
   },
   maxRedirects: 20
 });
+
+exports.shouldAbort = (req) => {
+  return req && req.query && req.query.sessionID && !Store.getRequest(req);
+};
 
 exports.getBrowser = async () => {
   return await puppeteer.launch({
@@ -56,6 +61,12 @@ exports.waitForWrapper = async (page, selector, opts = {}, message) => {
   }
 };
 
+exports.printPDF = async (page, number) => {
+  try {
+    await page.pdf({path: `${number || 1}.pdf`});
+  } catch (e) {}
+};
+
 exports.closeBrowser = async (browser) => {
   if (browser) {
     try {
@@ -74,6 +85,35 @@ exports.closePage = async (page) => {
   }
 };
 
+exports.refreshPage = async (page) => {
+  if (page) {
+    try {
+      await page.reload();
+    } catch (e) {
+    }
+  }
+};
+
+exports.waitForResponse = async ({ page, conditionCallback, message }) => {
+
+  let response;
+  try {
+    response = await page.waitForResponse(conditionCallback);
+  } catch (e) {
+    throw new Error(message);
+  }
+
+  if (response.status() !== 200) {
+    throw new Error(getCityJsonError(new Error("Статус ответа не 200"), trim));
+  }
+
+  try {
+    json = await response.json();
+  } catch(e) {
+    throw new Error(getCityJsonError(new Error("Формат ответа не JSON"), trim));
+  }
+};
+
 exports.request = request;
 
 const requestPromise = (opts) => {
@@ -87,45 +127,45 @@ const requestPromise = (opts) => {
   });
 };
 
-exports.requestWrapper = ({json, noReject, sessionID, ...opts}) => {
+exports.requestWrapper = ({json, noReject, useRequest, req, ...opts}) => {
   return new Promise((resolve, reject) => {
     setTimeout(async () => {
-      if (sessionID && !Store.getRequest(sessionID)) {
+      if (this.shouldAbort(req)) {
         return reject({ abort: true });
       }
       try {
         const retryRes = await async.retry(cfg.request.retryOpts, async (callback) => {
-          if (sessionID && !Store.getRequest(sessionID)) {
+          if (this.shouldAbort(req)) {
             return callback({ abort: true });
           }
-          /*try {
-            const fetchRes = await fetch(opts.uri || opts.url, opts);
-            if (sessionID && !Store.getRequest(sessionID)) {
-              return reject({ abort: true });
-            }
-            let body = null;
-            if (json) {
-              body = await fetchRes.json();
-            } else {
-              body = await fetchRes.text();
-              const match = body.match(/(bad gateway)|(403 Forbidden)|(token mismatch)/i);
-              if (match) {
-                return callback(new Error(match[1] || match[2] || match[3]));
+          if (!useRequest) {
+            try {
+              if (opts.headers) {
+                opts.headers = new Headers(opts.headers);
               }
+              const fetchRes = await fetch(opts.uri || opts.url, opts);
+              console.log(opts)
+              let body = null;
+              if (json) {
+                body = await fetchRes.json();
+              } else {
+                body = await fetchRes.text();
+                const match = body.match(/(bad gateway)|(403 Forbidden)|(token mismatch)/i);
+                if (match) {
+                  return callback(new Error(match[1] || match[2] || match[3]));
+                }
+              }
+              callback(null, {body, response: fetchRes});
+            } catch (e) {
+              callback(e);
             }
-            callback(null, {body, response: fetchRes});
-          } catch (e) {
-            callback(e);
-          }*/
-          console.log(opts)
-          try {
-            const res = await requestPromise(opts);
-            if (sessionID && !Store.getRequest(sessionID)) {
-              return reject({ abort: true });
+          } else {
+            try {
+              const res = await requestPromise({...opts, json});
+              callback(null, res);
+            } catch (e) {
+              callback(e);
             }
-            callback(null, res);
-          } catch (e) {
-            callback(e);
           }
         });
         resolve(retryRes);

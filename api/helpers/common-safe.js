@@ -12,6 +12,7 @@ exports.COUNTRYFROMNOTFOUND = 'Страна отправления отстус�
 exports.COUNTRYNOTFOUND = 'Страна назначения отстуствует в списке доступных';
 exports.CITYFROMNOTFOUND = 'Город отправления отстуствует в списке доступных';
 exports.CITYTONOTFOUND = 'Город назначения отстуствует в списке доступных';
+exports.CITYORCOUNTRYTONOTFOUND = 'Город или страна назначения отстуствует в списке доступных';
 exports.COUNTRYFROMRUSSIA = 'Отправления возможны только из России';
 exports.POSTCODEFROMNOTFOUND = 'Не удалось получить индекс города отправления';
 exports.POSTCODETONOTFOUND = 'Не удалось получить индекс города получения';
@@ -130,35 +131,36 @@ exports.findInArrayRegExp = function (value, exactly) {
 };
 
 exports.getServicesError = function (err) {
-  err = err || {};
-  return "Не удалось получить услуги с сайта. " + (err.message ? 'Ошибка: ' + err.message : '');
+  const message = typeof err === 'string' && err || err && err.message;
+  return "Не удалось получить услуги с сайта. " + (message ? 'Ошибка: ' + message : '');
 };
 
 exports.getResponseError = function (err) {
-  err = err || {};
-  return "Не удалось получить информацию с сайта. " + (err.message ? 'Ошибка: ' + err.message : '');
+  const message = typeof err === 'string' && err || err && err.message;
+  return "Не удалось получить информацию с сайта. " + (message ? 'Ошибка: ' + message : '');
 };
 
 exports.getCityJsonError = function (err, city) {
-  var mes = "Не удалось получить города с сайта. Неверный ответ от сервера. " + (err.message ? 'Ошибка: ' + err.message : '');
+  const message = typeof err === 'string' && err || err && err.message;
+  let result = "Не удалось получить города с сайта. Неверный ответ от сервера. " + (message ? 'Ошибка: ' + message : '');
   if (city) {
-    mes = "Не удалось получить город " + city.toUpperCase() + " с сайта. Неверный ответ от сервера. " + (err.message ? 'Ошибка: ' + err.message : '')
+    result = "Не удалось получить город " + city.toUpperCase() + " с сайта. Неверный ответ от сервера. " + (message ? 'Ошибка: ' + message : '')
   }
-  return mes;
+  return result;
 };
 
 exports.getCountriesError = function (err, country) {
-  err = err || {};
-  var mes = "Не удалось получить страны с сайта. " + (err.message ? 'Ошибка: ' + err.message : '');
+  const message = typeof err === 'string' && err || err && err.message;
+  let result = "Не удалось получить страны с сайта. " + (message ? 'Ошибка: ' + message : '');
   if (country) {
-    mes = "Не удалось получить страну " + country.toUpperCase() + " с сайта. " + (err.message ? 'Ошибка: ' + err.message : '');
+    result = "Не удалось получить страну " + country.toUpperCase() + " с сайта. " + (message ? 'Ошибка: ' + message : '');
   }
-  return mes;
+  return result;
 };
 
 exports.getResultJsonError = function (err) {
-  err = err || {};
-  return "Не удалось получить информацию с сайта, попробуйте позже. " + (err.message ? 'Ошибка: ' + err.message : '');
+  const message = typeof err === 'string' && err || err && err.message;
+  return "Не удалось получить информацию с сайта, попробуйте позже. " + (message ? 'Ошибка: ' + message : '');
 };
 
 exports.getCityNoResultError = function (city) {
@@ -183,13 +185,18 @@ exports.getJSONChangedMessage = function (selector) {
   return `Формат ответа изменился. Запрос: ${selector}`;
 };
 
+exports.getJSONRequestTimeoutMessage = function (selector) {
+  return `Изменился запрос к api или не был сделан запрос или запрос отвалился по таймауту. Запрос: ${selector}`;
+};
+
 exports.getUnavailableError = function (err) {
-  err = err || {};
-  return "Калькулятор недоступен, попробуйте позже. " + (err.message ? 'Ошибка: ' + err.message : '');
+  const message = typeof err === 'string' && err || err && err.message;
+  return "Калькулятор недоступен, попробуйте позже. " + (message ? 'Ошибка: ' + message : '');
 };
 
 exports.getNewsError = function (delivery, err) {
-  return "Не удалось получить новости c сайта " + delivery.toUpperCase() + ". Попробуйте позже. " + (err ? 'Ошибка: ' + err.message : '');
+  const message = typeof err === 'string' && err || err && err.message;
+  return "Не удалось получить новости c сайта " + delivery.toUpperCase() + ". Попробуйте позже. " + (message ? 'Ошибка: ' + message : '');
 };
 
 exports.getNewsPartError = function (delivery) {

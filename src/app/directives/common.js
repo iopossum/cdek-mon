@@ -39,6 +39,6 @@ let SortHeader = () => {
       }
     }
   }
-}
+};
 
-module.exports = {InputFile, SortHeader};
+export {InputFile, SortHeader};

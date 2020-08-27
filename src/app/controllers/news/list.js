@@ -1,6 +1,5 @@
 var moment = require('moment');
 var _ = require('underscore');
-var commonHelper = require('../../../../api/helpers/common-safe');
 
 class NewsCtrl {
   constructor($scope, $rootScope, Tariff, Notify, Xls) {
