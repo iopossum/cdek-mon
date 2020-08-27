@@ -1,4 +1,5 @@
-const _ = require('underscore');
+import _ from 'lodash';
+import { userAgent } from '../../conf';
 
 const targets = [
   {
@@ -434,13 +435,13 @@ const targets = [
   }
 ];
 
-const targetObj = _.indexBy(targets, 'id');
+const targetObj = _.keyBy(targets, 'id');
 
-exports.list = function () {
+export const list = () => {
   return targets;
 };
 
-exports.countries = function () {
+export const countries = () => {
   return [
     {id: 'ru', name: 'Россия'},
     {id: 'by', name: 'Беларусь'},
@@ -448,20 +449,20 @@ exports.countries = function () {
   ]
 };
 
-exports.get = function (id) {
+export const getOne = function (id) {
   if (targetObj[id]) {
     for (let key in targetObj[id]) {
       if (targetObj[id][key] instanceof Object) {
         targetObj[id][key].headers = {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.135 Safari/537.36'
+          'User-Agent': userAgent
         }
       }
     }
   }
-  return targetObj[id];
+  return { ...targetObj[id] };
 };
 
-exports.dimexCountryChanger = function (country) {
+export const dimexCountryChanger = (country) => {
   if (!country) {
     return country;
   }

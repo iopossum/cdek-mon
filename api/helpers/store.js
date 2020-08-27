@@ -50,6 +50,6 @@ const Store = {
 
 module.exports = Store;
 
-ttl.on("del", function( key ) {
+ttl.on("del", (key) => {
   Store.deleteExpired(key);
 });

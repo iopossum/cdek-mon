@@ -1,7 +1,8 @@
 const { createResponse } = require('../helpers/response');
+import { asyncMiddleware } from '../helpers/middleware';
 const async = require('promise-async');
 
-module.exports = async function (req, res) {
+module.exports = asyncMiddleware(async (req, res) => {
   if (!req.body.requests) {
     return createResponse(res, new Error("Requests is required"));
   }
@@ -28,4 +29,4 @@ module.exports = async function (req, res) {
   } catch(e) {
     createResponse(res, e, 500);
   }
-};
+});

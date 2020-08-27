@@ -7,7 +7,6 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 const HtmlWebpackHarddiskPlugin = require('html-webpack-harddisk-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const TerserPlugin = require('terser-webpack-plugin');
-const ExtractTextPlugin = require("extract-text-webpack-plugin");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 const OptimizeCSSAssetsPlugin = require('optimize-css-assets-webpack-plugin');
 const { merge } = require('webpack-merge');
@@ -19,11 +18,6 @@ const { merge } = require('webpack-merge');
 const ENV = process.env.npm_lifecycle_event;
 const isProd = ENV === 'build';
 const mode = isProd ? 'production' : 'development';
-
-const extractSass = new ExtractTextPlugin({
-  filename: "[name].[contenthash].css",
-  disable: !isProd
-});
 
 module.exports = function makeWebpackConfig() {
 

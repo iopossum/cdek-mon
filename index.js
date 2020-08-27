@@ -1,24 +1,18 @@
-var express = require('express');
-var app = express();
-var cors = require('cors');
-var bodyParser = require('body-parser');
-var methodOverride = require('method-override');
-var helmet = require('helmet');
-var moment = require('moment');
-var timeout = require('connect-timeout'); //express v4
-var config = require('./conf');
-var session = require('express-session');
-var logger = require('./api/helpers/logger');
 import { createResponse } from './api/helpers/response';
+const express = require('express');
+const app = express();
+const cors = require('cors');
+const bodyParser = require('body-parser');
+const methodOverride = require('method-override');
+const helmet = require('helmet');
+const moment = require('moment');
+const timeout = require('connect-timeout'); //express v4
+const config = require('./conf');
+const session = require('express-session');
+const logger = require('./api/helpers/logger');
 const Store = require('./api/helpers/store');
 
-var server;
-
-// Connect to database
-//mongoose.connect(config.mongo.uri, {});
-
-//app.use(helmet());
-//app.use(cookieParser('foo'));
+let server;
 
 app.set('trust proxy', 1);
 
@@ -28,8 +22,6 @@ app.use(methodOverride());
 
 app.set('port', (process.env.PORT || 5000));
 app.use('/', express.static(__dirname + '/dist'));
-//app.use('/tariffs', express.static(__dirname + '/dist'));
-//app.use('/news', express.static(__dirname + '/dist'));
 
 
 const exitHandler = function (options, err) {
@@ -61,10 +53,6 @@ app.use(['/api*'], session({
   resave: true,
   saveUninitialized: true,
   rolling: false
-  /*store: new mongoStore({
-    mongooseConnection: mongoose.connection,
-    stringify:false
-  })*/
 }));
 
 app.use(function (err, req, res, next) {
@@ -77,11 +65,9 @@ app.use(function (err, req, res, next) {
 });
 
 app.options('/api/*', cors());
-app.post('/api/tariff/request', cors(), require('./api/tariff'));
 app.get('/api/tariff/request', require('./api/tariff'));
 app.post('/api/tariff/one', cors(), require('./api/tariff/one'));
-app.get('/api/tariff/ping', cors(), require('./api/tariff/ping'));
-app.post('/api/tariff/news', cors(), require('./api/news'));
+// app.post('/api/tariff/news', cors(), require('./api/news'));
 app.get('/api/settings', cors(), require('./api/settings'));
 app.post('/api/beacon', cors(), (req, res) => {
   Store.delete(req);

@@ -1,7 +1,9 @@
-const { get } = require('../../helpers/delivery');
-const {
-  request,
-  requestWrapper,
+import { getOne } from '../../helpers/delivery';
+import {
+  shouldAbort,
+  findInArray,
+} from '../../helpers/common';
+import {
   CITIESREQUIRED,
   CITYFROMNOTFOUND,
   CITYTONOTFOUND,
@@ -14,7 +16,15 @@ const {
   COSTREG,
   getCity,
   allResultsError,
-  shouldAbort,
+  createTariff,
+  getJSONChangedMessage,
+  getRegionName,
+  getNoResultError,
+  getCityJsonError,
+  getDistrictName,
+  getContentChangedMessage,
+} from '../../helpers/tariff';
+import {
   getBrowser,
   newPage,
   closeBrowser,
@@ -22,20 +32,9 @@ const {
   refreshPage,
   waitForWrapper,
   printPDF,
-  getContentChangedMessage,
-  findInArray,
-  createTariff,
-  getJSONChangedMessage,
-  getRegionName,
-  getNoResultError,
-  getCityJsonError,
-  getDistrictName
-} = require('../../helpers/common');
-const Store = require('../../helpers/store');
+} from '../../helpers/browser';
 const async = require('promise-async');
 const cheerio = require('cheerio');
-const config = require('../../../conf');
-const _ = require('underscore');
 const logger = require('../../helpers/logger');
 
 const selectors = {
@@ -175,7 +174,7 @@ const getResult = async (delivery, resultObj, page) => {
 };
 
 module.exports = async function ({ deliveryKey, weights, cities, req}) {
-  const delivery = get(deliveryKey);
+  const delivery = getOne(deliveryKey);
 
   let results = [];
   let browser;

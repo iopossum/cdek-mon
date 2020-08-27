@@ -1,9 +1,9 @@
-var winston = require('winston');
-var targets = require('./delivery').list();
-var conf = require('../../conf');
+const winston = require('winston');
+const targets = require('./delivery').list();
+const conf = require('../../conf');
 
-var createLog = function (key) {
-  var news = new winston.Logger({
+const createLog = function (key) {
+  const news = new winston.Logger({
     maxFiles: 5,
     maxsize: 30000,
     prettyPrint: true,
@@ -12,7 +12,7 @@ var createLog = function (key) {
       new (winston.transports.File)({filename: conf.rootFolder + '/logs/news/' + key + '.log', level: 'error', json: true, name: key + '_error'})
     ]
   });
-  var tariffs = new winston.Logger({
+  const tariffs = new winston.Logger({
     maxFiles: 5,
     maxsize: 30000,
     prettyPrint: true,
@@ -27,8 +27,8 @@ var createLog = function (key) {
   };
 };
 
-var error = function () {
-  var error = new winston.Logger({
+const error = function () {
+  const error = new winston.Logger({
     levels: {
       error: 3
     },
@@ -42,7 +42,7 @@ var error = function () {
   return error.error;
 };
 
-var exports = {
+const exports = {
   error: error()
 };
 

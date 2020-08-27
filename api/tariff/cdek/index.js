@@ -1,33 +1,40 @@
-const { get } = require('../../helpers/delivery');
-const {
-  request,
-  requestWrapper,
+import { getOne } from '../../helpers/delivery';
+import {
+  shouldAbort,
+  findInArray,
+} from '../../helpers/common';
+import {
   CITIESREQUIRED,
   CITYFROMNOTFOUND,
   CITYTONOTFOUND,
+  CITYFROMREQUIRED,
   DELIVERYTIMEREG,
+  COUNTRYFROMRUSSIA,
+  CITYORCOUNTRYTOREQUIRED,
+  CITYORCOUNTRYTONOTFOUND,
+  COUNTRYNOTFOUND,
   COSTREG,
-  getCityJsonError,
   getCity,
   allResultsError,
-  getBrowser,
-  shouldAbort,
-  newPage,
-  closeBrowser,
-  closePage,
-  waitForWrapper,
-  getContentChangedMessage,
-  findInArray,
   createTariff,
   getJSONChangedMessage,
   getRegionName,
-  getNoResultError
-} = require('../../helpers/common');
-const Store = require('../../helpers/store');
+  getNoResultError,
+  getCityJsonError,
+  getDistrictName,
+  getContentChangedMessage,
+} from '../../helpers/tariff';
+import {
+  getBrowser,
+  newPage,
+  closeBrowser,
+  closePage,
+  refreshPage,
+  waitForWrapper,
+  printPDF,
+} from '../../helpers/browser';
 const async = require('promise-async');
 const cheerio = require('cheerio');
-const config = require('../../../conf');
-const _ = require('underscore');
 const logger = require('../../helpers/logger');
 
 const selectors = {
@@ -141,7 +148,7 @@ const getResult = async (delivery, resultObj, browser) => {
 };
 
 module.exports = async function ({ deliveryKey, weights, cities, req}) {
-  const delivery = get(deliveryKey);
+  const delivery = getOne(deliveryKey);
 
   let results = [];
   let browser;

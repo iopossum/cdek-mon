@@ -1,11 +1,11 @@
 
-exports.createResponse = (res, err, status) => {
-  return res.status(status || 500).json(this.createMessage(err));
+export const createResponse = (res, err, status) => {
+  return res.status(status || 500).json(createMessage(err));
 };
 
-exports.createMessage = function (err) {
+export const createMessage = (err) => {
   if (!err) {
-    return this.success();
+    return success();
   }
   const obj = {
     success: false,
@@ -18,27 +18,8 @@ exports.createMessage = function (err) {
   return obj;
 };
 
-exports.success = function () {
+export const success = () => {
   return {success: true};
 };
 
-exports.asyncMiddleware = fn =>
-  (req, res, next) => {
-    Promise.resolve(fn(req, res, next))
-      .catch(next);
-  };
 
-exports.eventError = (res, err, end) => {
-  res.write("event: eventError\n");
-  res.write(`data: ${JSON.stringify(this.createMessage(err))}\n\n`);
-  end && end();
-};
-
-exports.eventFinish = (res, end) => {
-  res.write("event: eventFinish\n");
-  end && end();
-};
-
-exports.eventData = (res, data) => {
-  res.write(`data: ${JSON.stringify(data)}\n\n`);
-};
