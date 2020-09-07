@@ -2,6 +2,7 @@ import { getOne } from '../../helpers/delivery';
 import {
   shouldAbort,
   findInArray,
+  randomTimeout
 } from '../../helpers/common';
 import {
   CITIESREQUIRED,
@@ -36,6 +37,7 @@ import {
 const async = require('promise-async');
 const cheerio = require('cheerio');
 const logger = require('../../helpers/logger');
+const cfg = require('../../../conf');
 
 const selectors = {
   cityInput: '.v-select input[placeholder="Введите город"]',
@@ -171,6 +173,7 @@ module.exports = async function ({ deliveryKey, weights, cities, req}) {
           results.push(result);
           continue;
         }
+        await randomTimeout(cfg.browser.delay.min, cfg.browser.delay.max);
         if (!shouldAbort(req)) {
           await getResult(delivery, result, browser);
           results.push(result);

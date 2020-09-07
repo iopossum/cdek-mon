@@ -15,6 +15,7 @@ export const CITYORCOUNTRYTONOTFOUND = 'Город или страна назн�
 export const COUNTRYFROMRUSSIA = 'Отправления возможны только из России';
 export const POSTCODEFROMNOTFOUND = 'Не удалось получить индекс города отправления';
 export const POSTCODETONOTFOUND = 'Не удалось получить индекс города получения';
+export const UNABLETOGETTARIFF = 'Не удалось получить тарифы с сайта.';
 
 export const CITIESBY = 'Отправления возможны только по Беларуси';
 export const CITYFROMBY = 'Отправления возможны только из Беларуси';
@@ -121,6 +122,11 @@ export const getJSONRequestTimeoutMessage = (selector) => {
   return `Изменился запрос к api или не был сделан запрос или запрос отвалился по таймауту. Запрос: ${selector}`;
 };
 
+export const getTariffErrorMessage = (err) => {
+  const message = getErrorMessage(err);
+  return "Не удалось получить тарифы с сайта. " + (message ? 'Ошибка: ' + message : '');
+};
+
 export const getUnavailableError = (err) => {
   const message = getErrorMessage(err);
   return "Калькулятор недоступен, попробуйте позже. " + (message ? 'Ошибка: ' + message : '');
@@ -134,28 +140,32 @@ export const createTariff = (service, cost, deliveryTime) => {
   };
 };
 
-export const getResponseErrorObject = (cityItem, delivery, weight, error) => {
-  delete cityItem.fromJson;
-  delete cityItem.toJson;
-  return {
-    city: {...cityItem},
-    delivery,
+export const getResponseErrorObject = ({ city, deliveryKey, weight, error, req }) => {
+  delete city.fromJson;
+  delete city.toJson;
+  const result = {
+    city: {...city},
+    delivery: deliveryKey,
     weight,
     tariffs: [],
     error: getErrorMessage(error)
+  };
+  if (req) {
+    result.req = req;
   }
+  return result;
 };
 
-export const getResponseErrorArray = (weights, cityItem, delivery, error) => {
-  return weights.map(function (weight) {
-    return getResponseErrorObject(cityItem, delivery, weight, error);
+export const getResponseErrorArray = ({ weights, ...props }) => {
+  return weights.map((weight) => {
+    return getResponseErrorObject({ ...props, weight });
   });
 };
 
-export const allResultsError = ({ cities, weights, deliveryKey, error }) => {
+export const allResultsError = ({ cities, ...props }) => {
   let array = [];
-  cities.forEach(function (item) {
-    array = array.concat(getResponseErrorArray(weights, item, deliveryKey, error));
+  cities.forEach((item) => {
+    array = array.concat(getResponseErrorArray({ ...props, city: item }));
   });
   return array;
 };

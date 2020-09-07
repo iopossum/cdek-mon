@@ -1,5 +1,6 @@
 const async = require('async');
 const _ = require('underscore');
+const pako = require('pako');
 import { NativeEventSource, EventSourcePolyfill } from 'event-source-polyfill';
 import { v4 as uuidv4 } from 'uuid';
 const EventSource = NativeEventSource || EventSourcePolyfill;
@@ -14,6 +15,14 @@ const pluralize = (num, array) => {
   }
   return result;
 };
+
+const utf8_to_b64 = (str) => {
+  return btoa(unescape(encodeURIComponent(str)));
+};
+
+function b64_to_utf8(str) {
+  return decodeURIComponent(escape(atob(str)));
+}
 
 class TariffsCtrl {
 
@@ -239,7 +248,7 @@ class TariffsCtrl {
     this.errors = [];
     async.series([
       function (callback) {
-        var intersection = _.intersection(obj.deliveries, ['dhl', 'tnt', 'fedex', 'ups', 'majorexpress', 'cityexpress', 'pochta', 'avislogisticskz', 'dhlkz']);
+        var intersection = _.intersection(obj.deliveries, ['dhl', 'tnt', 'fedex', 'ups', 'majorexpress', 'cityexpress', 'avislogisticskz', 'dhlkz']);
         if (intersection && intersection.length) {
           return that.getGoogleIds(callback);
         }
@@ -254,9 +263,13 @@ class TariffsCtrl {
       }
     ], function (err, cities) {
       obj.cities = cities[1];
-      const es1 = new EventSource(`http://localhost:5000/api/tariff/request?data=${JSON.stringify(obj)}&sessionID=${that.sessionID}`);
+      const encoded = btoa(pako.deflate(JSON.stringify(obj), { to: 'string' }));
+      // return console.log(pako.inflate(new Buffer(encoded, 'base64'), { to: 'string' }))
+      console.log(encoded)
+      const es1 = new EventSource(`http://localhost:5000/api/tariff/request?data=${encoded}&sessionID=${that.sessionID}`);
       es1.addEventListener("message", ({ data }) => {
-        const parsedData = JSON.parse(data);
+        const decoded = pako.inflate(new Buffer(data, 'base64'), { to: 'string' });
+        const parsedData = JSON.parse(decoded);
         that.$scope.$apply(() => {
           const obj = {};
           parsedData.forEach(v => obj[v.delivery] = 1);
@@ -269,11 +282,12 @@ class TariffsCtrl {
       });
       es1.addEventListener("eventFinish", ({ data }) => {
         es1.close();
+        const decoded = pako.inflate(new Buffer(data, 'base64'), { to: 'string' });
         that.$scope.$apply(() => {
           that.loading.main = false;
           that.requestedTargets = [];
           that.dynamic = 0;
-          that.receiveTariffs(JSON.parse(data));
+          that.receiveTariffs(JSON.parse(decoded));
         });
       });
       es1.addEventListener("eventError", (event) => {

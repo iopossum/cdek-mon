@@ -7,6 +7,7 @@ const async = require('promise-async');
 const fetch = require('cross-fetch');
 const { Headers } = require('node-fetch');
 const puppeteer = require('puppeteer');
+import { getJSONChangedMessage, getContentChangedMessage, getJSONRequestTimeoutMessage } from './tariff';
 
 request.defaults({
   timeout : 5000,
@@ -14,6 +15,10 @@ request.defaults({
     'User-Agent': userAgent
   },
   maxRedirects: 20
+});
+
+puppeteer.defaultArgs({
+  headless: false,
 });
 
 export const getBrowser = async () => {
@@ -46,7 +51,7 @@ export const waitForWrapper = async (page, selector, opts = {}, message) => {
   try {
     await page.waitFor(selector, opts);
   } catch(e) {
-    throw new Error(message || this.getContentChangedMessage(selector))
+    throw new Error(message || getContentChangedMessage(selector))
   }
 };
 
@@ -83,24 +88,28 @@ export const refreshPage = async (page) => {
   }
 };
 
-export const waitForResponse = async ({ page, conditionCallback, message }) => {
-
+export const waitForResponse = async ({ page, url, checkFn = () => true, message = '' }) => {
+  message = message ? `${message} ` : message;
   let response;
   try {
-    response = await page.waitForResponse(conditionCallback);
+    response = await page.waitForResponse(response => new RegExp(url).test(response.url()) && checkFn(response));
   } catch (e) {
-    throw new Error(message);
+    throw new Error(`${message}${getJSONRequestTimeoutMessage(url)}`);
   }
 
   if (response.status() !== 200) {
-    throw new Error(getCityJsonError(new Error("Статус ответа не 200"), trim));
+    throw new Error(`${message}Статус ответа не 200`);
   }
+
+  let json;
 
   try {
     json = await response.json();
   } catch(e) {
-    throw new Error(getCityJsonError(new Error("Формат ответа не JSON"), trim));
+    throw new Error(`${message}${getJSONChangedMessage(url)}`);
   }
+
+  return json;
 };
 
 const requestPromise = (opts) => {
@@ -161,12 +170,4 @@ export const requestWrapper = ({json, noReject, useRequest, req, ...opts}) => {
       }
     }, this.randomInteger(cfg.request.delay.min, cfg.request.delay.max));
   });
-};
-
-exports.allResultsError = function ({ cities, weights, deliveryKey, error }) {
-  let array = [];
-  cities.forEach(function (item) {
-    array = array.concat(exports.getResponseArray(weights, item, deliveryKey, error.message || error.stack || error));
-  });
-  return array;
 };

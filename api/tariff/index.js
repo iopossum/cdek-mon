@@ -2,6 +2,7 @@ import { eventError, eventFinish, eventData } from '../helpers/event';
 import { asyncMiddleware } from '../helpers/middleware';
 import { RUSSIA } from '../helpers/tariff';
 const Store = require('../helpers/store');
+const pako = require('pako');
 
 module.exports = asyncMiddleware(async (req, res) => {
 
@@ -26,8 +27,12 @@ module.exports = asyncMiddleware(async (req, res) => {
 
   let data = null;
   try {
-    data = JSON.parse(req.query.data);
+    const replaced = req.query.data.replace(/[\s\n]/g, '+');
+    const b = Buffer.from(replaced, 'base64');
+    let uncompressed = pako.inflate(b, { to: 'string' });
+    data = JSON.parse(uncompressed);
   } catch(e) {
+    console.log(e)
     eventError(res, new Error('Неверные данные запроса.'));
   }
 

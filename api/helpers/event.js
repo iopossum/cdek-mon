@@ -1,4 +1,5 @@
 import { createMessage } from './response';
+const pako = require('pako');
 
 export const eventError = (res, err, end) => {
   res.write("event: eventError\n");
@@ -12,5 +13,6 @@ export const eventFinish = (res, end) => {
 };
 
 export const eventData = (res, data) => {
-  res.write(`data: ${JSON.stringify(data)}\n\n`);
+  const encoded = Buffer.from(pako.deflate(JSON.stringify(data))).toString('base64');
+  res.write(`data: ${encoded}\n\n`);
 };

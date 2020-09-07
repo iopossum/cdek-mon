@@ -16,6 +16,10 @@ const targets = [
     cookieUrl: {method: 'GET', uri: 'https://www.pochta.ru/parcels'},
     calcUrl: {method: 'POST', uri: 'https://www.pochta.ru/portal-portlet/delegate/calculator/v1/api/delivery.time.cost.get'},
     citiesUrl: {method: 'POST', uri: 'https://www.pochta.ru/suggestions/v1/suggestion.find-addresses'},
+    citiesIndexUrl: {method: 'POST', uri: 'https://www.pochta.ru/suggestions/v1/suggestion.find-indices-by-address'},
+    citiesPostofficesUrl: {method: 'POST', uri: 'https://www.pochta.ru/suggestions/v1/suggestion.find-postoffices-by-address'},
+    countriesUrl: {method: 'GET', uri: 'https://www.pochta.ru/nsi/v1/countries/by.name'},
+    dictionaryUrl: {method: 'GET', uri: 'https://www.pochta.ru/portal-portlet/delegate/calculator/v1/api/dictionary'},
     newsUrl: {method: 'GET', uri: 'http://www.emspost.ru/ru/'},
     rssUrl: {method: 'GET', uri: 'http://www.emspost.ru'}
   },
@@ -477,6 +481,16 @@ export const dimexCountryChanger = (country) => {
   }
   if (country.toLowerCase() === 'ирландия') {
     country = 'Ирландия, республика';
+  }
+  return country;
+};
+
+export const pochtaCountryChanger = (country) => {
+  if (!country) {
+    return country;
+  }
+  if (country.toLowerCase() === 'англия') {
+    country = 'Великобритания';
   }
   return country;
 };

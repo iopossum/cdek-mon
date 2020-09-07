@@ -44,6 +44,7 @@
     "nightmare": "3.0.2",
     "nightmare-real-mouse": "1.1.0",
     "node-ttl": "0.0.5",
+    "pako": "^1.0.11",
     "password-generator": "2.1.0",
     "phantom": "4.0.1",
     "phantomjs": "2.1.7",

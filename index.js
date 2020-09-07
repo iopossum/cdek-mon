@@ -11,6 +11,7 @@ const config = require('./conf');
 const session = require('express-session');
 const logger = require('./api/helpers/logger');
 const Store = require('./api/helpers/store');
+const pako = require('pako');
 
 let server;
 
@@ -74,17 +75,17 @@ app.post('/api/beacon', cors(), (req, res) => {
   res.end();
 });
 
-require('./api/tariff')(
+/*require('./api/tariff')(
   {
     headers: {},
     query: {
-      data: JSON.stringify({
+      data: pako.deflate(JSON.stringify({
         deliveries: ['pochta'],
         cities: [
-          {from: 'Москва', to: 'Новосибирск'},
+          {from: 'Химки', to: 'Новосибирск'},
         ],
         weights: [1]
-      })
+      }))
     },
     socket: {
       setTimeout: function () {},
@@ -97,7 +98,7 @@ require('./api/tariff')(
     on: function () {},
     flushHeaders: function () {},
   },
-);
+);*/
 
 /*require('./api/tariff')(
   {session: {delivery: {}}, body: {

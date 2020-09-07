@@ -67,3 +67,19 @@ export const findInArray = (array, value, key, exactly) => {
 export const findInArrayRegExp = function (value, exactly) {
   return exactly ? new RegExp("(^|[^_0-9a-zA-Zа-яёА-ЯЁ])" + value + "([^_0-9a-zA-Zа-яёА-ЯЁ-]|$)", "i") : new RegExp(value, 'gi');
 };
+
+export const randomTimeout = (from = 0, to = 0) => {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      resolve();
+    }, randomInteger(from, to));
+  });
+};
+
+export const wrapTryCatch = async () => {
+  try {
+
+  } catch(e) {
+
+  }
+};

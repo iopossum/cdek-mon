@@ -1,4 +1,10 @@
 module.exports = {
+  browser: {
+    delay: {
+      min: 500,
+      max: 1000
+    },
+  },
   request: {
     delay: {
       min: 1000,
