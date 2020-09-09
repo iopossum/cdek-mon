@@ -444,7 +444,6 @@ const getIntCalcResult = async ({ request, delivery, cookie, req }) => {
       const opts = delivery.calcInternationalUrl;
       const formData = new URLSearchParams();
       const reqCopy = {...request.req, ...service.intReq};
-      console.log(reqCopy)
       for (let key of Object.keys(reqCopy)) {
         formData.append(key, reqCopy[key]);
       }
