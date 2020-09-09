@@ -1,537 +1,303 @@
-var responseHelper = require('../../helpers/response');
-var deliveryHelper = require('../../helpers/delivery');
-var commonHelper = require('../../helpers/common');
-var async = require('async');
-var request = commonHelper.request;
-var cheerio = require('cheerio');
-var config = require('../../../conf');
-var logger = require('../../helpers/logger');
-var _ = require('underscore');
-var delivery = 'majorexpress';
+import { getOne, majorExpressCountryChanger } from '../../helpers/delivery';
+import {
+  shouldAbort,
+  findInArray,
+  randomTimeout
+} from '../../helpers/common';
+import {
+  CITIESREQUIRED,
+  CITYFROMNOTFOUND,
+  CITYTONOTFOUND,
+  CITYFROMREQUIRED,
+  DELIVERYTIMEREG,
+  COUNTRYFROMNOTFOUND,
+  CITYORCOUNTRYTOREQUIRED,
+  CITYORCOUNTRYTONOTFOUND,
+  UNABLETOGETTARIFF,
+  COUNTRYTONOTFOUND,
+  COSTREG,
+  getCity,
+  allResultsError,
+  createTariff,
+  getJSONChangedMessage,
+  getRegionName,
+  getNoResultError,
+  getCityJsonError,
+  getDistrictName,
+  getTariffErrorMessage,
+  getContentChangedMessage,
+} from '../../helpers/tariff';
+import {
+  getBrowser,
+  newPage,
+  closeBrowser,
+  closePage,
+  refreshPage,
+  waitForWrapper,
+  waitForResponse,
+  printPDF,
+} from '../../helpers/browser';
+const async = require('promise-async');
+const cheerio = require('cheerio');
+const logger = require('../../helpers/logger');
+const cfg = require('../../../conf');
 
-var formData = {
-  __EVENTTARGET: '',
-  __EVENTARGUMENT: '',
-  __VIEWSTATE: '/wEPDwUKMTM4MTQxNjY1Mg9kFgJmD2QWAgIDD2QWCAIDDzwrAAYBAA8WAh4FVmFsdWVlZGQCBQ88KwAGAQAPFgIfAGVkZAIHDzwrAAQBAA8WAh8AaGRkAgsPZBYiAgEPFCsABg8WAh8AAgFkZGQ8KwAMAQs8KwAFAQAWBB4SRW5hYmxlQ2FsbGJhY2tNb2RlaB4nRW5hYmxlU3luY2hyb25pemF0aW9uT25QZXJmb3JtQ2FsbGJhY2sgaGRkZAIDDxQrAAYPFgQfAGYeD0RhdGFTb3VyY2VCb3VuZGdkZGQ8KwAMAQsUKwAFFgQfAWcfAmhkZGQPZBAWAWYWARQrAAEWAh4PQ29sVmlzaWJsZUluZGV4ZmRkZGQCBQ8UKwAGDxYEHwBmHwNnZGRkPCsADAELFCsABRYEHwFnHwJoZGRkD2QQFgFmFgEUKwABFgIfBGZkZGRkAgcPFCsABg8WBh8AAuMqHgdFbmFibGVkZx8DZ2RkZDwrAAwBCxQrAAUWBB8BZx8CaGRkZA9kEBYBZhYBFCsAARYCHwRmZGRkZAIJDxQrAAYPFgYfAAKBAR8FZx8DZ2RkZDwrAAwBCxQrAAUWBB8BZx8CaGRkZA9kEBYBZhYBFCsAARYCHwRmZGRkZAILDzwrAAYBAA8WAh8AZWRkAg0PPCsABgEADxYCHwBlZGQCDw88KwAGAQAPFgIfAGVkZAIRDzwrAAYBAA8WAh8ABQExZGQCEw88KwAEAQAPFgIfAAUQ0KPQv9Cw0LrQvtCy0LrQsGRkAhUPPCsABgEADxYCHwBlZGQCFw8UKwAGDxYEHwACAx4HVmlzaWJsZWdkZGQ8KwAMAQs8KwAFAQAWBB8BaB8CaGRkZAIdDzwrAAQBAA8WAh8AZWRkAh8PPCsAEQMADxYCHwZoZAEQFgAWABYADBQrAABkAiEPPCsAEQMADxYGHgtfIURhdGFCb3VuZGceC18hSXRlbUNvdW50AgEfBmdkARAWABYAFgAMFCsAABYCZg9kFgZmDw8WAh8GaGRkAgEPZBYCZg9kFgJmDxUGATEHMTE0OSwxMgEwATMBIABkAgIPDxYCHwZoZGQCIw9kFgICAQ8WAh4JaW5uZXJodG1sBQI2MmQCJw9kFgQCAQ8UKwAGDxYCHwBkZGRkPCsADAELPCsABQEAFgQfAWgfAmhkZGQCAw88KwAGAQAPFgIfAGVkZBgDBR5fX0NvbnRyb2xzUmVxdWlyZVBvc3RCYWNrS2V5X18WCgUPY3RsMDAkYnRuUG9wTG9nBSdjdGwwMCRDb250ZW50UGxhY2VIb2xkZXIxJGNiUHJvZHVjdCREREQFK2N0bDAwJENvbnRlbnRQbGFjZUhvbGRlcjEkY2JDb3VudHJ5RnJvbSREREQFKWN0bDAwJENvbnRlbnRQbGFjZUhvbGRlcjEkY2JDb3VudHJ5VG8kREREBShjdGwwMCRDb250ZW50UGxhY2VIb2xkZXIxJGNiQ2l0eUZyb20kREREBSZjdGwwMCRDb250ZW50UGxhY2VIb2xkZXIxJGNiQ2l0eVRvJERERAUnY3RsMDAkQ29udGVudFBsYWNlSG9sZGVyMSRjYlBhY2thZ2UkREREBSFjdGwwMCRDb250ZW50UGxhY2VIb2xkZXIxJGJ0bkNhbGMFPmN0bDAwJENvbnRlbnRQbGFjZUhvbGRlcjEkRGVsaXZlcnlCbG9jazEkY2JEZWxpdmVyeVByb2R1Y3QkREREBTFjdGwwMCRDb250ZW50UGxhY2VIb2xkZXIxJERlbGl2ZXJ5QmxvY2sxJGJ0bkNoZWNrBSBjdGwwMCRDb250ZW50UGxhY2VIb2xkZXIxJGd2Q2FsYw88KwAMAQgCAWQFJWN0bDAwJENvbnRlbnRQbGFjZUhvbGRlcjEkZ3ZJbnRlckNhbGMPZ2Q0yJECjjhkMow8kU2O+0b/6XODRoMAN3U2dvHFg+7I1g==',
-  __VIEWSTATEGENERATOR: '10DAA136',
-  __PREVIOUSPAGE: 'UpjP6228i5BkwqScLwRduaAPF98l8V35XC2BfPdPsiZwUcfh7mTf_E-JIT_hWe1cBfSGqC5cWn1wkHNp6zR_36Y3j8rfp4HLlUoW7Px82IE1',
-  tbPopLog_Raw: '',
-  ctl00$tbPopLog: 'Логин',
-  tbPopPwd_Raw: '',
-  ctl00$tbPopPwd: 'Пароль',
-  ctl00$chbRemember: 'U',
-  ContentPlaceHolder1_cbProduct_VI: '1',
-  ctl00$ContentPlaceHolder1$cbProduct: 'Экспресс-доставка',
-  ContentPlaceHolder1_cbProduct_DDDWS: '0:0:-1:-10000:-10000:0:0:0:1:0:0:0',
-  ContentPlaceHolder1_cbProduct_DDD_LDeletedItems: '',
-  ContentPlaceHolder1_cbProduct_DDD_LInsertedItems: '',
-  ContentPlaceHolder1_cbProduct_DDD_LCustomCallback: '',
-  ctl00$ContentPlaceHolder1$cbProduct$DDD$L: '1',
-  ContentPlaceHolder1_cbCountryFrom_VI: '0',
-  ctl00$ContentPlaceHolder1$cbCountryFrom: 'Россия',
-  ContentPlaceHolder1_cbCountryFrom_DDDWS: '0:0:-1:-10000:-10000:0:0:0:1:0:0:0',
-  ContentPlaceHolder1_cbCountryFrom_DDD_LDeletedItems: '',
-  ContentPlaceHolder1_cbCountryFrom_DDD_LInsertedItems: '',
-  ContentPlaceHolder1_cbCountryFrom_DDD_LCustomCallback: '',
-  ctl00$ContentPlaceHolder1$cbCountryFrom$DDD$L: '0',
-  ContentPlaceHolder1_cbCountryTo_VI: '0',
-  ctl00$ContentPlaceHolder1$cbCountryTo: 'Россия',
-  ContentPlaceHolder1_cbCountryTo_DDDWS: '0:0:-1:-10000:-10000:0:0:0:1:0:0:0',
-  ContentPlaceHolder1_cbCountryTo_DDD_LDeletedItems: '',
-  ContentPlaceHolder1_cbCountryTo_DDD_LInsertedItems: '',
-  ContentPlaceHolder1_cbCountryTo_DDD_LCustomCallback: '',
-  ctl00$ContentPlaceHolder1$cbCountryTo$DDD$L: '0',
-  ContentPlaceHolder1_cbCityFrom_VI: '5475',
-  ctl00$ContentPlaceHolder1$cbCityFrom: 'jklhj',
-  ContentPlaceHolder1_cbCityFrom_DDDWS: '1:1:12000:432:367:1:198:180:1:0:0:0',
-  ContentPlaceHolder1_cbCityFrom_DDD_LDeletedItems: '',
-  ContentPlaceHolder1_cbCityFrom_DDD_LInsertedItems: '',
-  ContentPlaceHolder1_cbCityFrom_DDD_LCustomCallback: '',
-  ctl00$ContentPlaceHolder1$cbCityFrom$DDD$L: '',
-  ContentPlaceHolder1_cbCityTo_VI: '129',
-  ctl00$ContentPlaceHolder1$cbCityTo: 'Москва',
-  ContentPlaceHolder1_cbCityTo_DDDWS: '0:0:-1:-10000:-10000:0:0:0:1:0:0:0',
-  ContentPlaceHolder1_cbCityTo_DDD_LDeletedItems: '',
-  ContentPlaceHolder1_cbCityTo_DDD_LInsertedItems: '',
-  ContentPlaceHolder1_cbCityTo_DDD_LCustomCallback: '',
-  ctl00$ContentPlaceHolder1$cbCityTo$DDD$L: '129',
-  ContentPlaceHolder1_tbLength_Raw: '',
-  ctl00$ContentPlaceHolder1$tbLength: 'Длина (см)',
-  ContentPlaceHolder1_tbWidth_Raw: '',
-  ctl00$ContentPlaceHolder1$tbWidth: 'Ширина (см)',
-  ContentPlaceHolder1_tbHeight_Raw: '',
-  ctl00$ContentPlaceHolder1$tbHeight: 'Высота (см)',
-  ContentPlaceHolder1_tbCalcWeight_Raw: '1',
-  ctl00$ContentPlaceHolder1$tbCalcWeight: '1',
-  ContentPlaceHolder1_tbCost_Raw: '',
-  ctl00$ContentPlaceHolder1$tbCost: 'Оценочная стоимость (руб)',
-  ContentPlaceHolder1_cbPackage_VI: '3',
-  ctl00$ContentPlaceHolder1$cbPackage: 'Другая упаковка',
-  ContentPlaceHolder1_cbPackage_DDDWS: '0:0:-1:-10000:-10000:0:0:0:1:0:0:0',
-  ContentPlaceHolder1_cbPackage_DDD_LDeletedItems: '',
-  ContentPlaceHolder1_cbPackage_DDD_LInsertedItems: '',
-  ContentPlaceHolder1_cbPackage_DDD_LCustomCallback: '',
-  ctl00$ContentPlaceHolder1$cbPackage$DDD$L: '3',
-  ContentPlaceHolder1_DeliveryBlock1_cbDeliveryProduct_VI: '1',
-  ctl00$ContentPlaceHolder1$DeliveryBlock1$cbDeliveryProduct: 'Экспресс-доставка',
-  ContentPlaceHolder1_DeliveryBlock1_cbDeliveryProduct_DDDWS: '0:0:-1:-10000:-10000:0:0:0:1:0:0:0',
-  ContentPlaceHolder1_DeliveryBlock1_cbDeliveryProduct_DDD_LDeletedItems: '',
-  ContentPlaceHolder1_DeliveryBlock1_cbDeliveryProduct_DDD_LInsertedItems: '',
-  ContentPlaceHolder1_DeliveryBlock1_cbDeliveryProduct_DDD_LCustomCallback: '',
-  ctl00$ContentPlaceHolder1$DeliveryBlock1$cbDeliveryProduct$DDD$L: '1',
-  ContentPlaceHolder1_DeliveryBlock1_InvoiceNumber_Raw: '',
-  ctl00$ContentPlaceHolder1$DeliveryBlock1$InvoiceNumber: 'Введите номер накладной',
-  DXScript: '1_187,1_101,1_130,1_137,1_180,1_124,1_121,1_105,1_141,1_129,1_98,1_172,1_170,1_132',
-  DXCss: '1_7,1_16,1_8,1_6,1_14,1_1,styles.css',
-  __CALLBACKID: 'ctl00$ContentPlaceHolder1$cbCityTo',
-  __CALLBACKPARAM: 'c0:LBCRI|4;0:99;CBCF|5;jklhj;',
-  __EVENTVALIDATION: '/wEdAAg+8a68xr3s0poGWclUeS1ujtVQLQrEnIbjmIO/ZtnanBURE9yPSvOSRjDl2QhdsmkuZdkoFpB4ESxdAtuiUVt8gl73xgw2NCSYTnx1Re6LhDcdrfIBD0KLYT9317mddRwD6Jh4KGw6EeOMB2EMx8q+sBBTJQXkxFp9HwpVVLmS7jW36QSP0vLTTzlJKqnaEajshG8aizhfmygvfQzYKi7N'
+const selectors = {
+  countryFromInput: '#ContentPlaceHolder1_cbCountryFrom_I',
+  countryToInput: '#ContentPlaceHolder1_cbCountryTo_I',
+  countryFromDropdownOption: '#ContentPlaceHolder1_cbCountryFrom_DDD_L_LBT .dxeListBoxItem',
+  countryToDropdownOption: '#ContentPlaceHolder1_cbCountryTo_DDD_L_LBT .dxeListBoxItem',
+  cityFromInput: '#ContentPlaceHolder1_cbCityFrom_I',
+  cityToInput: '#ContentPlaceHolder1_cbCityTo_I',
+  cityFromDropdownOption: '#ContentPlaceHolder1_cbCityFrom_DDD_L_LBT .dxeListBoxItem',
+  cityToDropdownOption: '#ContentPlaceHolder1_cbCityTo_DDD_L_LBT .dxeListBoxItem',
+  weightInput: '#ContentPlaceHolder1_tbCalcWeight_I',
+  calcButton: '#ContentPlaceHolder1_btnCalc_CD',
 };
 
-var getReq = function (from, countryFrom, to, countryTo) {
-  from = from || {};
-  to = to || {};
-  countryFrom = countryFrom || {};
-  countryTo = countryTo || {};
-  return {
-    countryFromId: countryFrom.id || 0,
-    countryToId: countryTo.id || 0,
-    countryFromName: countryFrom.name || "Россия",
-    countryToName: countryTo.name || "Россия",
-    cityFromId: countryTo && countryTo.useEng ? 129 : from.id,
-    cityToId: to.id || undefined,
-    cityFrom: countryTo && countryTo.useEng ? "Москва" : (from.name || ''),
-    cityTo: to.name || ""
-  }
+const setWeight = async ({ page, weight }) => {
+  const weightInput = await page.$(selectors.weightInput);
+  await page.focus(selectors.weightInput);
+  await weightInput.click({ clickCount: 2 });
+  await page.keyboard.press('Backspace');
+  await page.focus(selectors.weightInput);
+  await page.keyboard.type(weight.toString());
 };
 
-var getCity = function (city, cityEng, country, callback) {
-  var totalCity = city;
-  if (country && country.useEng) {
-    totalCity = cityEng;
-  }
-  var deliveryData = deliveryHelper.get(delivery);
-  var opts = deliveryData.citiesUrl;
-  var trim = commonHelper.getCity(totalCity);
-  var splitTrim = null;
-  if (country && country.useEng) {
-    var splits = trim.split(" ");
-    if (splits.length > 1) {
-      splitTrim = splits[0];
-    }
-  }
-  var result = {
-    city: totalCity,
-    cityTrim: trim,
-    success: false
-  };
-  opts.form = Object.assign({}, formData);
-  opts.form.ctl00$ContentPlaceHolder1$cbCityTo = splitTrim || trim;
-  opts.form.__CALLBACKPARAM = 'c0:LBCRI|4;0:99;CBCF|' + (splitTrim ? splitTrim.length : trim.length) + ';' + (splitTrim ? splitTrim : trim) + ';';
-  if (country) {
-    opts.form.ContentPlaceHolder1_cbCountryTo_VI = country.id;
-    opts.form.ctl00$ContentPlaceHolder1$cbCountryTo = country.name;
-    opts.form.ctl00$ContentPlaceHolder1$cbCountryTo$DDD$L = country.id;
-  }
-  async.retry(config.retryOpts, function (callback) {
-    request(opts, callback)
-  }, function (err, r, b) {
-    if (err) {
-      result.message = commonHelper.getCityJsonError(err, trim);
-      return callback(null, result);
-    }
-    b = b.replace('0|/!*DX*!/(', '');
-    b = b.replace('0|/*DX*/(', '');
-    b = b.substring(0, b.length - 1);
-    b = b.replace(/\"/g, '\\"').replace(/\'/g, '"');
-    var json = null;
-    try {
-      json = JSON.parse(b);
-    } catch (e) {
-      result.message = commonHelper.getCityJsonError(e, trim);
-    }
-    if (!json) {
-      return callback(null, result);
-    }
-    if (!json.result) {
-      result.message = commonHelper.getCityJsonError(new Error("Отсутствует обязательный параметр result"), trim);
-      return callback(null, result);
-    }
-    var array = null;
-    try {
-      array = JSON.parse(json.result);
-    } catch (e) {
-      result.message = commonHelper.getCityJsonError(new Error("Неверный формат result"), trim);
-    }
-    if (!array) {
-      return callback(null, result);
-    }
-    var cities = [];
-    array.forEach(function (item, index) {
-      if (typeof item === 'string') {
-        cities.push({id: array[index-1], name: item});
-      }
-    });
-    if (!cities.length) {
-      result.message = commonHelper.getCityNoResultError(trim);
-    } else if (cities.length === 1) {
-      result.foundCities = cities;
-      result.success = true;
-    } else {
-      var region = commonHelper.getRegionName(totalCity);
-      var foundIds = [];
-      if (region) {
-        foundIds = commonHelper.findInArray(cities, region, 'name');
-      }
-      if (!foundIds.length) {
-        //ищем по точному совпадению
-        cities.forEach(function (item, index) {
-          if (commonHelper.getCity(item.name).toUpperCase() === trim.toUpperCase()) {
-            foundIds.push(item);
-          }
-        });
-      }
-      result.cities = cities;
-      result.foundCities = foundIds.length ? foundIds : [cities[0]];
-      result.success = true;
-    }
-    callback(null, result);
-  });
-};
-module.exports = function (req, cities, callback) {
-  var deliveryData = deliveryHelper.get(delivery);
-  var requests = [];
-  var cityObj = {};
-  var timestamp = callback ? new Date().getTime*2 : commonHelper.getReqStored(req, delivery);
+const setCity = async ({ page, city, notFoundMessage, delivery, isFrom }) => {
+  return new Promise(async (resolve, reject) => {
+    let selector = isFrom ? selectors.cityFromInput : selectors.cityToInput;
+    let dropdownSelector = isFrom ? selectors.cityFromDropdownOption : selectors.cityToDropdownOption;
 
-  async.auto({
-    getCountries: function (callback) {
+    const trim = getCity(city);
+    const cityInput = await page.$(selector);
+    const isDisabled = await cityInput.evaluate(node => node.classList.contains('dxeDisabled'));
+    if (isDisabled) {
+      return resolve();
+    }
+    await cityInput.focus();
+    await cityInput.click({clickCount: 2});
+    await page.keyboard.press('Backspace');
+    await page.waitFor(100);
+    await cityInput.focus();
+    await page.keyboard.type(trim);
 
-      async.retry(config.retryOpts, function (callback) {
-        var nightmare = commonHelper.getNightmare();
-        nightmare.goto(deliveryData.calcUrl.uri)
-          .realMousedown('#ContentPlaceHolder1_cbProduct_B-1')
-          .wait('#ContentPlaceHolder1_cbProduct_DDD_L_LBT')
-          .realMousedown('#ContentPlaceHolder1_cbProduct_DDD_L_LBI0T0')
-          .realClick('#ContentPlaceHolder1_cbProduct_DDD_L_LBI0T0')
-          .wait('#ContentPlaceHolder1_cbPackage')
-          .wait()
-          .evaluate(function () {
-            var result = {
-              from: [],
-              to: [],
-              params: {}
-            };
-            var reg = /dxo\.itemsValue=(\[[0-9\-,]*\])/i;
-            var containerFrom = document.querySelector('#ContentPlaceHolder1_cbCountryFrom_DDD_PWC-1');
-            var containerTo = document.querySelector('#ContentPlaceHolder1_cbCountryTo_DDD_PWC-1');
-            if (!containerFrom || !containerTo) {
-              return result;
-            }
-            var matchesFrom = containerFrom.querySelector('script').innerText.match(reg);
-            var matchesTo = containerTo.querySelector('script').innerText.match(reg);
-            try {
-              var idsFrom = JSON.parse(matchesFrom[1]);
-              var idsTo = JSON.parse(matchesTo[1]);
-              var labelsFrom = document.querySelector('#ContentPlaceHolder1_cbCountryFrom_DDD_L_LBT').querySelectorAll('.dxeListBoxItemRow');
-              var labelsTo = document.querySelector('#ContentPlaceHolder1_cbCountryTo_DDD_L_LBT').querySelectorAll('.dxeListBoxItemRow');
-              labelsFrom.forEach(function (item, index) {
-                result.from.push({id: idsFrom[index], name: item.querySelector('td').innerText.trim().toLowerCase()});
-              });
-              labelsTo.forEach(function (item, index) {
-                result.to.push({id: idsTo[index], name: item.querySelector('td').innerText.trim().toLowerCase()});
-              });
-            } catch (e) {}
-            return result;
-          })
-          .end()
-          .then(function (result) {
-            callback(!result.from.length || !result.to.length ? commonHelper.getCountriesError(new Error("Возможно изменилась структура сайта")) : null, result);
-          })
-          .catch(function (error) {
-            callback(error ? commonHelper.getCountriesError(error) : null, []);
-          });
-      }, function (err, results) {
-        async.nextTick(function () {
-          callback(err, results);
-        });
-      });
-      /*async.retry(config.retryOpts, function (callback) {
-        var opts = _.extend({}, deliveryData.calcUrl);
-        opts.form = _.extend({}, formData);
-        opts.form.ContentPlaceHolder1_cbProduct_VI = 1;
-        opts.form.ctl00$ContentPlaceHolder1$cbProduct = 'Экспресс-доставка';
-        opts.form.ctl00$ContentPlaceHolder1$cbProduct$DDD$L = 1;
-        opts.form.__EVENTTARGET = 'ctl00$ContentPlaceHolder1$cbProduct';
-        opts.form.__EVENTARGUMENT = '';
+    waitForResponse({page, url: delivery.citiesUrl.uri, message: getCityJsonError(null, trim), format: 'text'})
+      .then(async text => {
+        text = text.replace('0|/!*DX*!/(', '');
+        text = text.replace('0|/*DX*/(', '');
+        text = text.substring(0, text.length - 1);
+        text = text.replace(/\"/g, '\\"').replace(/\'/g, '"');
 
-        delete opts.form.__CALLBACKID;
-        delete opts.form.__CALLBACKPARAM;
-
-        opts.followAllRedirects = true;
-        request(opts, callback);
-      }, function (err, resp, body) {
-        if (err) {
-          return callback(commonHelper.getCountriesError(err));
-        }
-        var reg = /dxo\.itemsValue=(.*);/gi;
-        var reg2 = /dxo\.itemsValue=(.*);/i;
-        var matches = body.match(reg);
-        var labels = [];
-        var result = {
-          from: [],
-          to: []
-        };
+        let json = null;
         try {
-          result.from = JSON.parse(matches[1].match(reg2)[1]);
-          result.to = JSON.parse(matches[2].match(reg2)[1]);
-        } catch (e) {}
-        var $ = cheerio.load(body);
-        var tds = $('#ContentPlaceHolder1_cbCountryTo_DDD_L_LBT').find('tr');
-        tds.each(function (index, item) {
-          labels.push($(item).text().trim().toLowerCase());
-        });
-        var temp = labels.slice(0, result.from.length).map(function (item, index) {
-          return {
-            id: result.from[index],
-            name: item
-          }
-        });
-        result.from = temp;
-        result.to = labels.map(function (item, index) {
-          return {
-            id: result.to[index],
-            name: item
-          }
-        });
-        callback(!result.from.length || !result.to.length ? commonHelper.getCountriesError(new Error("Возможно изменилась структура сайта")) : null, result);
-      });*/
-
-    },
-    getCities: ['getCountries', function (results, callback) {
-      var countryFromObj = _.indexBy(results.getCountries.from, 'name');
-      var countryToObj = _.indexBy(results.getCountries.to, 'name');
-      async.mapSeries(cities, function (city, callback) {
-        if (!city.from || !city.to) {
-          city.error = commonHelper.CITIESREQUIRED;
-          return async.nextTick(function () {
-            callback(null, city);
-          });
+          json = JSON.parse(text);
+        } catch (e) {
+          throw new Error(getCityJsonError("Формат ответа не JSON", trim));
         }
-        if (city.countryFrom) {
-          if (typeof countryFromObj[city.countryFrom.toLowerCase()] === 'undefined') {
-            city.error = commonHelper.COUNTRYFROMNOTFOUND;
-            return async.nextTick(function () {
-              callback(null, city);
-            });
-          } else {
-            city.countryFromTemp = countryFromObj[city.countryFrom.toLowerCase()];
-          }
-        }
-        if (city.countryTo) {
-          if (city.countryToEng === 'United States') {
-            city.countryToEng = 'USA';
-          }
-          if (city.countryToEng === 'беларусь') {
-            city.countryToEng = 'Белоруссия';
-          }
-          var found = false;
-          if (typeof countryToObj[city.countryTo.toLowerCase()] !== 'undefined') {
-            found = true;
-            city.countryToTemp = countryToObj[city.countryTo.toLowerCase()];
-          } else if (city.countryToEng && typeof countryToObj[city.countryToEng.toLowerCase()] !== 'undefined') {
-            found = true;
-            city.countryToTemp = countryToObj[city.countryToEng.toLowerCase()];
-            city.countryToTemp.useEng = true;
-          }
-          if (!found) {
-            city.error = commonHelper.COUNTRYNOTFOUND;
-            return async.nextTick(function () {
-              callback(null, city);
-            });
-          }
-        }
-        setTimeout(function () {
-          if (commonHelper.getReqStored(req, delivery) > timestamp) {
-            return callback({abort: true});
-          }
-          async.parallel([
-            function (callback) {
-              if (typeof  cityObj[city.from + city.countryFrom] !== 'undefined') {
-                return callback(null);
-              }
-              getCity(city.from, city.fromEngName, city.countryFromTemp, callback);
-            },
-            function (callback) {
-              if (typeof  cityObj[city.to + city.countryTo] !== 'undefined') {
-                return callback(null);
-              }
-              getCity(city.to, city.toEngName, city.countryToTemp, callback);
-            }
-          ], function (err, foundCities) { //ошибки быть не может
-            if (typeof  cityObj[city.from + city.countryFrom] === 'undefined') {
-              cityObj[city.from + city.countryFrom] = foundCities[0];
-            }
-            if (typeof  cityObj[city.to + city.countryTo] === 'undefined') {
-              cityObj[city.to + city.countryTo] = foundCities[1];
-            }
-            city.fromJson = cityObj[city.from + city.countryFrom];
-            city.toJson = cityObj[city.to + city.countryTo];
-            callback(null, city);
-          });
-        }, commonHelper.randomInteger(500, 1000));
-      }, callback);
-    }],
-    parseCities: ['getCities', function (results, callback) {
 
-      var tempRequests = [];
-      results.getCities.forEach(function (item) {
-        if (item.error) {
-          requests = requests.concat(commonHelper.getResponseArray(req.body.weights, item, delivery, item.error));
-        } else if (!item.fromJson.success) {
-          requests = requests.concat(commonHelper.getResponseArray(req.body.weights, item, delivery, item.fromJson.message));
-        } else if (!item.toJson.success) {
-          if (item.countryToTemp && item.countryToTemp.useEng && item.toEngName) {
-            item.initialCityTo = item.to;
-            item.to = item.toEngName;
-          }
-          requests = requests.concat(commonHelper.getResponseArray(req.body.weights, item, delivery, item.toJson.message));
-        } else {
-          item.fromJson.foundCities.forEach(function (fromCity) {
-            item.toJson.foundCities.forEach(function (toCity) {
-              var copy = _.clone(item);
-              copy.initialCityFrom = item.from;
-              copy.initialCityTo = item.to;
-              copy.from = fromCity.name;
-              copy.to = toCity.name;
-              copy.countryFrom = item.countryFrom;
-              copy.countryTo = item.countryTo;
-              tempRequests.push({
-                city: copy,
-                req: getReq(fromCity, item.countryFromTemp, toCity, item.countryToTemp),
-                delivery: delivery,
-                tariffs: []
-              });
-            });
-          });
+        if (!json.result) {
+          throw new Error(getCityJsonError("Отсутствует параметр result", trim));
         }
-      });
-      tempRequests.forEach(function (item) {
-        req.body.weights.forEach(function (weight) {
-          var obj = commonHelper.deepClone(item);
-          obj.weight = weight;
-          requests.push(obj);
+
+        let jsonResult;
+
+        try {
+          jsonResult = JSON.parse(json.result);
+        } catch (e) {
+          throw new Error(getCityJsonError("Неверный формат result", trim));
+        }
+
+        if (!jsonResult.length) {
+          throw new Error(notFoundMessage);
+        }
+
+        const values = [];
+        jsonResult.forEach((item, index) => {
+          if (typeof item === 'string') {
+            values.push({id: jsonResult[index - 1], name: item, index: index - 1});
+          }
         });
-      });
-      callback(null);
-    }],
-    requests: ['parseCities', function (results, callback) {
 
-      async.mapLimit(requests, 3, function (item, callback) {
-        setTimeout(function () {
-          if (commonHelper.getReqStored(req, delivery) > timestamp) {
-            return callback({abort: true});
-          }
-          if (item.error) {
-            return async.nextTick(function () {
-              callback(null, item);
-            });
-          }
+        const region = getRegionName(city);
+        const district = getDistrictName(city);
+        const filtered = findInArray(values, trim, 'name', true);
+        let founds = [];
 
-          async.retry(config.retryOpts, function (callback) {
-            var nightmare = commonHelper.getNightmare();
-            nightmare.goto(deliveryData.calcUrl.uri)
-              .realMousedown('#ContentPlaceHolder1_cbProduct_B-1')
-              .wait('#ContentPlaceHolder1_cbProduct_DDD_L_LBT')
-              .realMousedown('#ContentPlaceHolder1_cbProduct_DDD_L_LBI0T0')
-              .realClick('#ContentPlaceHolder1_cbProduct_DDD_L_LBI0T0')
-              .wait('#ContentPlaceHolder1_cbPackage')
-              .insert('input#ContentPlaceHolder1_tbCalcWeight_Raw', item.weight)
-              .insert('input#ContentPlaceHolder1_tbCalcWeight_I', item.weight)
-              .evaluate(function (item) {
-                document.querySelector('input#ContentPlaceHolder1_cbCountryFrom_VI').value = item.req.countryFromId;
-                document.querySelector('input#ContentPlaceHolder1_cbCountryTo_VI').value = item.req.countryToId;
-                document.querySelector('input#ContentPlaceHolder1_cbCountryFrom_I').value = item.req.countryFromName;
-                document.querySelector('input#ContentPlaceHolder1_cbCountryTo_I').value = item.req.countryToName;
+        if (!filtered.length) {
+          throw new Error(notFoundMessage);
+        }
 
-                document.querySelector('input#ContentPlaceHolder1_cbCityFrom_I').value = item.req.cityFrom;
-                document.querySelector('input#ContentPlaceHolder1_cbCityFrom_VI').value = item.req.cityFromId;
-                document.querySelector('input#ContentPlaceHolder1_cbCityTo_I').value = item.req.cityTo;
-                document.querySelector('input#ContentPlaceHolder1_cbCityTo_VI').value = item.req.cityToId;
-                return false;
-              }, item) // <-- that's how you pass parameters from Node scope to browser scope)
-              .realClick('#ContentPlaceHolder1_btnCalc')
-              .wait(3000)
-              .wait('#ContentPlaceHolder1_cbPackage')
-              .evaluate(function (item) {
-                document.querySelector('input#ContentPlaceHolder1_cbCountryFrom_VI').value = item.req.countryFromId;
-                document.querySelector('input#ContentPlaceHolder1_cbCountryTo_VI').value = item.req.countryToId;
-                document.querySelector('input#ContentPlaceHolder1_cbCountryFrom_I').value = item.req.countryFromName;
-                document.querySelector('input#ContentPlaceHolder1_cbCountryTo_I').value = item.req.countryToName;
+        if (region) {
+          founds = findInArray(founds.length ? founds : filtered, region, 'area');
+        }
+        if (district) {
+          founds = findInArray(founds.length ? founds : filtered, district, 'region');
+        }
+        const result = founds.length ? founds[0] : filtered[0];
+        let optionsHandlers = await page.$$(dropdownSelector);
+        if (!optionsHandlers.length) {
+          throw new Error(notFoundMessage);
+        }
+        await optionsHandlers[result.index].click();
+        resolve(result);
+      })
+      .catch(reject);
 
-                document.querySelector('input#ContentPlaceHolder1_cbCityFrom_I').value = item.req.cityFrom;
-                document.querySelector('input#ContentPlaceHolder1_cbCityFrom_VI').value = item.req.cityFromId;
-                document.querySelector('input#ContentPlaceHolder1_cbCityTo_I').value = item.req.cityTo;
-                document.querySelector('input#ContentPlaceHolder1_cbCityTo_VI').value = item.req.cityToId;
-                return false;
-              }, item) // <-- that's how you pass parameters from Node scope to browser scope)
-              .realClick('#ContentPlaceHolder1_btnCalc')
-              .wait(3000)
-              .wait('#ContentPlaceHolder1_cbPackage')
-              //.inject('js', process.cwd() + '/node_modules/jquery/dist/jquery.js')
-              //.screenshot(process.cwd() + '/temp2.png')
-              .evaluate(function (item) {
-                var spans = null;
-                var int = false;
-                try {
-                  spans = document.querySelector('#ContentPlaceHolder1_gvCalc').querySelector('table').querySelectorAll('span');
-                } catch (e) {}
-                if (!spans) {
-                  try {
-                    spans = document.querySelector('#ContentPlaceHolder1_gvInterCalc').querySelector('table').querySelectorAll('span');
-                    int = true;
-                  } catch (e) {
-                  }
-                }
-                if (!spans) {
-                  item.error = "По указанным направлениям ничего не найдено";
-                  return item;
-                }
-                item.tariffs = [{
-                  cost: int ? spans[2].innerText.trim() + '$' : spans[4].innerText.trim(),
-                  deliveryTime: int ? '' : spans[8].innerText.trim()
-                }];
-                return item;
-              }, item)
-              .end()
-              .then(function (result) {
-                callback(null, result);
-              })
-              .catch(function (error) {
-                callback(error, item);
-              });
-          }, function (err, result) {
-            if (err) {
-              item.error = commonHelper.getResultJsonError(new Error(err));
-              return callback(null, item);
-            }
-            callback(null, result);
-          });
-        }, commonHelper.randomInteger(500, 1000));
-      }, callback);
-    }],
-    nextTick: ['requests', function (results, callback) {
-      async.nextTick(callback);
-    }]
-
-  }, function (err, results) {
-    logger.tariffsInfoLog(delivery, results.requests, 'getTariffs');
-    commonHelper.saveResults(req, err, {
-      delivery: delivery,
-      timestamp: timestamp,
-      cities: cities,
-      items: results.requests || [],
-      callback: callback
-    });
+    await page.keyboard.type(" ");
   });
+};
+
+const setCountry = async ({ page, country, notFoundMessage, delivery, isFrom }) => {
+  return new Promise(async (resolve) => {
+    const trim = getCity(majorExpressCountryChanger(country));
+
+    let selector = isFrom ? selectors.countryFromInput : selectors.countryToInput;
+    let dropdownSelector = isFrom ? selectors.countryFromDropdownOption : selectors.countryToDropdownOption;
+
+    const options = await page.$$eval(dropdownSelector, nodes => Array.from(nodes).map((node, index) => ({ name: node.innerText, index })));
+    const filtered = findInArray(options, trim, 'name', true);
+
+    if (!filtered.length) {
+      throw new Error(notFoundMessage);
+    }
+
+    const countryInput = await page.$(selector);
+    await countryInput.click({ clickCount: 2 });
+    await page.keyboard.press('Backspace');
+    await page.waitFor(100);
+    await countryInput.focus();
+    await page.keyboard.type(trim);
+
+    const optionsHandlers = await page.$$(dropdownSelector);
+
+    waitForResponse({page, url: delivery.reloadCitiesUrl.uri})
+      .then(() => resolve(filtered[0]))
+      .catch(() => resolve(filtered[0]));
+
+    await optionsHandlers[filtered[0].index].click();
+  });
+};
+
+const setTariffs = async ({ result, page, delivery }) => {
+
+  const calcButton = await page.$(selectors.calcButton);
+  await calcButton.click();
+
+  let json = await waitForResponse({page, url: delivery.calcUrl.uri, message: UNABLETOGETTARIFF});
+  if (!json.d) {
+    throw new Error(getTariffErrorMessage('Отсутствует параметр d в ответе'));
+  }
+  let parsed;
+  try {
+    parsed = JSON.parse(json.d);
+  } catch (e) {
+    throw new Error(getTariffErrorMessage('Неверный формат JSON в ответе'));
+  }
+  if (!Array.isArray(parsed)) {
+    throw new Error(getTariffErrorMessage('Изменился формат ответа. Ожидался массив'));
+  }
+  let tariffs = parsed.map(v => createTariff(v.ServiceName, v.FullCost, v.DeliveryPeriod));
+  result.tariffs = tariffs;
+  if (!tariffs.length) {
+    result.error = getNoResultError();
+  }
+};
+
+const getResult = async ({ deliveryKey, city, page, weights }) => {
+  const delivery = getOne(deliveryKey);
+  let results = [];
+  try {
+    await page.goto(delivery.pageUrl.uri);
+
+    await waitForWrapper(page, selectors.cityFromInput);
+    await waitForWrapper(page, selectors.cityToInput);
+
+    if (city.countryFrom) {
+      await setCountry({page, country: city.countryFrom, notFoundMessage: COUNTRYFROMNOTFOUND, delivery, isFrom: true });
+    }
+
+    if (city.countryTo) {
+      await setCountry({page, country: city.countryTo, notFoundMessage: COUNTRYTONOTFOUND, delivery });
+    }
+
+    const fromFound = await setCity({page, city: city.from, notFoundMessage: CITYFROMNOTFOUND, delivery, isFrom: true });
+    const toFound = await setCity({page, city: city.to, country: city.countryTo, notFoundMessage: CITYTONOTFOUND, delivery });
+
+    Object.assign(city, {
+      from: fromFound ? fromFound.name : city.from,
+      to: toFound ? toFound.name : city.countryTo,
+    });
+
+    await waitForWrapper(page, selectors.weightInput);
+    await waitForWrapper(page, selectors.calcButton);
+
+    for (let i = 0; i < weights.length; i++) {
+
+      const result = {
+        city: {...city},
+        weight: weights[i],
+        tariffs: [],
+        req: {},
+        delivery: deliveryKey
+      };
+
+      try {
+        await setWeight({ weight: weights[i], page });
+        await setTariffs({ page, result, delivery });
+      } catch (e) {
+        result.error = e.message;
+      }
+
+      results.push(result);
+
+    }
+  } catch(e) {
+    results = results.concat(allResultsError({ deliveryKey, weights, cities: [city], error: e.message || e.stack, req: {} }));
+  }
+  await refreshPage(page);
+  return results;
+};
+
+module.exports = async function ({ deliveryKey, weights, cities, req}) {
+
+  let results = [];
+  let browser;
+  let page;
+
+  try {
+    browser = await getBrowser();
+    page = await newPage(browser);
+    for (let i = 0; i < cities.length; i++) {
+      const initialCity = {
+        ...cities[i],
+        countryFrom: majorExpressCountryChanger(cities[i].countryFrom),
+        countryTo: majorExpressCountryChanger(cities[i].countryTo),
+        initialCountryFrom: cities[i].countryFrom,
+        initialCountryTo: cities[i].countryTo,
+        initialCityFrom: cities[i].from,
+        initialCityTo: cities[i].to,
+      };
+      if (!cities[i].from) {
+        results = results.concat(allResultsError({ deliveryKey, weights, cities: [cities[i]], error: CITYFROMREQUIRED }));
+        continue;
+      }
+      if (!cities[i].to && !cities[i].countryTo) {
+        results = results.concat(allResultsError({ deliveryKey, weights, cities: [cities[i]], error: CITYORCOUNTRYTOREQUIRED }));
+        continue;
+      }
+      await randomTimeout(cfg.browser.delay.min, cfg.browser.delay.max);
+      if (!shouldAbort(req)) {
+        const data = await getResult({ deliveryKey, city: initialCity, page, weights });
+        results = results.concat(data);
+      }
+    }
+  } catch(error) {
+    results = allResultsError({ deliveryKey, weights, cities, error });
+  }
+
+  await closePage(page);
+  await closeBrowser(browser);
+
+  return results;
 };

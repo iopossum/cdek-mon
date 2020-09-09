@@ -14,7 +14,7 @@ import {
   CITYORCOUNTRYTOREQUIRED,
   CITYORCOUNTRYTONOTFOUND,
   UNABLETOGETTARIFF,
-  COUNTRYNOTFOUND,
+  COUNTRYTONOTFOUND,
   COSTREG,
   getCity,
   allResultsError,
@@ -91,6 +91,7 @@ const setCity = async ({ page, selector, city, isCountry, country, notFoundMessa
   const lastLetter = trim.slice(-1);
   const trimSliced = trim.slice(0, -1);
   const cityInput = await page.$(selector);
+  await cityInput.focus();
   await cityInput.click({ clickCount: 2 });
   await page.keyboard.press('Backspace');
   await page.waitFor(100);
@@ -129,7 +130,7 @@ const setCity = async ({ page, selector, city, isCountry, country, notFoundMessa
     founds = findInArray(founds.length ? founds : filtered, region, 'area');
   }
   if (district) {
-    founds = findInArray(founds.length ? founds : filtered, region, 'region');
+    founds = findInArray(founds.length ? founds : filtered, district, 'region');
   }
   const result = founds.length ? founds[0] : filtered[0];
   let optionsHandlers = await page.$$(selectors.dropdownOption);
@@ -139,28 +140,20 @@ const setCity = async ({ page, selector, city, isCountry, country, notFoundMessa
   await optionsHandlers[result.index].click();
   try {
     await waitForResponse({page, url: delivery.citiesIndexUrl.uri});
-  } catch(e) {
-    console.log(e);
-  }
+  } catch(e) {}
   if (isFrom) {
     try {
       await waitForResponse({page, url: delivery.citiesPostofficesUrl.uri});
-    } catch(e) {
-      console.log(e);
-    }
+    } catch(e) {}
   } else {
     try {
       await waitForResponse({page, url: delivery.countriesUrl.uri});
-    } catch(e) {
-      console.log(e);
-    }
+    } catch(e) {}
   }
   if (isCountry || result.precision === 'COUNTRY') {
      try {
       await waitForResponse({page, url: delivery.dictionaryUrl.uri});
-    } catch(e) {
-      console.log(e);
-    }
+    } catch(e) {}
   }
   return result;
 };
@@ -208,7 +201,7 @@ const getResult = async ({ deliveryKey, city, page, weights }) => {
   const delivery = getOne(deliveryKey);
   let results = [];
   try {
-    await page.goto(delivery.cookieUrl.uri);
+    await page.goto(delivery.pageUrl.uri);
 
     await waitForWrapper(page, selectors.cityFromInput);
     await waitForWrapper(page, selectors.cityToInput);
@@ -219,18 +212,16 @@ const getResult = async ({ deliveryKey, city, page, weights }) => {
     if (city.to) {
       try {
         toFound = await setCity({page, selector: selectors.cityToInput, city: city.to, country: city.countryTo, notFoundMessage: CITYTONOTFOUND, delivery });
-      } catch(e) {
-        console.log(e)
-      }
+      } catch(e) {}
       if (!toFound) {
         if (city.countryTo) {
-          toFound = await setCity({page, selector: selectors.cityToInput, isCountry: true, city: city.countryTo, notFoundMessage: COUNTRYNOTFOUND, delivery });
+          toFound = await setCity({page, selector: selectors.cityToInput, isCountry: true, city: city.countryTo, notFoundMessage: COUNTRYTONOTFOUND, delivery });
         } else {
           throw new Error(CITYTONOTFOUND);
         }
       }
     } else {
-      toFound = await setCity({page, selector: selectors.cityToInput, isCountry: true, city: city.countryTo, notFoundMessage: COUNTRYNOTFOUND, delivery });
+      toFound = await setCity({page, selector: selectors.cityToInput, isCountry: true, city: city.countryTo, notFoundMessage: COUNTRYTONOTFOUND, delivery });
     }
 
     Object.assign(city, {
@@ -279,6 +270,10 @@ module.exports = async function ({ deliveryKey, weights, cities, req}) {
     for (let i = 0; i < cities.length; i++) {
       const initialCity = {
         ...cities[i],
+        countryFrom: pochtaCountryChanger(cities[i].countryFrom),
+        countryTo: pochtaCountryChanger(cities[i].countryTo),
+        initialCountryFrom: cities[i].countryFrom,
+        initialCountryTo: cities[i].countryTo,
         initialCityFrom: cities[i].from,
         initialCityTo: cities[i].to,
       };

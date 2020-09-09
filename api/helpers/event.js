@@ -13,6 +13,7 @@ export const eventFinish = (res, end) => {
 };
 
 export const eventData = (res, data) => {
+  console.log(data)
   const encoded = Buffer.from(pako.deflate(JSON.stringify(data))).toString('base64');
   res.write(`data: ${encoded}\n\n`);
 };

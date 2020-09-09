@@ -75,17 +75,17 @@ app.post('/api/beacon', cors(), (req, res) => {
   res.end();
 });
 
-/*require('./api/tariff')(
+require('./api/tariff')(
   {
     headers: {},
     query: {
-      data: pako.deflate(JSON.stringify({
-        deliveries: ['pochta'],
+      data: Buffer.from(pako.deflate(JSON.stringify({
+        deliveries: ['dpd'],
         cities: [
-          {from: 'Химки', to: 'Новосибирск'},
+          {from: 'Пушкино, Московская обл.', to: 'Москва'},
         ],
         weights: [1]
-      }))
+      }))).toString('base64')
     },
     socket: {
       setTimeout: function () {},
@@ -94,11 +94,13 @@ app.post('/api/beacon', cors(), (req, res) => {
   {
     end: function () {},
     set: function () {},
-    write: (v) => console.log(v),
+    write: (v) => {
+
+    },
     on: function () {},
     flushHeaders: function () {},
   },
-);*/
+);
 
 /*require('./api/tariff')(
   {session: {delivery: {}}, body: {

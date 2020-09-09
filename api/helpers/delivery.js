@@ -13,7 +13,7 @@ const targets = [
     id: 'pochta',
     name: 'Pochta.ru',
     country: 'ru',
-    cookieUrl: {method: 'GET', uri: 'https://www.pochta.ru/parcels'},
+    pageUrl: {method: 'GET', uri: 'https://www.pochta.ru/parcels'},
     calcUrl: {method: 'POST', uri: 'https://www.pochta.ru/portal-portlet/delegate/calculator/v1/api/delivery.time.cost.get'},
     citiesUrl: {method: 'POST', uri: 'https://www.pochta.ru/suggestions/v1/suggestion.find-addresses'},
     citiesIndexUrl: {method: 'POST', uri: 'https://www.pochta.ru/suggestions/v1/suggestion.find-indices-by-address'},
@@ -23,16 +23,29 @@ const targets = [
     newsUrl: {method: 'GET', uri: 'http://www.emspost.ru/ru/'},
     rssUrl: {method: 'GET', uri: 'http://www.emspost.ru'}
   },
-  /*,
   {
     id: 'majorexpress',
     name: 'Major-express',
     country: 'ru',
-    calcUrl: {method: 'POST', uri: 'https://major-express.ru/calculator.aspx'},
-    citiesUrl: {method: 'POST', uri: 'https://major-express.ru/calculator.aspx'},
+    pageUrl: {method: 'GET', uri: 'https://www.major-express.ru/calculator.aspx'},
+    calcUrl: {method: 'POST', uri: 'https://www.major-express.ru/Calculator.aspx/Calculate'},
+    citiesUrl: {method: 'POST', uri: 'https://www.major-express.ru/calculator.aspx'},
+    reloadCitiesUrl: {method: 'POST', uri: 'https://www.major-express.ru/Calculator.aspx/CheckReloadCities'},
     newsUrl: {method: 'GET', uri: 'https://www.major-express.ru/News.aspx'}
   },
-  /!*{
+  {
+    id: 'dpd',
+    name: 'DPD',
+    country: 'ru',
+    calcUrl: {method: 'POST', uri: 'https://www.dpd.ru/ols/calc/calc.do2'},
+    calcInternationalUrl: {method: 'POST', uri: 'https://www.dpd.ru/ols/calcint/offire.do2'},
+    citiesUrl: {method: 'POST', uri: 'https://www.dpd.ru/ols/calc/cities.do2'},
+    citiesInternationalUrl: {method: 'POST', uri: 'https://www.dpd.ru/ols/calcint/city_ru.do2'},
+    countriesUrl: {method: 'GET', uri: 'https://www.dpd.ru/ols/calcint/show.do2'},
+    newsUrl: {method: 'GET', uri: 'http://www.dpd.ru/dpd/o-dpd/informacionnyj-centr/novosti.do2'},
+    baseUrl: 'http://www.dpd.ru'
+  },
+  /*{
     id: 'spsr',
     calcUrl: {method: 'POST', uri: 'http://www.spsr.ru/ru/system/ajax'},
     citiesUrl: {method: 'GET', uri: 'http://www.spsr.ru/ru/service/calculator?q=/spsr/cc_autocomplete/'},
@@ -46,18 +59,6 @@ const targets = [
     calcUrl: {method: 'GET', uri: 'http://www.spsr.ru/webapi/calculator?'},
     citiesUrl: {method: 'GET', uri: 'http://www.spsr.ru/webapi/autocomplete_city?city='},
     newsUrl: {method: 'GET', uri: 'http://www.spsr.ru/ru/news/collection/novosti-i-press-relizy'}
-  },
-  {
-    id: 'dpd',
-    name: 'DPD',
-    country: 'ru',
-    calcUrl: {method: 'POST', uri: 'http://www.dpd.ru/ols/calc/calc.do2'},
-    calcInternationalUrl: {method: 'POST', uri: 'http://www.dpd.ru/ols/calcint/offire.do2'},
-    citiesUrl: {method: 'POST', uri: 'http://www.dpd.ru/ols/calc/cities.do2'},
-    citiesInternationalUrl: {method: 'POST', uri: 'http://www.dpd.ru/ols/calcint/city_ru.do2'},
-    countriesUrl: {method: 'GET', uri: 'http://www.dpd.ru/ols/calcint/show.do2'},
-    newsUrl: {method: 'GET', uri: 'http://www.dpd.ru/dpd/o-dpd/informacionnyj-centr/novosti.do2'},
-    baseUrl: 'http://www.dpd.ru'
   },
   {
     id: 'dimex',
@@ -488,6 +489,32 @@ export const dimexCountryChanger = (country) => {
 export const pochtaCountryChanger = (country) => {
   if (!country) {
     return country;
+  }
+  if (country.toLowerCase() === 'англия') {
+    country = 'Великобритания';
+  }
+  return country;
+};
+
+export const majorExpressCountryChanger = (country) => {
+  if (!country) {
+    return country;
+  }
+  if (country.toLowerCase() === 'англия') {
+    country = 'Великобритания';
+  }
+  return country;
+};
+
+export const dpdCountryChanger = (country) => {
+  if (!country) {
+    return country;
+  }
+  if (country.toLowerCase() === 'южная корея') {
+    country = 'Корея Респ.';
+  }
+  if (country.toLowerCase() === 'молдавия') {
+    country = 'Молдова Респ.';
   }
   if (country.toLowerCase() === 'англия') {
     country = 'Великобритания';

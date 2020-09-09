@@ -8,6 +8,7 @@ const fetch = require('cross-fetch');
 const { Headers } = require('node-fetch');
 const puppeteer = require('puppeteer');
 import { getJSONChangedMessage, getContentChangedMessage, getJSONRequestTimeoutMessage } from './tariff';
+import { randomInteger, shouldAbort } from './common';
 
 request.defaults({
   timeout : 5000,
@@ -88,7 +89,7 @@ export const refreshPage = async (page) => {
   }
 };
 
-export const waitForResponse = async ({ page, url, checkFn = () => true, message = '' }) => {
+export const waitForResponse = async ({ page, url, checkFn = () => true, message = '', format = 'json' }) => {
   message = message ? `${message} ` : message;
   let response;
   try {
@@ -104,7 +105,7 @@ export const waitForResponse = async ({ page, url, checkFn = () => true, message
   let json;
 
   try {
-    json = await response.json();
+    json = await response[format]();
   } catch(e) {
     throw new Error(`${message}${getJSONChangedMessage(url)}`);
   }
@@ -123,15 +124,15 @@ const requestPromise = (opts) => {
   });
 };
 
-export const requestWrapper = ({json, noReject, useRequest, req, ...opts}) => {
+export const requestWrapper = ({format = 'json', noReject, useRequest, req, ...opts}) => {
   return new Promise((resolve, reject) => {
     setTimeout(async () => {
-      if (this.shouldAbort(req)) {
+      if (shouldAbort(req)) {
         return reject({ abort: true });
       }
       try {
         const retryRes = await async.retry(cfg.request.retryOpts, async (callback) => {
-          if (this.shouldAbort(req)) {
+          if (shouldAbort(req)) {
             return callback({ abort: true });
           }
           if (!useRequest) {
@@ -140,9 +141,9 @@ export const requestWrapper = ({json, noReject, useRequest, req, ...opts}) => {
                 opts.headers = new Headers(opts.headers);
               }
               const fetchRes = await fetch(opts.uri || opts.url, opts);
-              console.log(opts)
               let body = null;
-              if (json) {
+              // console.log(opts)
+              if (format === 'json') {
                 body = await fetchRes.json();
               } else {
                 body = await fetchRes.text();
@@ -157,7 +158,7 @@ export const requestWrapper = ({json, noReject, useRequest, req, ...opts}) => {
             }
           } else {
             try {
-              const res = await requestPromise({...opts, json});
+              const res = await requestPromise({...opts, json: format === 'json'});
               callback(null, res);
             } catch (e) {
               callback(e);
@@ -168,6 +169,6 @@ export const requestWrapper = ({json, noReject, useRequest, req, ...opts}) => {
       } catch (e) {
         noReject && !e.abort ? resolve({error: e}) : reject(e);
       }
-    }, this.randomInteger(cfg.request.delay.min, cfg.request.delay.max));
+    }, randomInteger(cfg.request.delay.min, cfg.request.delay.max));
   });
 };

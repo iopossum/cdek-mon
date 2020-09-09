@@ -32,6 +32,7 @@ import {
   closePage,
   refreshPage,
   waitForWrapper,
+  waitForResponse,
   printPDF,
 } from '../../helpers/browser';
 const async = require('promise-async');

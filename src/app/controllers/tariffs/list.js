@@ -248,7 +248,7 @@ class TariffsCtrl {
     this.errors = [];
     async.series([
       function (callback) {
-        var intersection = _.intersection(obj.deliveries, ['dhl', 'tnt', 'fedex', 'ups', 'majorexpress', 'cityexpress', 'avislogisticskz', 'dhlkz']);
+        var intersection = _.intersection(obj.deliveries, ['dhl', 'tnt', 'fedex', 'ups', 'cityexpress', 'avislogisticskz', 'dhlkz']);
         if (intersection && intersection.length) {
           return that.getGoogleIds(callback);
         }
@@ -287,6 +287,7 @@ class TariffsCtrl {
           that.loading.main = false;
           that.requestedTargets = [];
           that.dynamic = 0;
+          console.log(JSON.parse(decoded))
           that.receiveTariffs(JSON.parse(decoded));
         });
       });
@@ -311,8 +312,10 @@ class TariffsCtrl {
   }
 
   getCityKey (item) {
-    return item.city.initialCityFrom + item.city.initialCityTo + item.city.from + item.city.to +
+    return item.city.initialCityFrom + item.city.initialCityTo +
       item.city.initialCountryFrom + item.city.initialCountryTo + item.city.countryFrom + item.city.countryTo + item.weight
+    /*return item.city.initialCityFrom + item.city.initialCityTo + item.city.from + item.city.to +
+      item.city.initialCountryFrom + item.city.initialCountryTo + item.city.countryFrom + item.city.countryTo + item.weight*/
   }
 
   repeatResponse (res) {
