@@ -45,6 +45,17 @@ const targets = [
     newsUrl: {method: 'GET', uri: 'http://www.dpd.ru/dpd/o-dpd/informacionnyj-centr/novosti.do2'},
     baseUrl: 'http://www.dpd.ru'
   },
+  {
+    id: 'dimex',
+    name: 'Dimex',
+    country: 'ru',
+    cookieUrl: {method: 'GET', uri: 'https://www.dimex.ws/kalkulyator/ekspress/'},
+    calcUrl: {method: 'GET', uri: 'https://rus.tech-dimex.ru/calculator/calcestnew?'},
+    citiesUrl: {method: 'GET', uri: 'https://rus.tech-dimex.ru/calculator/autocompletecity?'},
+    countriesUrl: {method: 'POST', uri: 'https://rus.tech-dimex.ru/calculator/getajaxForm'},
+    newsUrl: {method: 'GET', uri: 'http://www.dimex.ws/novosti-kompanii/arhiv-novostey/'},
+    baseUrl: 'http://www.dimex.ws'
+  },
   /*{
     id: 'spsr',
     calcUrl: {method: 'POST', uri: 'http://www.spsr.ru/ru/system/ajax'},
@@ -59,16 +70,6 @@ const targets = [
     calcUrl: {method: 'GET', uri: 'http://www.spsr.ru/webapi/calculator?'},
     citiesUrl: {method: 'GET', uri: 'http://www.spsr.ru/webapi/autocomplete_city?city='},
     newsUrl: {method: 'GET', uri: 'http://www.spsr.ru/ru/news/collection/novosti-i-press-relizy'}
-  },
-  {
-    id: 'dimex',
-    name: 'Dimex',
-    country: 'ru',
-    calcUrl: {method: 'GET', uri: 'http://rus.tech-dimex.ru/calculator/calcestnew?'},
-    citiesUrl: {method: 'GET', uri: 'http://rus.tech-dimex.ru/calculator/autocompletecity?'},
-    countriesUrl: {method: 'POST', uri: 'http://rus.tech-dimex.ru/calculator/getajaxForm'},
-    newsUrl: {method: 'GET', uri: 'http://www.dimex.ws/novosti-kompanii/arhiv-novostey/'},
-    baseUrl: 'http://www.dimex.ws'
   },
   {
     id: 'flippost',
@@ -483,6 +484,9 @@ export const dimexCountryChanger = (country) => {
   if (country.toLowerCase() === 'ирландия') {
     country = 'Ирландия, республика';
   }
+  if (country.toLowerCase() === 'англия') {
+    country = 'Великобритания';
+  }
   return country;
 };
 
@@ -521,3 +525,5 @@ export const dpdCountryChanger = (country) => {
   }
   return country;
 };
+
+export const DIMEXCOUNTRIES = ['Абхазия', 'Азербайджан', 'Армения', 'Афганистан', 'Беларусь', 'Грузия', 'Казахстан', 'Кыргызстан', 'Латвия', 'Молдова', 'Эстония'];

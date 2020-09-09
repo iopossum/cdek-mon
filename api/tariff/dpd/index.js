@@ -197,96 +197,100 @@ const getCities = async ({cities, delivery, req, cookie, countries}) => {
   const cityIntObj = {};
   const countryObj = _.keyBy(countries, 'name');
   return await async.mapSeries(cities, async (item, callback) => {
-    const city = {
-      ...item,
-      countryFrom: dpdCountryChanger(item.countryFrom),
-      countryTo: dpdCountryChanger(item.countryTo),
-      initialCityFrom: item.from,
-      initialCityTo: item.to,
-      initialCountryFrom: item.countryFrom,
-      initialCountryTo: item.countryTo,
-    };
-    if (!city.from && !city.to) {
-      city.error = CITIESREQUIRED;
-      return callback(null, city);
-    }
-    if (!city.from && !city.countryFrom) {
-      city.error = CITYORCOUNTRYFROMREQUIRED;
-      return callback(null, city);
-    }
-    if (!city.to && !city.countryTo) {
-      city.error = CITYORCOUNTRYTOREQUIRED;
-      return callback(null, city);
-    }
-    if (city.countryFrom && SNG.indexOf(city.countryFrom.toLowerCase()) > -1) {
-      city.countryFromTemp = city.countryFrom;
-      city.countryFrom = '';
-    }
-    if (city.countryTo && SNG.indexOf(city.countryTo.toLowerCase()) > -1) {
-      city.countryToTemp = city.countryTo;
-      city.countryTo = '';
-    }
-    if (city.countryFrom && !countryObj[city.countryFrom.toUpperCase()]) {
-      city.error = COUNTRYFROMNOTFOUND;
-      return callback(null, city);
-    }
-    if (city.countryTo && !countryObj[city.countryTo.toUpperCase()]) {
-      city.error = COUNTRYTONOTFOUND;
-      return callback(null, city);
-    }
-    if (city.countryTo && !countryObj[city.countryTo.toUpperCase()]) {
-      city.error = COUNTRYTONOTFOUND;
-      return callback(null, city);
-    }
-    if (city.countryFrom && city.countryTo) {
-      city.error = CITYFROMORTORU;
-      return callback(null, city);
-    }
-    if ((city.countryFrom || city.countryTo) && (city.countryFromTemp || city.countryToTemp)) {
-      city.error = CITYFROMORTORU;
-      return callback(null, city);
-    }
-    const fromKey = city.from + city.countryFrom;
-    const toKey = city.to + city.countryTo;
-    if (city.countryFrom || city.countryTo) {
-      if (city.from) {
-        if (cityIntObj[fromKey]) {
-          city.fromJSON = cityIntObj[fromKey];
+    try {
+      const city = {
+        ...item,
+        countryFrom: dpdCountryChanger(item.countryFrom),
+        countryTo: dpdCountryChanger(item.countryTo),
+        initialCityFrom: item.from,
+        initialCityTo: item.to,
+        initialCountryFrom: item.countryFrom,
+        initialCountryTo: item.countryTo,
+      };
+      if (!city.from && !city.to) {
+        city.error = CITIESREQUIRED;
+        return callback(null, city);
+      }
+      if (!city.from && !city.countryFrom) {
+        city.error = CITYORCOUNTRYFROMREQUIRED;
+        return callback(null, city);
+      }
+      if (!city.to && !city.countryTo) {
+        city.error = CITYORCOUNTRYTOREQUIRED;
+        return callback(null, city);
+      }
+      if (city.countryFrom && SNG.indexOf(city.countryFrom.toLowerCase()) > -1) {
+        city.countryFromTemp = city.countryFrom;
+        city.countryFrom = '';
+      }
+      if (city.countryTo && SNG.indexOf(city.countryTo.toLowerCase()) > -1) {
+        city.countryToTemp = city.countryTo;
+        city.countryTo = '';
+      }
+      if (city.countryFrom && !countryObj[city.countryFrom.toUpperCase()]) {
+        city.error = COUNTRYFROMNOTFOUND;
+        return callback(null, city);
+      }
+      if (city.countryTo && !countryObj[city.countryTo.toUpperCase()]) {
+        city.error = COUNTRYTONOTFOUND;
+        return callback(null, city);
+      }
+      if (city.countryTo && !countryObj[city.countryTo.toUpperCase()]) {
+        city.error = COUNTRYTONOTFOUND;
+        return callback(null, city);
+      }
+      if (city.countryFrom && city.countryTo) {
+        city.error = CITYFROMORTORU;
+        return callback(null, city);
+      }
+      if ((city.countryFrom || city.countryTo) && (city.countryFromTemp || city.countryToTemp)) {
+        city.error = CITYFROMORTORU;
+        return callback(null, city);
+      }
+      const fromKey = city.from + city.countryFrom;
+      const toKey = city.to + city.countryTo;
+      if (city.countryFrom || city.countryTo) {
+        if (city.from) {
+          if (cityIntObj[fromKey]) {
+            city.fromJSON = cityIntObj[fromKey];
+          } else {
+            const result = await _getCity({city: city.from, delivery, req, isInternational: true, cookie});
+            cityIntObj[fromKey] = result;
+            city.fromJSON = result;
+          }
+          city.toJSON = {isCountry: true, success: true, items: [countryObj[city.countryTo.toUpperCase()]]};
         } else {
-          const result = await _getCity({city: city.from, delivery, req, isInternational: true, cookie});
-          cityIntObj[fromKey] = result;
+          city.fromJSON = {isCountry: true, success: true, items: [countryObj[city.countryFrom.toUpperCase()]]};
+          if (cityIntObj[toKey]) {
+            city.toJSON = cityIntObj[toKey];
+          } else {
+            const result = await _getCity({city: city.to, delivery, req, isInternational: true, cookie});
+            cityIntObj[toKey] = result;
+            city.toJSON = result;
+          }
+        }
+      } else {
+        if (cityObj[fromKey]) {
+          city.fromJSON = cityObj[fromKey];
+        } else {
+          const result = await _getCity({city: city.from, country: city.countryFromTemp, delivery, req, cookie});
+          cityObj[fromKey] = result;
           city.fromJSON = result;
         }
-        city.toJSON = { isCountry: true, success: true, items: [countryObj[city.countryTo.toUpperCase()]] };
-      } else {
-        city.fromJSON = { isCountry: true, success: true, items: [countryObj[city.countryFrom.toUpperCase()]] };
-        if (cityIntObj[toKey]) {
-          city.toJSON = cityIntObj[toKey];
+        if (cityObj[toKey]) {
+          city.toJSON = cityObj[toKey];
         } else {
-          const result = await _getCity({city: city.to, delivery, req, isInternational: true, cookie});
-          cityIntObj[toKey] = result;
+          const result = await _getCity({city: city.to, country: city.countryToTemp, delivery, req, cookie});
+          cityObj[toKey] = result;
           city.toJSON = result;
         }
       }
-    } else {
-      if (cityObj[fromKey]) {
-        city.fromJSON = cityObj[fromKey];
-      } else {
-        const result = await _getCity({city: city.from, country: city.countryFromTemp, delivery, req, cookie});
-        cityObj[fromKey] = result;
-        city.fromJSON = result;
-      }
-      if (cityObj[toKey]) {
-        city.toJSON = cityObj[toKey];
-      } else {
-        const result = await _getCity({city: city.to, country: city.countryToTemp, delivery, req, cookie});
-        cityObj[toKey] = result;
-        city.toJSON = result;
-      }
+      delete city.countryFromTemp;
+      delete city.countryToTemp;
+      callback(null, city);
+    } catch(e) {
+      callback(e);
     }
-    delete city.countryFromTemp;
-    delete city.countryToTemp;
-    callback(null, city);
   });
 };
 
@@ -309,16 +313,17 @@ const getCityName = (city) => {
 
 const getRequests = ({ deliveryKey, cities, weights }) => {
   let requests = [];
+  let errors = [];
   const internationalRequests = [];
   const tempRequests = [];
   const tempIntRequests = [];
   cities.forEach((item) => {
     if (item.error) {
-      requests = requests.concat(getResponseErrorArray({ deliveryKey, weights, city: {...item, error: undefined}, error: item.error }));
+      errors = errors.concat(getResponseErrorArray({ deliveryKey, weights, city: item, error: item.error }));
     } else if (!item.fromJSON.success) {
-      requests = requests.concat(getResponseErrorArray({ deliveryKey, weights, city: item, error: item.fromJSON.error }));
+      errors = errors.concat(getResponseErrorArray({ deliveryKey, weights, city: item, error: item.fromJSON.error }));
     } else if (!item.toJSON.success) {
-      requests = requests.concat(getResponseErrorArray({ deliveryKey, weights, city: item, error: item.toJSON.error }));
+      errors = errors.concat(getResponseErrorArray({ deliveryKey, weights, city: item, error: item.toJSON.error }));
     } else {
       item.fromJSON.items.forEach((fromCity) => {
         item.toJSON.items.forEach((toCity) => {
@@ -373,7 +378,7 @@ const getRequests = ({ deliveryKey, cities, weights }) => {
       });
     });
   });
-  return {internationalRequests, requests};
+  return {internationalRequests, requests, errors};
 };
 
 const getCalcResults = async ({ request, delivery, cookie, req }) => {
@@ -518,12 +523,25 @@ module.exports = async function ({ deliveryKey, weights, cities, req}) {
 
   try {
     const {cookie, countries} = await getCookie({ delivery, req });
+    if (shouldAbort(req)) {
+      throw new Error('abort');
+    }
     const citiesResults = await getCities({cities, delivery, req, cookie, countries});
-    const {internationalRequests, requests} = getRequests({ deliveryKey, cities: citiesResults, weights });
+    if (shouldAbort(req)) {
+      throw new Error('abort');
+    }
+    const {internationalRequests, requests, errors} = getRequests({ deliveryKey, cities: citiesResults, weights });
+    results = results.concat(errors);
     for (let request of requests) {
+      if (shouldAbort(req)) {
+        break;
+      }
       results.push(await getCalcResults({ request, cookie, delivery, req }));
     }
     for (let request of internationalRequests) {
+      if (shouldAbort(req)) {
+        break;
+      }
       results.push(await getIntCalcResult({ request, cookie, delivery, req }));
     }
   } catch(error) {

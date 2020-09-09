@@ -255,10 +255,6 @@ class TariffsCtrl {
         callback(null);
       },
       function (callback) {
-        var intersection = _.intersection(obj.deliveries, ['fedex', 'ups', 'baikalsr']);
-        //if (intersection && intersection.length) {
-        //  return that.getCdekIds(callback);
-        //}
         callback(null, that.filter.cities);
       }
     ], function (err, cities) {

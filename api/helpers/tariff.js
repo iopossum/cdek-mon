@@ -142,8 +142,9 @@ export const createTariff = (service, cost, deliveryTime) => {
 };
 
 export const getResponseErrorObject = ({ city, deliveryKey, weight, error, req }) => {
-  delete city.fromJson;
-  delete city.toJson;
+  delete city.fromJSON;
+  delete city.toJSON;
+  delete city.error;
   const result = {
     city: {...city},
     delivery: deliveryKey,
