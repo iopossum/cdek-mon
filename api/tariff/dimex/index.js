@@ -196,18 +196,17 @@ const getCities = async ({cities, delivery, req, countries}) => {
       const fromKey = city.from + city.countryFrom;
       const toKey = city.to + city.countryTo;
       if (cityObj[fromKey]) {
-        city.fromJSON = cityObj[fromKey];
+        city.fromJSON = { ...cityObj[fromKey] };
       } else {
         const result = await _getCity({city: city.from, dest: 'cityo', delivery, req});
         cityObj[fromKey] = result;
         city.fromJSON = result;
       }
       if (cityObj[toKey]) {
-        city.toJSON = cityObj[toKey];
+        city.toJSON = { ...cityObj[toKey] };
       } else {
         if (city.countryTo && DIMEXCOUNTRIES.indexOf(city.countryTo) === -1) {
-          cityObj[toKey] = countryObj[city.countryTo.toUpperCase()];
-          city.toJSON = countryObj[city.countryTo.toUpperCase()];
+          city.toJSON = { ...countryObj[city.countryTo.toUpperCase()] };
         } else {
           const result = await _getCity({
             city: city.to,

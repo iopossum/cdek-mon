@@ -94,6 +94,7 @@ class TariffsCtrl {
     }
 
     window.addEventListener('beforeunload', (e) => {
+      this.esl && this.esl.close();
       navigator.sendBeacon(`http://localhost:5000/api/beacon?sessionID=${this.sessionID}`, {});
     });
   }
@@ -257,12 +258,13 @@ class TariffsCtrl {
       function (callback) {
         callback(null, that.filter.cities);
       }
-    ], function (err, cities) {
+    ], (err, cities) => {
       obj.cities = cities[1];
       const encoded = btoa(pako.deflate(JSON.stringify(obj), { to: 'string' }));
       // return console.log(pako.inflate(new Buffer(encoded, 'base64'), { to: 'string' }))
       console.log(encoded)
       const es1 = new EventSource(`http://localhost:5000/api/tariff/request?data=${encoded}&sessionID=${that.sessionID}`);
+      this.esl = es1;
       es1.addEventListener("message", ({ data }) => {
         const decoded = pako.inflate(new Buffer(data, 'base64'), { to: 'string' });
         const parsedData = JSON.parse(decoded);

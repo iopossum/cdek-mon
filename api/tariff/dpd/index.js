@@ -252,7 +252,7 @@ const getCities = async ({cities, delivery, req, cookie, countries}) => {
       if (city.countryFrom || city.countryTo) {
         if (city.from) {
           if (cityIntObj[fromKey]) {
-            city.fromJSON = cityIntObj[fromKey];
+            city.fromJSON = { ...cityIntObj[fromKey] };
           } else {
             const result = await _getCity({city: city.from, delivery, req, isInternational: true, cookie});
             cityIntObj[fromKey] = result;
@@ -262,7 +262,7 @@ const getCities = async ({cities, delivery, req, cookie, countries}) => {
         } else {
           city.fromJSON = {isCountry: true, success: true, items: [countryObj[city.countryFrom.toUpperCase()]]};
           if (cityIntObj[toKey]) {
-            city.toJSON = cityIntObj[toKey];
+            city.toJSON = { ...cityIntObj[toKey] };
           } else {
             const result = await _getCity({city: city.to, delivery, req, isInternational: true, cookie});
             cityIntObj[toKey] = result;
@@ -271,14 +271,14 @@ const getCities = async ({cities, delivery, req, cookie, countries}) => {
         }
       } else {
         if (cityObj[fromKey]) {
-          city.fromJSON = cityObj[fromKey];
+          city.fromJSON = { ...cityObj[fromKey] };
         } else {
           const result = await _getCity({city: city.from, country: city.countryFromTemp, delivery, req, cookie});
           cityObj[fromKey] = result;
           city.fromJSON = result;
         }
         if (cityObj[toKey]) {
-          city.toJSON = cityObj[toKey];
+          city.toJSON = { ...cityObj[toKey] };
         } else {
           const result = await _getCity({city: city.to, country: city.countryToTemp, delivery, req, cookie});
           cityObj[toKey] = result;

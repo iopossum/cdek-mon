@@ -56,6 +56,16 @@ const targets = [
     newsUrl: {method: 'GET', uri: 'http://www.dimex.ws/novosti-kompanii/arhiv-novostey/'},
     baseUrl: 'http://www.dimex.ws'
   },
+  {
+    id: 'flippost',
+    name: 'Flippost',
+    country: 'ru',
+    calcFlipUrl: {method: 'POST', uri: 'https://flippost.com/instruments/stoimdost/'},
+    calcOtdoUrl: {method: 'GET', uri: 'http://otdo.ru/calc/calc/delivery-russia/?'},
+    calcOtdoIntUrl: {method: 'GET', uri: 'http://otdo.ru/calc/calc/world/?'},
+    citiesUrl: {method: 'GET', uri: 'https://flippost.com/ajax/api/?action=cities_suggestions&city='},
+    //newsUrl: {method: 'GET', uri: ''}
+  },
   /*{
     id: 'spsr',
     calcUrl: {method: 'POST', uri: 'http://www.spsr.ru/ru/system/ajax'},
@@ -71,16 +81,7 @@ const targets = [
     citiesUrl: {method: 'GET', uri: 'http://www.spsr.ru/webapi/autocomplete_city?city='},
     newsUrl: {method: 'GET', uri: 'http://www.spsr.ru/ru/news/collection/novosti-i-press-relizy'}
   },
-  {
-    id: 'flippost',
-    name: 'Flippost',
-    country: 'ru',
-    calcFlipUrl: {method: 'GET', uri: 'http://flippost.com/proxy.php?dbAct=getTarif&'},
-    calcOtdoUrl: {method: 'GET', uri: 'http://otdo.ru/calc/delivery-russia/?'},
-    calcOtdoIntUrl: {method: 'GET', uri: 'http://otdo.ru/calc/world/?'},
-    citiesUrl: {method: 'GET', uri: 'http://flippost.com/proxy.php?dbAct=getCities&'},
-    //newsUrl: {method: 'GET', uri: ''}
-  },
+  ,
   {
     id: 'ponyexpress',
     name: 'Ponyexpress',

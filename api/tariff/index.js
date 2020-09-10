@@ -90,6 +90,9 @@ module.exports = asyncMiddleware(async (req, res) => {
         .then((results) => {
           const storedTTL = Store.getTTL(req);
           if (storedTTL >= -1) {
+            if (Array.isArray(results) && results.every((v) => v.error === 'abort')) {
+              return false;
+            }
             Store.completeOne(req, item);
             if (storedTTL === -1) {
               Store.setResults(req, results);

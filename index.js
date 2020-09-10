@@ -80,10 +80,10 @@ require('./api/tariff')(
     headers: {},
     query: {
       data: Buffer.from(pako.deflate(JSON.stringify({
-        deliveries: ['dimex'],
+        deliveries: ['flippost'],
         cities: [
-          // {from: 'Пушкино, Московская обл.', to: 'Новосибирск'},
-          {from: 'Москва', to: 'Абай', countryTo: 'Англия'},
+          {from: 'Новосибирск', to: 'Москва'/*, countryTo: 'Австралия'*/},
+          // {from: 'Москва', to: 'Абай', countryTo: 'Англия'},
         ],
         weights: [1]
       }))).toString('base64')
