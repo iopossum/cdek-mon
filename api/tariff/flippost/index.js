@@ -122,7 +122,7 @@ const _getCity = async ({ city, country, delivery, req }) => {
     if (region) {
       founds = findInArray(json.suggestions, region, 'fullname');
     }
-    result.items = founds.length ? founds.splice(0, 3) : [json.suggestions[0]];
+    result.items = founds.length ? founds.slice(0, 2) : json.suggestions.slice(0, 2);
     result.success = true;
   }
   return result;
@@ -222,7 +222,6 @@ const getRequests = ({ deliveryKey, cities, weights }) => {
         isCountry: item.toJSON.isCountry,
         req: getOtDoReq(item.toJSON),
         delivery: deliveryKey,
-        tariffs: []
       });
     } else if (!item.toJSON.success) {
       errors = errors.concat(getResponseErrorArray({ deliveryKey, weights, city: item, error: item.toJSON.error }));
@@ -238,7 +237,6 @@ const getRequests = ({ deliveryKey, cities, weights }) => {
           },
           req: getReq(toCity),
           delivery: deliveryKey,
-          tariffs: []
         });
       });
     }
@@ -249,7 +247,8 @@ const getRequests = ({ deliveryKey, cities, weights }) => {
         ...item,
         city: {...item.city},
         weight,
-        req: {...item.req, weight}
+        req: {...item.req, weight},
+        tariffs: []
       });
     });
   });
@@ -259,7 +258,8 @@ const getRequests = ({ deliveryKey, cities, weights }) => {
         ...item,
         city: {...item.city},
         weight,
-        req: {...item.req, Ves: weight}
+        req: {...item.req, Ves: weight},
+        tariffs: []
       });
     });
   });

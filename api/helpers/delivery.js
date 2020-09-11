@@ -66,6 +66,25 @@ const targets = [
     citiesUrl: {method: 'GET', uri: 'https://flippost.com/ajax/api/?action=cities_suggestions&city='},
     //newsUrl: {method: 'GET', uri: ''}
   },
+  {
+    id: 'ponyexpress',
+    name: 'Ponyexpress',
+    country: 'ru',
+    calcUrl: {method: 'POST', uri: 'https://www.ponyexpress.ru/local/ajax/tariff.php'},
+    citiesUrl: {method: 'GET', uri: 'https://www.ponyexpress.ru/autocomplete/city?term='},
+    countriesUrl: {method: 'GET', uri: 'https//www.ponyexpress.ru/autocomplete/country?term='},
+    newsUrl: {method: 'GET', uri: 'https://www.ponyexpress.ru/about/press-center/news/'},
+    baseUrl: 'https://www.ponyexpress.ru'
+  },
+  {
+    id: 'cse',
+    name: 'CSE',
+    country: 'ru',
+    calcPageUrl: {method: 'GET', uri: 'https://www.cse.ru/ovb/order/'},
+    calcUrl: {method: 'GET', uri: 'https://lk.cse.ru/api/calc?'},
+    citiesUrl: {method: 'GET', uri: 'https://lk.cse.ru/api/settlements?country_guid='},
+    newsUrl: {method: 'GET', uri: 'http://cse.ru/sitecontent/city-mosrus/lang-rus/news/#'}
+  },
   /*{
     id: 'spsr',
     calcUrl: {method: 'POST', uri: 'http://www.spsr.ru/ru/system/ajax'},
@@ -82,25 +101,7 @@ const targets = [
     newsUrl: {method: 'GET', uri: 'http://www.spsr.ru/ru/news/collection/novosti-i-press-relizy'}
   },
   ,
-  {
-    id: 'ponyexpress',
-    name: 'Ponyexpress',
-    country: 'ru',
-    calcUrl: {method: 'POST', uri: 'https://www.ponyexpress.ru/local/ajax/tariff.php'},
-    citiesUrl: {method: 'GET', uri: 'https://www.ponyexpress.ru/autocomplete/city?term='},
-    countriesUrl: {method: 'GET', uri: 'https//www.ponyexpress.ru/autocomplete/country?term='},
-    newsUrl: {method: 'GET', uri: 'https://www.ponyexpress.ru/about/press-center/news/'},
-    baseUrl: 'https://www.ponyexpress.ru'
-  },
-  {
-    id: 'cse',
-    name: 'CSE',
-    country: 'ru',
-    calcUrl: {method: 'POST', uri: 'http://web.cse.ru:5000/External/CSETest/Calc.aspx?city=%u041c%u043e%u0441%u043a%u0432%u0430'},
-    citiesUrl: {method: 'GET', uri: 'http://web.cse.ru:5000/Scripts/Autocomplete.ashx?'},
-    countriesUrl: {method: 'GET', uri: 'http://web.cse.ru:5000/External/CSETest/Calc.aspx?city=%D0%9C%D0%BE%D1%81%D0%BA%D0%B2%D0%B0'},
-    newsUrl: {method: 'GET', uri: 'http://cse.ru/sitecontent/city-mosrus/lang-rus/news/#'}
-  },
+
   {
     id: 'garantpost',
     name: 'Garantpost',
@@ -527,4 +528,15 @@ export const dpdCountryChanger = (country) => {
   return country;
 };
 
+export const ponyCountryChanger = (country) => {
+  if (!country) {
+    return country;
+  }
+  if (country.toLowerCase() === 'белоруссия') {
+    country = 'беларусь';
+  }
+  return country;
+};
+
 export const DIMEXCOUNTRIES = ['Абхазия', 'Азербайджан', 'Армения', 'Афганистан', 'Беларусь', 'Грузия', 'Казахстан', 'Кыргызстан', 'Латвия', 'Молдова', 'Эстония'];
+export const PONYCOUNTRIES = ['азербайджан', 'армения', 'беларусь', 'казахстан', 'кыргызстан', 'молдавия', 'молдова', 'таджикистан', 'туркменистан', 'турция', 'узбекистан', 'украина', 'латвия', 'литва', 'эстония', 'грузия'];

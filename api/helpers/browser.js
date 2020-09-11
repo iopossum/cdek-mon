@@ -58,7 +58,7 @@ export const waitForWrapper = async (page, selector, opts = {}, message) => {
 
 export const printPDF = async (page, number) => {
   try {
-    await page.pdf({path: `${number || 1}.pdf`});
+    await page.pdf({path: `${number || 1}.pdf`, landscape: true});
   } catch (e) {}
 };
 

@@ -235,10 +235,6 @@ const getCities = async ({cities, delivery, req, cookie, countries}) => {
         city.error = COUNTRYTONOTFOUND;
         return callback(null, city);
       }
-      if (city.countryTo && !countryObj[city.countryTo.toUpperCase()]) {
-        city.error = COUNTRYTONOTFOUND;
-        return callback(null, city);
-      }
       if (city.countryFrom && city.countryTo) {
         city.error = CITYFROMORTORU;
         return callback(null, city);
@@ -338,7 +334,6 @@ const getRequests = ({ deliveryKey, cities, weights }) => {
               },
               req: getInternationalReq(fromCity, toCity, item.fromJSON.isCountry, item.toJSON.isCountry),
               delivery: deliveryKey,
-              tariffs: []
             });
           } else {
             tempRequests.push({
@@ -351,7 +346,6 @@ const getRequests = ({ deliveryKey, cities, weights }) => {
               },
               req: getReq(fromCity, toCity),
               delivery: deliveryKey,
-              tariffs: []
             });
           }
         });
@@ -364,7 +358,8 @@ const getRequests = ({ deliveryKey, cities, weights }) => {
         ...item,
         city: {...item.city},
         weight,
-        req: {...item.req, 'form.weightStr': weight}
+        req: {...item.req, 'form.weightStr': weight},
+        tariffs: []
       });
     });
   });
@@ -374,7 +369,8 @@ const getRequests = ({ deliveryKey, cities, weights }) => {
         ...item,
         city: {...item.city},
         weight,
-        req: {...item.req, payWeight: weight, weight}
+        req: {...item.req, payWeight: weight, weight},
+        tariffs: []
       });
     });
   });

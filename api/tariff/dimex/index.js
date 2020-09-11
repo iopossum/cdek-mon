@@ -152,7 +152,7 @@ const _getCity = async ({ city, country, dest, delivery, req }) => {
     if (region) {
       founds = findInArray(json.results, region, 'text');
     }
-    result.items = founds.length ? founds.splice(0, 3) : [json.results[0]];
+    result.items = founds.length ? founds.slice(0, 2) : json.results.slice(0, 2);
     result.success = true;
     result.hasCountry = !!country;
   }
@@ -325,7 +325,7 @@ const getCalcResults = async ({ request, delivery, isInternational, req }) => {
       }
       const reqCopy = {...request.req, ...service.req};
       for (let key of Object.keys(reqCopy)) {
-        opts.uri += (key + '=' + encodeURIComponent(request.req[key]) + '&');
+        opts.uri += (key + '=' + encodeURIComponent(reqCopy[key]) + '&');
       }
       const res = await requestWrapper({ req, ...opts, format: 'text' });
       body = res.body;
