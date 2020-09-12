@@ -85,6 +85,19 @@ const targets = [
     citiesUrl: {method: 'GET', uri: 'https://lk.cse.ru/api/settlements?country_guid='},
     newsUrl: {method: 'GET', uri: 'http://cse.ru/sitecontent/city-mosrus/lang-rus/news/#'}
   },
+  {
+    id: 'garantpost',
+    name: 'Garantpost',
+    country: 'ru',
+    calcUrl1: {method: 'GET', uri: 'https://garantpost.ru/calc/test.php?url=https://api.garantpost.ru/cgi-bin/termCGI?'},
+    calcUrl2: {method: 'GET', uri: 'https://garantpost.ru/calc/test.php?url=https://api.garantpost.ru/cgi-bin/tarZonesCGI?'},
+    calcIntUrl: {method: 'GET', uri: 'https://garantpost.ru/calc/test.php?url=https://api.garantpost.ru/cgi-bin/tarCGI?calc=w&'},
+    servicesUrl: {method: 'GET', uri: 'https://garantpost.ru/calc/test.php?url=https://api.garantpost.ru/cgi-bin/tarCGI?service=show&calc='},
+    citiesUrl: {method: 'GET', uri: 'https://garantpost.ru/calc/test.php?url=https://api.garantpost.ru/cgi-bin/tarZonesCGI?okato='},
+    countriesUrl: {method: 'GET', uri: 'https://garantpost.ru/calc/test.php?url=https://api.garantpost.ru/cgi-bin/tarCGI?calc=w&okato=show'},
+    newsUrl: {method: 'GET', uri: 'http://garantpost.ru/news'},
+    baseUrl: 'http://garantpost.ru'
+  },
   /*{
     id: 'spsr',
     calcUrl: {method: 'POST', uri: 'http://www.spsr.ru/ru/system/ajax'},
@@ -102,19 +115,7 @@ const targets = [
   },
   ,
 
-  {
-    id: 'garantpost',
-    name: 'Garantpost',
-    country: 'ru',
-    calcUrl1: {method: 'GET', uri: 'http://garantpost.ru/calc/test.php?url=http://api.garantpost.ru/cgi-bin/termCGI?'},
-    calcUrl2: {method: 'GET', uri: 'http://garantpost.ru/calc/test.php?url=http://api.garantpost.ru/cgi-bin/tarZonesCGI?'},
-    calcIntUrl: {method: 'GET', uri: 'http://garantpost.ru/calc/test.php?url=http://api.garantpost.ru/cgi-bin/tarCGI?calc=w&'},
-    servicesUrl: {method: 'GET', uri: 'http://garantpost.ru/calc/test.php?url=http://api.garantpost.ru/cgi-bin/tarCGI?service=show&calc='},
-    citiesUrl: {method: 'GET', uri: 'http://garantpost.ru/calc/test.php?url=http://api.garantpost.ru/cgi-bin/tarZonesCGI?okato='},
-    countriesUrl: {method: 'GET', uri: 'http://garantpost.ru/calc/test.php?url=http://api.garantpost.ru/cgi-bin/tarCGI?calc=w&okato=show'},
-    newsUrl: {method: 'GET', uri: 'http://garantpost.ru/news'},
-    baseUrl: 'http://garantpost.ru'
-  },
+
   {
     id: 'iml',
     name: 'Iml',

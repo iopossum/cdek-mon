@@ -112,7 +112,7 @@ const _getCity = async ({ city, country, delivery, req }) => {
     values = findInArray(values, region, 'region');
   }
   if (!values.length) {
-    result.error = getCityNoResultError(trim);
+    result.error = getCityNoResultError(city);
   } else {
     result.items = values.slice(0, 2);
     result.success = true;
