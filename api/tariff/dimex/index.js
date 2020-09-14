@@ -252,7 +252,6 @@ const getRequests = ({ deliveryKey, cities, weights }) => {
             },
             req: getInternationalReq(fromCity, item.toJSON),
             delivery: deliveryKey,
-            tariffs: []
           });
         } else {
           item.toJSON.items.forEach((toCity) => {
@@ -267,7 +266,6 @@ const getRequests = ({ deliveryKey, cities, weights }) => {
                 },
                 req: getInternationalReq(fromCity, item.toJSON, toCity),
                 delivery: deliveryKey,
-                tariffs: []
               });
             } else {
               tempRequests.push({
@@ -280,7 +278,6 @@ const getRequests = ({ deliveryKey, cities, weights }) => {
                 },
                 req: getReq(fromCity, toCity),
                 delivery: deliveryKey,
-                tariffs: []
               });
             }
           });
@@ -294,7 +291,8 @@ const getRequests = ({ deliveryKey, cities, weights }) => {
         ...item,
         city: {...item.city},
         weight,
-        req: {...item.req, 'massa': weight}
+        req: {...item.req, 'massa': weight},
+        tariffs: []
       });
     });
   });
@@ -304,7 +302,8 @@ const getRequests = ({ deliveryKey, cities, weights }) => {
         ...item,
         city: {...item.city},
         weight,
-        req: {...item.req, massa: weight}
+        req: {...item.req, massa: weight},
+        tariffs: []
       });
     });
   });

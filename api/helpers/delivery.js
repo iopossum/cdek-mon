@@ -98,6 +98,15 @@ const targets = [
     newsUrl: {method: 'GET', uri: 'http://garantpost.ru/news'},
     baseUrl: 'http://garantpost.ru'
   },
+  {
+    id: 'iml',
+    name: 'Iml',
+    country: 'ru',
+    calcUrl: {method: 'POST', uri: 'https://iml.ru/perscalc'},
+    citiesUrl: {method: 'GET', uri: 'https://iml.ru/perscalc'},
+    newsUrl: {method: 'GET', uri: 'http://iml.ru/news'},
+    baseUrl: 'http://iml.ru'
+  },
   /*{
     id: 'spsr',
     calcUrl: {method: 'POST', uri: 'http://www.spsr.ru/ru/system/ajax'},
@@ -116,15 +125,7 @@ const targets = [
   ,
 
 
-  {
-    id: 'iml',
-    name: 'Iml',
-    country: 'ru',
-    calcUrl: {method: 'POST', uri: 'http://iml.ru/wats/calc2.php'},
-    citiesUrl: {method: 'GET', uri: 'http://iml.ru/wats/calc2.php'},
-    newsUrl: {method: 'GET', uri: 'http://iml.ru/news'},
-    baseUrl: 'http://iml.ru'
-  },
+
   {
     id: 'cityexpress',
     name: 'Cityexpress',

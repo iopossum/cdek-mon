@@ -13,6 +13,7 @@ export const CITYFROMNOTFOUND = 'Город отправления отстус�
 export const CITYTONOTFOUND = 'Город назначения отстуствует в списке доступных';
 export const CITYORCOUNTRYTONOTFOUND = 'Город или страна назначения отстуствует в списке доступных';
 export const COUNTRYFROMRUSSIA = 'Отправления возможны только из России';
+export const COUNTRYRUSSIA = 'Отправления возможны только по России';
 export const POSTCODEFROMNOTFOUND = 'Не удалось получить индекс города отправления';
 export const POSTCODETONOTFOUND = 'Не удалось получить индекс города получения';
 export const UNABLETOGETTARIFF = 'Не удалось получить тарифы с сайта.';
@@ -100,6 +101,11 @@ export const getCountriesError = (err, country) => {
 export const getCityNoResultError = (city) => {
   city = city || '';
   return "Не удалось получить города с сайта. Такого города " + city.toUpperCase() + " нет в БД сайта.";
+};
+
+export const getPVZNoResultError = (city) => {
+  city = city || '';
+  return "Не удалось получить список ПВЗ для города " + city.toUpperCase() + ".";
 };
 
 export const getCountryNoResultError = (country) => {
