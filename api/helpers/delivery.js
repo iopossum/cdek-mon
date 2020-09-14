@@ -107,6 +107,34 @@ const targets = [
     newsUrl: {method: 'GET', uri: 'http://iml.ru/news'},
     baseUrl: 'http://iml.ru'
   },
+  {
+    id: 'cityexpress',
+    name: 'Cityexpress',
+    country: 'ru',
+    calcUrl: {method: 'POST', uri: 'https://clients.cityexpress.ru/Calculator/GetTariffs'},
+    citiesUrl: {method: 'POST', uri: 'https://clients.cityexpress.ru/Data/GetAdrressOneBoxList'},
+    newsUrl: {method: 'GET', uri: 'http://www.cityexpress.ru/news'},
+    baseUrl: 'http://www.cityexpress.ru'
+  },
+  {
+    id: 'dellin',
+    name: 'Dellin',
+    country: 'ru',
+    calcUrl: {method: 'GET', uri: 'https://www.dellin.ru/api/calculation.json?'},
+    citiesUrl: {method: 'GET', uri: 'https://www.dellin.ru/api/cities/search.json?q='},
+    terminalsUrl: {method: 'GET', uri: 'https://www.dellin.ru/api/v1/terminals?code='},
+    newsUrl: {method: 'GET', uri: 'https://www.dellin.ru/api/news/filter.json?categories%5B%5D=1&categories%5B%5D=2&categories%5B%5D=3&categories%5B%5D=4&categories%5B%5D=7&categories%5B%5D=6&categories%5B%5D=5&'},
+    baseUrl: 'https://www.dellin.ru'
+  },
+  {
+    id: 'pecom',
+    name: 'Pecom',
+    country: 'ru',
+    calcUrl: {method: 'GET', uri: 'https://pecom.ru/ajax/calc.php?requrl=%2Fbitrix%2Fcomponents%2Fpecom%2Fcalc%2Fajax.php%3Fpage_type%3Dcalc%26'},
+    citiesUrl: {method: 'GET', uri: 'https://pecom.ru/services-are/the-calculation-of-the-cost/'},
+    newsUrl: {method: 'GET', uri: 'https://pecom.ru/news/'},
+    baseUrl: 'https://pecom.ru'
+  },
   /*{
     id: 'spsr',
     calcUrl: {method: 'POST', uri: 'http://www.spsr.ru/ru/system/ajax'},
@@ -126,34 +154,9 @@ const targets = [
 
 
 
-  {
-    id: 'cityexpress',
-    name: 'Cityexpress',
-    country: 'ru',
-    calcUrl: {method: 'POST', uri: 'http://clients.cityexpress.ru/Customers/Calc.aspx'},
-    citiesUrl: {method: 'POST', uri: 'http://clients.cityexpress.ru/Customers/GEstAutoComplete.asmx/GetFullCompletionList'},
-    newsUrl: {method: 'GET', uri: 'http://www.cityexpress.ru/news'},
-    baseUrl: 'http://www.cityexpress.ru'
-  },
-  {
-    id: 'dellin',
-    name: 'Dellin',
-    country: 'ru',
-    calcUrl: {method: 'GET', uri: 'https://www.dellin.ru/api/calculation.json?'},
-    citiesUrl: {method: 'GET', uri: 'https://www.dellin.ru/api/cities/search.json?q='},
-    terminalsUrl: {method: 'GET', uri: 'https://www.dellin.ru/api/get_terminal_data.json?'},
-    newsUrl: {method: 'GET', uri: 'https://www.dellin.ru/api/news/filter.json?categories%5B%5D=1&categories%5B%5D=2&categories%5B%5D=3&categories%5B%5D=4&categories%5B%5D=7&categories%5B%5D=6&categories%5B%5D=5&'},
-    baseUrl: 'https://www.dellin.ru'
-  },
-  {
-    id: 'pecom',
-    name: 'Pecom',
-    country: 'ru',
-    calcUrl: {method: 'GET', uri: 'https://pecom.ru/ajax/calc.php?requrl=%2Fbitrix%2Fcomponents%2Fpecom%2Fcalc%2Fajax.php%3Fpage_type%3Dcalc%26'},
-    citiesUrl: {method: 'GET', uri: 'https://pecom.ru/services-are/the-calculation-of-the-cost/'},
-    newsUrl: {method: 'GET', uri: 'https://pecom.ru/news/'},
-    baseUrl: 'https://pecom.ru'
-  },
+
+
+
   {
     id: 'vozovoz',
     name: 'Vozovoz',

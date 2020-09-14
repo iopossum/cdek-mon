@@ -383,7 +383,7 @@ const getCalcResults = async ({ request, delivery, cookie, req }) => {
   for (let service of services) {
     let body;
     try {
-      const opts = delivery.calcUrl;
+      const opts = { ...delivery.calcUrl };
       const formData = new URLSearchParams();
       const reqCopy = {...request.req, ...service.req};
       for (let key of Object.keys(reqCopy)) {
