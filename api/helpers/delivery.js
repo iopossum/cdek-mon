@@ -130,7 +130,8 @@ const targets = [
     id: 'pecom',
     name: 'Pecom',
     country: 'ru',
-    calcUrl: {method: 'GET', uri: 'https://pecom.ru/ajax/calc.php?requrl=%2Fbitrix%2Fcomponents%2Fpecom%2Fcalc%2Fajax.php%3Fpage_type%3Dcalc%26'},
+    pageUrl: {method: 'GET', uri: 'https://pecom.ru/services-are/shipping-request/'},
+    calcUrl: {method: 'POST', uri: 'https://pecom.ru/ajax/'},
     citiesUrl: {method: 'GET', uri: 'https://pecom.ru/services-are/the-calculation-of-the-cost/'},
     newsUrl: {method: 'GET', uri: 'https://pecom.ru/news/'},
     baseUrl: 'https://pecom.ru'

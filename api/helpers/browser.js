@@ -58,7 +58,7 @@ export const waitForWrapper = async (page, selector, opts = {}, message) => {
 
 export const printPDF = async (page, number) => {
   try {
-    await page.pdf({path: `${number || 1}.pdf`, landscape: true});
+    await page.pdf({path: `${number || 1}.pdf`, landscape: true, printBackground: true});
   } catch (e) {}
 };
 
@@ -89,11 +89,11 @@ export const refreshPage = async (page) => {
   }
 };
 
-export const waitForResponse = async ({ page, url, checkFn = () => true, message = '', format = 'json' }) => {
+export const waitForResponse = async ({ page, url, checkFn = () => true, message = '', format = 'json', timeout = 30000 }) => {
   message = message ? `${message} ` : message;
   let response;
   try {
-    response = await page.waitForResponse(response => new RegExp(url).test(response.url()) && checkFn(response));
+    response = await page.waitForResponse(response => new RegExp(url).test(response.url()) && checkFn(response, { timeout }));
   } catch (e) {
     throw new Error(`${message}${getJSONRequestTimeoutMessage(url)}`);
   }
