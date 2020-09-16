@@ -161,6 +161,15 @@ const targets = [
     newsUrl: {method: 'GET', uri: 'http://tk-kit.ru/about/news/'},
     baseUrl: 'http://tk-kit.ru'
   },
+  {
+    id: 'expressauto',
+    name: 'Expressauto',
+    country: 'ru',
+    calcUrl: {method: 'POST', uri: 'http://expressauto.ru/ajax/'},
+    citiesUrl: {method: 'POST', uri: 'http://expressauto.ru/ajax/'},
+    newsUrl: {method: 'GET', uri: 'http://expressauto.ru/news/'},
+    baseUrl: 'http://expressauto.ru'
+  },
   /*{
     id: 'spsr',
     calcUrl: {method: 'POST', uri: 'http://www.spsr.ru/ru/system/ajax'},
@@ -193,15 +202,7 @@ const targets = [
     citiesUrl: {method: 'POST', uri: 'http://rateksib.ru/ajax/calccity'},
     newsUrl: {method: 'GET', uri: 'http://rateksib.ru/novosti/'}
   },
-  {
-    id: 'expressauto',
-    name: 'Expressauto',
-    country: 'ru',
-    calcUrl: {method: 'POST', uri: 'http://expressauto.ru/ajax/'},
-    citiesUrl: {method: 'POST', uri: 'http://expressauto.ru/ajax/'},
-    newsUrl: {method: 'GET', uri: 'http://expressauto.ru/news/'},
-    baseUrl: 'http://expressauto.ru'
-  },
+
   {
     id: 'dhl',
     name: 'DHL',
