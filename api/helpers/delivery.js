@@ -136,6 +136,31 @@ const targets = [
     newsUrl: {method: 'GET', uri: 'https://pecom.ru/news/'},
     baseUrl: 'https://pecom.ru'
   },
+  {
+    id: 'vozovoz',
+    name: 'Vozovoz',
+    country: 'ru',
+    pageUrl: {method: 'GET', uri: 'https://vozovoz.ru/order/create/'},
+    tokenUrl: {method: 'GET', uri: 'https://vozovoz.ru/order/create/'},
+    calcUrl: {method: 'POST', uri: 'https://api.vozovoz.ru/order/get-price'},
+    terminalUrl: {method: 'POST', uri: 'https://api.vozovoz.ru/terminal/all'},
+    calcUrlAdditional: {method: 'POST', uri: 'https://vozovoz.ru/shipping-term/change-dispatch/'},
+    citiesUrl: {method: 'POST', uri: 'https://api.vozovoz.ru/location/get'},
+    newsUrl: {method: 'POST', uri: 'https://vozovoz.ru/article/ajax-get-news/'},
+    baseUrl: 'https://vozovoz.ru'
+  },
+  {
+    id: 'kit',
+    name: 'TK-kit',
+    country: 'ru',
+    tokenUrl: {method: 'GET', uri: 'https://gtdel.com/'},
+    calcUrl: {method: 'POST', uri: 'https://gtdel.com/site/calculate_end?send=1&location=home'},
+    calcValidateUrl: {method: 'POST', uri: 'https://gtdel.com/site/calculate_validate?location=home'},
+    calcUrlAdditional: {method: 'GET', uri: 'http://tk-kit.ru/calculate/rx_gocalc_multi.php?'},
+    citiesUrl: {method: 'GET', uri: 'https://gtdel.com/site/autocomplete-city?is_active=1&term='},
+    newsUrl: {method: 'GET', uri: 'http://tk-kit.ru/about/news/'},
+    baseUrl: 'http://tk-kit.ru'
+  },
   /*{
     id: 'spsr',
     calcUrl: {method: 'POST', uri: 'http://www.spsr.ru/ru/system/ajax'},
@@ -158,27 +183,8 @@ const targets = [
 
 
 
-  {
-    id: 'vozovoz',
-    name: 'Vozovoz',
-    country: 'ru',
-    tokenUrl: {method: 'GET', uri: 'https://vozovoz.ru/order/create/'},
-    calcUrl: {method: 'POST', uri: 'https://vozovoz.ru/order/get-price/'},
-    calcUrlAdditional: {method: 'POST', uri: 'https://vozovoz.ru/shipping-term/change-dispatch/'},
-    citiesUrl: {method: 'POST', uri: 'https://vozovoz.ru/location/get/'},
-    newsUrl: {method: 'POST', uri: 'https://vozovoz.ru/article/ajax-get-news/'},
-    baseUrl: 'https://vozovoz.ru'
-  },
-  {
-    id: 'kit',
-    name: 'TK-kit',
-    country: 'ru',
-    calcUrl: {method: 'GET', uri: 'http://tk-kit.ru/calculate/get_form_hash.php?'},
-    calcUrlAdditional: {method: 'GET', uri: 'http://tk-kit.ru/calculate/rx_gocalc_multi.php?'},
-    citiesUrl: {method: 'GET', uri: 'http://tk-kit.ru/calculate/ajax/get_city_list.php'},
-    newsUrl: {method: 'GET', uri: 'http://tk-kit.ru/about/news/'},
-    baseUrl: 'http://tk-kit.ru'
-  },
+
+
   {
     id: 'rateksib',
     name: 'Rateksib',
