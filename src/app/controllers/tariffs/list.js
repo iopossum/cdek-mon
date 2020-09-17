@@ -249,7 +249,7 @@ class TariffsCtrl {
     this.errors = [];
     async.series([
       function (callback) {
-        var intersection = _.intersection(obj.deliveries, ['dhl', 'tnt', 'fedex', 'ups', 'cityexpress', 'avislogisticskz', 'dhlkz']);
+        var intersection = _.intersection(obj.deliveries, ['tnt', 'fedex', 'ups', 'avislogisticskz', 'dhlkz']);
         if (intersection && intersection.length) {
           return that.getGoogleIds(callback);
         }

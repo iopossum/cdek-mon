@@ -1,316 +1,410 @@
-var responseHelper = require('../../helpers/response');
-var deliveryHelper = require('../../helpers/delivery');
-var commonHelper = require('../../helpers/common');
-var async = require('async');
-var request = commonHelper.request;
-var cheerio = require('cheerio');
-var config = require('../../../conf');
-var logger = require('../../helpers/logger');
-var _ = require('underscore');
-var moment = require('moment');
-var delivery = 'dhl';
+import { getOne, dimexCountryChanger, DIMEXCOUNTRIES } from '../../helpers/delivery';
+import {
+  shouldAbort,
+  findInArray,
+  randomTimeout
+} from '../../helpers/common';
+import {
+  CITIESREQUIRED,
+  CITYORCOUNTRYFROMREQUIRED,
+  COUNTRYFROMNOTFOUND,
+  CITYFROMORTORU,
+  CITYFROMNOTFOUND,
+  CITYTONOTFOUND,
+  CITYFROMREQUIRED,
+  DELIVERYTIMEREG,
+  COUNTRYFROMRUSSIA,
+  CITYORCOUNTRYTOREQUIRED,
+  CITYORCOUNTRYTONOTFOUND,
+  UNABLETOGETTARIFF,
+  COUNTRYTONOTFOUND,
+  COSTREG,
+  getCity,
+  allResultsError,
+  getResponseError,
+  getResponseErrorArray,
+  getCountriesError,
+  getCountryNoResultError,
+  createTariff,
+  getJSONChangedMessage,
+  getRegionName,
+  getNoResultError,
+  getCityJsonError,
+  getCityNoResultError,
+  getDistrictName,
+  getTariffErrorMessage,
+  getContentChangedMessage,
+  SNG, CITYTOREQUIRED
+} from '../../helpers/tariff';
+import {
+  getBrowser,
+  newPage,
+  closeBrowser,
+  closePage,
+  refreshPage,
+  waitForWrapper,
+  waitForResponse,
+  printPDF,
+  requestWrapper
+} from '../../helpers/browser';
+const async = require('promise-async');
+const cheerio = require('cheerio');
+const logger = require('../../helpers/logger');
+const _  = require('lodash');
+const cfg = require('../../../conf');
+const moment = require('moment');
 
-var getServiceReq = function (id, session) {
+const getReq = (from, to, route, sessionId) => {
+  from = from || {};
+  to = to || {};
   return {
+    city_from: from.DctCityName,
+    city_to: to.DctCityName,
+    country_code_from: from.CountryCode,
+    country_code_to: to.CountryCode,
+    date: moment().format('YYYY-MM-DD'),
+    facility_code_from: from.FacilityCode,
+    facility_code_to: to.FacilityCode,
     language: "ru",
-    max_count: 1,
-    nearest: {google_place_id: id, limit_km: 100},
-    session_id: session
-  };
+    non_dhl_code_from: null,
+    non_dhl_code_to: null,
+    pickup_from_time: "10:00",
+    pieces: [{id: 0, weight: "1", type: 0, width: 0, height: 0, depth: 0}],
+    postal_code_from: from.PostalCode,
+    postal_code_to: to.PostalCode,
+    service_point_route: route.route,
+    session_id: sessionId,
+    shp_windows_time_zone_id: "N. Central Asia Standard Time",
+  }
 };
 
-var getReq = function (from, to, servicePoint, session) {
-  var req = {
-    date: moment().add(1, 'day').format("YYYY-MM-DD"),
-    language: "ru",
-    pieces: [{id: "1", weight: "1", type: 0, width: null, height: null, depth: null}],
-    ready_time: "09:00",
-    rec_google_place_id: to,
-    session_id: session,
-    shp_google_place_id: from
+const _getCity = async ({ city, country, countryCode, isCountry, delivery, req, sessionId }) => {
+  const trim = getCity(isCountry ? country : city);
+  const notFoundFn = isCountry ? getCountryNoResultError : getCityNoResultError;
+  const errorFn = isCountry ? getCountriesError : getCityJsonError;
+  const result = {
+    trim,
+    success: false
   };
-  if (servicePoint) {
-    req.service_point_route = servicePoint;
-  }
-  return req;
-};
-
-var getCity = function (json, callback) {
-  var deliveryData = deliveryHelper.get(delivery);
-  var opts = Object.assign({}, deliveryData.citiesUrl);
-  opts.json = json;
-  if (!json.google_place_id) {
-    return callback(null, {success: false, message: json.purpose === 'pickup' ? commonHelper.CITYFROMNOTFOUND : commonHelper.CITYTONOTFOUND});
-  }
-  async.retry(config.retryOpts, function (callback) {
-    request(opts, callback)
-  }, function (err, r, b) {
-    var result = {
-      success: false
+  let json;
+  try {
+    const opts = {...delivery.citiesUrl};
+    const body = {
+      language: "ru",
+      max_count: 100,
+      requested_entity: isCountry ? "country" : 'city',
+      search_string: trim.toLowerCase(),
+      session_id: sessionId
     };
-    if (err) {
-      result.message = commonHelper.getCityJsonError(err, json.city);
-      return callback(null, result);
+    if (!isCountry) {
+      body.country_code = countryCode || 'RU';
     }
-    if (!b) {
-      result.message = commonHelper.getCityJsonError(new Error("Неверный ответ от сервера"), json.city);
-      return callback(null, result);
+    opts.body = JSON.stringify(body);
+    const res = await requestWrapper({ req, ...opts });
+    json = res.body;
+  } catch(e) {}
+  if (!json) {
+    result.error = errorFn('Изменился запрос', city);
+    return result;
+  }
+  if (!json.success) {
+    result.error = errorFn('Неверный формат данных в ответе. Отсутствует параметр success', city);
+    return result;
+  }
+  if (!Array.isArray(json.success)) {
+    result.error = errorFn("Неверный тип данных в ответе. Success не массив", trim);
+    return result;
+  }
+  if (isCountry) {
+    if (json.success.length) {
+      result.success = true;
+      result.countryCode = json.success[0].CountryCode;
+      result.country = json.success[0].CommonAlias;
+    } else {
+      result.error = notFoundFn(trim);
     }
-    if (!b.success) {
-      result.message = commonHelper.getCityJsonError(new Error("Отсутствует обязательный параметр success"), json.city);
-      return callback(null, result);
+    return result;
+  }
+  if (countryCode === 'RU') {
+    json.success = findInArray(json.success, trim, 'CommonAlias', true);
+  }
+  if (!json.success.length) {
+    result.error = notFoundFn(trim);
+  } else {
+    const region = getRegionName(city);
+    const district = getDistrictName(city);
+    let founds = [];
+    if (region) {
+      founds = findInArray(json.success, region, 'CommonAlias');
+      if (!founds.length) {
+        result.error = notFoundFn(city);
+        return result;
+      }
     }
-    if (!b.success.place_details) {
-      result.message = commonHelper.getCityJsonError(new Error("Отсутствует обязательный параметр success.place_details"), json.city);
-      return callback(null, result);
+    if (district) {
+      founds = findInArray(founds.length ? founds : json.success, district, 'CommonAlias');
+      if (!founds.length) {
+        result.error = notFoundFn(city);
+        return result;
+      }
     }
-    result.foundCities = [b.success.place_details];
     result.success = true;
-    result.cities = [b.success.place_details];
-    callback(null, result);
-  });
+    result.items = founds.length ? founds.slice(0, 2) : json.success.slice(0, 1);
+  }
+  return result;
 };
 
-var calcResults = function (item, session, callback) {
-  var deliveryData = deliveryHelper.get(delivery);
-  setTimeout(function () {
-    async.waterfall([
-      function (callback) {
-        var opts = _.extend({}, deliveryData.calcUrlAdditional);
-        opts.json = item.req;
-        async.retry(config.retryOpts, function (callback) {
-          request(opts, callback)
-        }, function (err, r, b) {
-          var result = '';
-          if (err) {
-            return callback(null, result);
-          }
-          try {
-            result = b.success[0].route;
-          } catch(e) {}
-          return callback(null, result);
-        });
-      },
-      function (servicePoint, callback) {
-        var opts = _.extend({}, deliveryData.calcUrl);
-        item.req2 = getReq(item.city.fromGooglePlaceId, item.city.toGooglePlaceId, servicePoint, session);
-        opts.json = item.req2;
-        opts.json.pieces[0].weight = item.weight;
-        async.retry(config.retryOpts, function (callback) {
-          request(opts, callback)
-        }, function (err, r, b) {
-          var result = {
-            tariffs: []
-          };
-          if (err) {
-            result.error = commonHelper.getResponseError(err);
-            return callback(null, result);
-          }
-          if (!b) {
-            result.error = commonHelper.getResponseError(new Error("Неверный формат ответа"));
-            return callback(null, result);
-          }
-          if (!b.success) {
-            result.error = commonHelper.getNoResultError();
-            return callback(null, result);
-          }
-          if (b.success.call) {
-            var deliveryTime = '';
-            if (b.success.call.delivery_date) {
-              deliveryTime = moment(moment(b.success.call.delivery_date, 'YYYY-MM-DD')).diff(moment().add(1, 'day'), 'days') + 1;
-            }
-            result.tariffs.push(commonHelper.createTariff("Вызвать курьера по телефону", commonHelper.parseFloat(b.success.call.price), deliveryTime));
-          }
-          if (b.success.click) {
-            var deliveryTime = '';
-            if (b.success.click.delivery_date) {
-              deliveryTime = moment(moment(b.success.click.delivery_date, 'YYYY-MM-DD')).diff(moment().add(1, 'day'), 'days') + 1;
-            }
-            result.tariffs.push(commonHelper.createTariff("Вызвать курьера онлайн", commonHelper.parseFloat(b.success.click.price), deliveryTime));
-          }
-          if (b.success.walk) {
-            var deliveryTime = '';
-            if (b.success.walk.delivery_date) {
-              deliveryTime = moment(moment(b.success.walk.delivery_date, 'YYYY-MM-DD')).diff(moment().add(1, 'day'), 'days') + 1;
-            }
-            result.tariffs.push(commonHelper.createTariff("Подготовить накладную и отправить из офиса DHL", commonHelper.parseFloat(b.success.walk.price), deliveryTime));
-          }
-          return callback(null, result);
-        });
+const getCities = async ({cities, delivery, req, sessionId}) => {
+  const cityObj = {};
+  const countryObj = {};
+  return await async.mapSeries(cities, async (item, callback) => {
+    try {
+      const city = {
+        ...item,
+        initialCityFrom: item.from,
+        initialCityTo: item.to,
+        initialCountryFrom: item.countryFrom,
+        initialCountryTo: item.countryTo,
+      };
+      if (!city.from) {
+        city.error = CITYFROMREQUIRED;
+        return callback(null, city);
       }
-    ], function (err, results) {
-      if (results.error) {
-        item.error = results.error;
-      } else if (!results.tariffs.length) {
-        item.error = commonHelper.getNoResultError();
+      if (!city.to) {
+        city.error = CITYTOREQUIRED;
+        return callback(null, city);
       }
-      item.tariffs = results.tariffs;
-      callback(null, item);
-    });
-  }, commonHelper.randomInteger(500, 1000));
-};
-
-module.exports = function (req, cities, callback) {
-  var deliveryData = deliveryHelper.get(delivery);
-  var requests = [];
-  var cityObj = {};
-  var timestamp = callback ? new Date().getTime*2 : commonHelper.getReqStored(req, delivery);
-
-  async.auto({
-    getSession: function (callback) {
-      var opts = deliveryData.authorizeUrl;
-      opts.json = {language: 'ru'};
-      async.retry(config.retryOpts, function (callback) {
-        request(opts, callback)
-      }, function (err, r, b) {
-        if (err) {
-          return callback(commonHelper.getUnavailableError());
-        }
-        if (!b || typeof b === 'string') {
-          return callback(commonHelper.getResponseError(new Error("Невозможно получить сессию. Неверный формат json")));
-        }
-        if (!b.success) {
-          return callback(commonHelper.getResponseError(new Error("Сессия. Неверный тип данных в ответе. Отсутствует параметр success")));
-        }
-        if (!b.success.SessionId) {
-          return callback(commonHelper.getResponseError(new Error("Сессия. Неверный тип данных в ответе. Отсутствует параметр success.SessionId")));
-        }
-        callback(null, b.success.SessionId);
-      });
-    },
-    getCities: ['getSession', function (results, callback) {
-      async.mapSeries(cities, function (city, callback) {
-        if (!city.from || !city.to) {
-          city.error = commonHelper.CITIESREQUIRED;
-          return async.nextTick(function () {
-            callback(null, city);
-          });
-        }
-        if (!city.fromGooglePlaceId) {
-          city.error = commonHelper.CITYFROMNOTFOUND;
-          return async.nextTick(function () {
-            callback(null, city);
-          });
-        }
-        if (!city.toGooglePlaceId) {
-          city.error = commonHelper.CITYTONOTFOUND;
-          return async.nextTick(function () {
-            callback(null, city);
-          });
-        }
-        if (city.countryFrom) {
-          city.error = commonHelper.COUNTRYFROMRUSSIA;
-          return async.nextTick(function () {
-            callback(null, city);
-          });
-        }
-        setTimeout(function () {
-          if (commonHelper.getReqStored(req, delivery) > timestamp) {
-            return callback({abort: true});
-          }
-          async.parallel([
-            function (callback) {
-              if (typeof  cityObj[city.from + city.countryFrom] !== 'undefined') {
-                return callback(null);
-              }
-              var opts = {
-                google_place_id: city.fromGooglePlaceId,
-                city: city.fromEngName,
-                language: "ru",
-                purpose: 'pickup',
-                session_id: results.getSession
-              };
-              getCity(opts, callback);
-            },
-            function (callback) {
-              if (typeof  cityObj[city.to + city.countryTo] !== 'undefined') {
-                return callback(null);
-              }
-              var opts = {
-                google_place_id: city.toGooglePlaceId,
-                city: city.toEngName,
-                language: "ru",
-                purpose: 'delivery',
-                session_id: results.getSession
-              };
-              getCity(opts, callback);
-            }
-          ], function (err, foundCities) { //ошибки быть не может
-            if (typeof  cityObj[city.from + city.countryFrom] === 'undefined') {
-              cityObj[city.from + city.countryFrom] = foundCities[0];
-            }
-            if (typeof  cityObj[city.to + city.countryTo] === 'undefined') {
-              cityObj[city.to + city.countryTo] = foundCities[1];
-            }
-            city.fromJson = cityObj[city.from + city.countryFrom];
-            city.toJson = cityObj[city.to + city.countryTo];
-            callback(null, city);
-          });
-        }, commonHelper.randomInteger(500, 1000));
-      }, callback);
-    }],
-    parseCities: ['getCities', function (results, callback) {
-      logger.tariffsInfoLog(delivery, results.getCities, 'getCities');
-      var tempRequests = [];
-      results.getCities.forEach(function (item) {
-        if (item.error) {
-          requests = requests.concat(commonHelper.getResponseArray(req.body.weights, item, delivery, item.error));
-        } else if (!item.fromJson.success) {
-          requests = requests.concat(commonHelper.getResponseArray(req.body.weights, item, delivery, item.fromJson.message));
-        } else if (!item.toJson.success) {
-          requests = requests.concat(commonHelper.getResponseArray(req.body.weights, item, delivery, item.toJson.message));
+      if (city.countryFrom) {
+        city.error = COUNTRYFROMRUSSIA;
+        return callback(null, city);
+      }
+      let countryFrom = { country: 'Россия', countryCode: 'RU' };
+      let countryTo = { country: 'Россия', countryCode: 'RU' };
+      if (city.countryFrom) {
+        if (countryObj[city.countryFrom]) {
+          countryFrom = {...countryObj[city.countryFrom]};
         } else {
-          item.fromJson.foundCities.forEach(function (fromCity) {
-            item.toJson.foundCities.forEach(function (toCity) {
-              var copy = _.clone(item);
-              copy.initialCityFrom = item.from;
-              copy.initialCityTo = item.to;
-              copy.from = item.fromEngFullName;
-              copy.to = item.toEngFullName;
-              copy.countryFrom = item.countryFrom;
-              copy.countryTo = item.countryTo;
-              copy.fromGooglePlaceId = item.fromGooglePlaceId;
-              copy.toGooglePlaceId = item.toGooglePlaceId;
-              tempRequests.push({
-                city: copy,
-                req: getServiceReq(item.fromGooglePlaceId, results.getSession),
-                delivery: delivery,
-                tariffs: []
-              });
-            });
+          countryFrom = await _getCity({country: city.countryFrom, isCountry: true, delivery, req, sessionId});
+          countryObj[city.countryFrom] = {...countryFrom};
+        }
+        if (!countryFrom.success) {
+          city.error = countryFrom.error;
+          return callback(null, city);
+        } else {
+          city.countryFrom = countryFrom.country;
+        }
+      }
+      if (city.countryTo) {
+        if (countryObj[city.countryTo]) {
+          countryTo = {...countryObj[city.countryTo]};
+        } else {
+          countryTo = await _getCity({country: city.countryTo, isCountry: true, delivery, req, sessionId});
+          countryObj[city.countryTo] = {...countryTo};
+        }
+        if (!countryTo.success) {
+          city.error = countryTo.error;
+          return callback(null, city);
+        } else {
+          city.countryTo = countryTo.country;
+        }
+      }
+      const fromKey = city.from + city.countryFrom;
+      const toKey = city.to + city.countryTo;
+      if (cityObj[fromKey]) {
+        city.fromJSON = { ...cityObj[fromKey] };
+      } else {
+        const result = await _getCity({city: city.from, countryCode: countryFrom.countryCode, delivery, req, sessionId});
+        cityObj[fromKey] = result;
+        city.fromJSON = result;
+      }
+      if (cityObj[toKey]) {
+        city.toJSON = { ...cityObj[toKey] };
+      } else {
+        const result = await _getCity({city: city.to, countryCode: countryTo.countryCode, delivery, req, sessionId});
+        cityObj[toKey] = result;
+        city.toJSON = result;
+      }
+      callback(null, city);
+    } catch(e) {
+      callback(e);
+    }
+  });
+};
+
+const getRoute = async ({ delivery, req, fromCity, toCity, sessionId }) => {
+  const opts = { ...delivery.calcUrlAdditional };
+  opts.body = JSON.stringify({
+    language: 'ru',
+    max_count: 0,
+    nearest: {
+      city_from: fromCity.DctCityName,
+      city_to: toCity.DctCityName,
+      country_code_from: fromCity.CountryCode,
+      country_code_to: toCity.CountryCode,
+      facility_from: fromCity.FacilityCode,
+      postal_code_from: null,
+      postal_code_to: null
+    },
+    session_id: sessionId
+  });
+  const result = { success: false };
+  try {
+    const { body } = await requestWrapper({ req, ...opts});
+    if (!body.success) {
+      result.error = getResponseError('Не удалось получить код маршрута. Отсутствует параметр success');
+      return result;
+    }
+    if (!Array.isArray(body.success)) {
+      result.error = getResponseError("Не удалось получить код маршрута. Неверный тип данных в ответе. Success не массив");
+      return result;
+    }
+    if (!body.success.length) {
+      result.error = getResponseError("Не удалось получить код маршрута. Нет доступных маршрутов");
+      return result;
+    }
+    result.route = body.success[0].route;
+    result.success = true;
+  } catch (e) {
+    result.error = getResponseError('Не удалось получить код маршрута');
+  }
+  return result;
+};
+
+const getRequests = async ({ deliveryKey, cities, weights, sessionId, delivery, req }) => {
+  let requests = [];
+  let errors = [];
+  const routeObj = {};
+  const tempRequests = [];
+  for (let item of cities) {
+    if (item.error) {
+      errors = errors.concat(getResponseErrorArray({ deliveryKey, weights, city: item, error: item.error }));
+    } else if (!item.fromJSON.success) {
+      errors = errors.concat(getResponseErrorArray({ deliveryKey, weights, city: item, error: item.fromJSON.error }));
+    } else if (!item.toJSON.success) {
+      errors = errors.concat(getResponseErrorArray({ deliveryKey, weights, city: item, error: item.toJSON.error }));
+    } else {
+      for (let fromCity of item.fromJSON.items) {
+        for (let toCity of item.toJSON.items) {
+          let route;
+          const routeKey = fromCity.CommonAlias + toCity.CommonAlias;
+          if (routeObj[routeKey]) {
+            route = routeObj[routeKey];
+          } else {
+            route = await getRoute({ delivery, req, fromCity, toCity, sessionId });
+          }
+          const city = {
+            ...item,
+            fromJSON: undefined,
+            toJSON: undefined,
+            from: fromCity.CommonAlias,
+            to: toCity.CommonAlias,
+          };
+          if (!route.success) {
+            errors = errors.concat(getResponseErrorArray({ deliveryKey, weights, city, error: route.error }));
+            continue;
+          }
+          tempRequests.push({
+            city,
+            req: getReq(fromCity, toCity, route, sessionId),
+            delivery: deliveryKey,
           });
         }
+      }
+    }
+  }
+  tempRequests.forEach((item) => {
+    weights.forEach((weight) => {
+      const req = {...item.req };
+      req.pieces = req.pieces.map(v => ({ ...v, weight }));
+      requests.push({
+        ...item,
+        city: {...item.city},
+        weight,
+        req,
+        tariffs: []
       });
-      tempRequests.forEach(function (item) {
-        req.body.weights.forEach(function (weight) {
-          var obj = Object.assign({}, item);
-          obj.weight = weight;
-          requests.push(obj);
-        });
-      });
-      callback(null);
-    }],
-    requests: ['parseCities', function (results, callback) {
-      async.mapLimit(requests, 2, function (item, callback) {
-        if (commonHelper.getReqStored(req, delivery) > timestamp) {
-          return callback({abort: true});
-        }
-        if (item.error) {
-          return async.nextTick(function () {
-            callback(null, item);
-          });
-        }
-        calcResults(item, results.getSession, callback);
-      }, callback);
-    }]
-  }, function (err, results) {
-    logger.tariffsInfoLog(delivery, results.requests, 'getTariffs');
-    commonHelper.saveResults(req, err, {
-      delivery: delivery,
-      timestamp: timestamp,
-      cities: cities,
-      items: results.requests || [],
-      callback: callback
     });
   });
+  return {requests, errors};
+};
+
+const getCalcResults = async ({ request, delivery, req }) => {
+  try {
+    const opts = {...delivery.calcUrl};
+    opts.body = JSON.stringify(request.req);
+    const { body } = await requestWrapper({ req, ...opts });
+    if (body.success) {
+      if (body.success['call'] && body.success['call'].price) {
+        request.tariffs.push(createTariff(
+          'Вызвать курьера по телефону',
+          body.success['call'].price,
+          body.success['call'].total_transit_days || ''
+        ));
+      }
+      if (body.success['click'] && body.success['click'].price) {
+        request.tariffs.push(createTariff(
+          'Вызвать курьера онлайн',
+          body.success['click'].price,
+          body.success['click'].total_transit_days || ''
+        ));
+      }
+      if (body.success['walk'] && body.success['walk'].price) {
+        request.tariffs.push(createTariff(
+          'Отправить из офиса DHL',
+          body.success['walk'].price,
+          body.success['walk'].total_transit_days || ''
+        ));
+      }
+    }
+  } catch(e) {
+    request.error = e.message;
+  }
+  if (!request.tariffs.length && !request.error) {
+    request.error = getNoResultError();
+  }
+  request.req = {};
+  return request;
+};
+
+const getToken = async ({ delivery, req }) => {
+  const opts = { ...delivery.authorizeUrl };
+  opts.body = JSON.stringify({
+    language: 'ru',
+    session_id: null
+  });
+  try {
+    const { body } = await requestWrapper({ req, ...opts});
+    return body.success.session_id;
+  } catch (e) {
+    throw getResponseError('Не удалось получить token session_id');
+  }
+};
+
+module.exports = async function ({ deliveryKey, weights, cities, req}) {
+  const delivery = getOne(deliveryKey);
+  let results = [];
+
+  try {
+    const sessionId = await getToken({ delivery, req });
+    if (shouldAbort(req)) {
+      throw new Error('abort');
+    }
+    const citiesResults = await getCities({cities, delivery, req, sessionId});
+    if (shouldAbort(req)) {
+      throw new Error('abort');
+    }
+    const {requests, errors} = await getRequests({ deliveryKey, cities: citiesResults, weights, sessionId, delivery, req });
+    results = results.concat(errors);
+    for (let request of requests) {
+      if (shouldAbort(req)) {
+        break;
+      }
+      results.push(await getCalcResults({ request, delivery, req }));
+    }
+  } catch(error) {
+    results = allResultsError({ deliveryKey, weights, cities, error });
+  }
+
+  return results;
+
 };

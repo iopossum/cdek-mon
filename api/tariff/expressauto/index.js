@@ -178,7 +178,7 @@ const getCalcResults = async ({ request, delivery, req }) => {
   } catch(e) {
     request.error = e.message;
   }
-  if (!request.tariffs.length) {
+  if (!request.tariffs.length && !request.error) {
     request.error = getNoResultError();
   }
   request.req = {};

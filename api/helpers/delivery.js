@@ -170,6 +170,16 @@ const targets = [
     newsUrl: {method: 'GET', uri: 'http://expressauto.ru/news/'},
     baseUrl: 'http://expressauto.ru'
   },
+  {
+    id: 'dhl',
+    name: 'DHL',
+    country: 'ru',
+    authorizeUrl: {method: 'POST', uri: 'https://express.dhl.ru/api/authorize'},
+    calcUrl: {method: 'POST', uri: 'https://express.dhl.ru/api/calculateprice'},
+    calcUrlAdditional: {method: 'POST', uri: 'https://express.dhl.ru/api/getServicePoints'},
+    citiesUrl: {method: 'POST', uri: 'https://express.dhl.ru/api/autocomplete'},
+    newsUrl: {method: 'GET', uri: 'http://www.dhl.ru/ru/press/releases'}
+  },
   /*{
     id: 'spsr',
     calcUrl: {method: 'POST', uri: 'http://www.spsr.ru/ru/system/ajax'},
@@ -203,16 +213,7 @@ const targets = [
     newsUrl: {method: 'GET', uri: 'http://rateksib.ru/novosti/'}
   },
 
-  {
-    id: 'dhl',
-    name: 'DHL',
-    country: 'ru',
-    authorizeUrl: {method: 'POST', uri: 'http://zakaz.dhl.ru/api/authorize'},
-    calcUrl: {method: 'POST', uri: 'http://zakaz.dhl.ru/api/calculatePrice'},
-    calcUrlAdditional: {method: 'POST', uri: 'http://zakaz.dhl.ru/api/getServicePoints'},
-    citiesUrl: {method: 'POST', uri: 'http://zakaz.dhl.ru/api/GetPlaceDetails'},
-    newsUrl: {method: 'GET', uri: 'http://www.dhl.ru/ru/press/releases'}
-  },
+
   {
     id: 'tnt',
     name: 'TNT',
