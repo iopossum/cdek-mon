@@ -260,6 +260,7 @@ class TariffsCtrl {
       }
     ], (err, cities) => {
       obj.cities = cities[1];
+      console.log(obj)
       const encoded = btoa(pako.deflate(JSON.stringify(obj), { to: 'string' }));
       // return console.log(pako.inflate(new Buffer(encoded, 'base64'), { to: 'string' }))
       console.log(encoded)

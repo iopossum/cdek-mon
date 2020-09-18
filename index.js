@@ -80,16 +80,16 @@ require('./api/tariff')(
     headers: {},
     query: {
       data: Buffer.from(pako.deflate(JSON.stringify({
-        deliveries: ['jde'],
+        deliveries: ['fedex'],
         cities: [
           // {from: 'Москва', to: 'Новолуговое, Новосибирская обл', countryFrom: ''},
           // {from: 'Челябинск', to: 'Владивосток', countryFrom: ''},
-          {from: 'Яхрома, Дмитровский район, Московская обл.', to: 'Новосибирск', countryFrom: ''},
+          // {from: 'Яхрома, Дмитровский район, Московская обл.', to: 'Новосибирск', countryFrom: ''},
           // {from: 'Москва', to: 'Новосибирск', countryFrom: ''},
           // {from: 'Яхрома, Дмитровский район, Московская обл.', to: 'Новосибирск', countryFrom: ''},
-          // {from: 'Москва', to: 'Сидней', countryTo: 'Австралия'},
+          {from: 'Москва', to: 'Сидней', countryTo: 'Австралия', postcodeFrom: "109012", postcodeTo: "2000", countryFromEngShort: 'RU', countryToEngShort: 'AU'},
         ],
-        weights: [1]
+        weights: [2]
       }))).toString('base64')
     },
     socket: {

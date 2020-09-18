@@ -195,6 +195,15 @@ const targets = [
     newsUrl: {method: 'GET', uri: 'http://www.jde.ru/company/news/'},
     baseUrl: 'http://www.jde.ru'
   },
+  {
+    id: 'fedex',
+    name: 'Fedex',
+    country: 'ru',
+    calcUrl: {method: 'POST', uri: 'https://www.fedex.com/ratefinder/standalone?method=getQuickQuote'},
+    countriesUrl: {method: 'GET', uri: 'https://www.fedex.com/ratefinder/home?cc=ru&language=ru'},
+    newsFirstUrl: {method: 'GET', uri: 'http://about.van.fedex.com/newsroom/global-english/'},
+    newsUrl: {method: 'POST', uri: 'http://about.van.fedex.com/wp-admin/admin-ajax.php'}
+  },
   /*{
     id: 'spsr',
     calcUrl: {method: 'POST', uri: 'http://www.spsr.ru/ru/system/ajax'},
@@ -239,15 +248,7 @@ const targets = [
     baseUrl: 'https://www.tnt.com'
   },
 
-  {
-    id: 'fedex',
-    name: 'Fedex',
-    country: 'ru',
-    calcUrl: {method: 'POST', uri: 'https://www.fedex.com/ratefinder/standalone?method=getQuickQuote'},
-    countriesUrl: {method: 'GET', uri: 'https://www.fedex.com/ratefinder/home?cc=ru&language=ru'},
-    newsFirstUrl: {method: 'GET', uri: 'http://about.van.fedex.com/newsroom/global-english/'},
-    newsUrl: {method: 'POST', uri: 'http://about.van.fedex.com/wp-admin/admin-ajax.php'}
-  },
+
   {
     id: 'ups',
     name: 'UPS',
