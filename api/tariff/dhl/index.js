@@ -285,13 +285,11 @@ const getRequests = async ({ deliveryKey, cities, weights, sessionId, delivery, 
     } else {
       for (let fromCity of item.fromJSON.items) {
         for (let toCity of item.toJSON.items) {
-          let route;
           const routeKey = fromCity.CommonAlias + toCity.CommonAlias;
-          if (routeObj[routeKey]) {
-            route = routeObj[routeKey];
-          } else {
-            route = await getRoute({ delivery, req, fromCity, toCity, sessionId });
+          if (!routeObj[routeKey]) {
+            routeObj[routeKey] = await getRoute({ delivery, req, fromCity, toCity, sessionId });
           }
+          const route = {...routeObj[routeKey]};
           const city = {
             ...item,
             fromJSON: undefined,

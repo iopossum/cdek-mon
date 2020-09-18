@@ -180,6 +180,21 @@ const targets = [
     citiesUrl: {method: 'POST', uri: 'https://express.dhl.ru/api/autocomplete'},
     newsUrl: {method: 'GET', uri: 'http://www.dhl.ru/ru/press/releases'}
   },
+  {
+    id: 'jde',
+    name: 'Jde',
+    country: 'ru',
+    pageUrl: {method: 'GET', uri: 'https://www.jde.ru/'},
+    page2Url: {method: 'GET', uri: 'https://i.jde.ru/rq/'},
+    calcUrl: {method: 'POST', uri: 'https://i.jde.ru/rqst/CalcAPI/'},
+    citiesUrl: {method: 'GET', uri: 'https://i.jde.ru/rqst/GetAddr/'},
+    routesFromUrl: {method: 'GET', uri: 'https://i.jde.ru/rqst/GetNearOtpr/'},
+    routesToUrl: {method: 'GET', uri: 'https://i.jde.ru/rqst/GetNearNazn/'},
+    codeUrl: {method: 'GET', uri: 'https://i.jde.ru/rqst/GetSessionIdCloud'},
+    servicesUrl: {method: 'POST', uri: 'https://i.jde.ru/rqst/ListDopUslugiOTPR'},
+    newsUrl: {method: 'GET', uri: 'http://www.jde.ru/company/news/'},
+    baseUrl: 'http://www.jde.ru'
+  },
   /*{
     id: 'spsr',
     calcUrl: {method: 'POST', uri: 'http://www.spsr.ru/ru/system/ajax'},
@@ -223,15 +238,7 @@ const targets = [
     newsUrl: {method: 'GET', uri: 'https://www.tnt.com/express/ru_ru/site/home/the-company/press/press_releases.html'},
     baseUrl: 'https://www.tnt.com'
   },
-  {
-    id: 'jde',
-    name: 'Jde',
-    country: 'ru',
-    calcUrl: {method: 'POST', uri: 'http://www.jde.ru/ajax/calculator.html'},
-    citiesUrl: {method: 'POST', uri: 'http://www.jde.ru/ajax/branch.html'},
-    newsUrl: {method: 'GET', uri: 'http://www.jde.ru/company/news/'},
-    baseUrl: 'http://www.jde.ru'
-  },
+
   {
     id: 'fedex',
     name: 'Fedex',

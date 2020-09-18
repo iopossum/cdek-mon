@@ -50,7 +50,7 @@ export const newPage = async (browser) => {
 
 export const waitForWrapper = async (page, selector, opts = {}, message) => {
   try {
-    await page.waitFor(selector, opts);
+    await page.waitForSelector(selector, opts);
   } catch(e) {
     throw new Error(message || getContentChangedMessage(selector))
   }
@@ -85,6 +85,7 @@ export const refreshPage = async (page) => {
     try {
       await page.reload();
     } catch (e) {
+      console.log(e)
     }
   }
 };
@@ -93,7 +94,14 @@ export const waitForResponse = async ({ page, url, checkFn = () => true, message
   message = message ? `${message} ` : message;
   let response;
   try {
-    response = await page.waitForResponse(response => new RegExp(url).test(response.url()) && checkFn(response, { timeout }));
+    /*page.waitForResponse(response => {
+      const url = response.url();
+      if (new RegExp('https://i.jde.ru/rqst').test(url)) {
+        console.log(url)
+      }
+      return true;
+    }, { timeout }).catch(() => {});*/
+    response = await page.waitForResponse(response => new RegExp(url).test(response.url()) && checkFn(response), { timeout });
   } catch (e) {
     throw new Error(`${message}${getJSONRequestTimeoutMessage(url)}`);
   }

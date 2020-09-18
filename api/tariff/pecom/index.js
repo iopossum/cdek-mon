@@ -279,7 +279,7 @@ const getResult = async ({ deliveryKey, city, page, weights }) => {
     await waitForWrapper(page, selectors.cityFromInput);
     await waitForWrapper(page, selectors.cityToInput);
 
-    let fromFound = await setCity({page, city: city.from, notFoundMessage: CITYFROMNOTFOUND, delivery, isFrom: true });
+    let fromFound;
     if (city.from) {
       try {
         fromFound = await setCity({page, city: city.from, country: city.countryFrom, notFoundMessage: CITYFROMNOTFOUND, delivery, isFrom: true });
