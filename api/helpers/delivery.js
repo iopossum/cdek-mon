@@ -204,6 +204,16 @@ const targets = [
     newsFirstUrl: {method: 'GET', uri: 'http://about.van.fedex.com/newsroom/global-english/'},
     newsUrl: {method: 'POST', uri: 'http://about.van.fedex.com/wp-admin/admin-ajax.php'}
   },
+  {
+    id: 'ups',
+    name: 'UPS',
+    country: 'ru',
+    calcUrl: {method: 'POST', uri: 'https://wwwapps.ups.com/ctc/results'},
+    countriesUrl: {method: 'POST', uri: 'https://wwwapps.ups.com/cac/cacws/cacService/getCACInitValue'},
+    citiesUrl: {method: 'POST', uri: 'https://wwwapps.ups.com/cac/cacws/cacService/getCityValues'},
+    newsUrl: {method: 'GET', uri: 'https://www.pressroom.ups.com/pressroom/news-assets/pagination/fetchbyconcept.page?ConceptType=PressReleases&language=ru&start='},
+    baseUrl: 'https://www.pressroom.ups.com'
+  },
   /*{
     id: 'spsr',
     calcUrl: {method: 'POST', uri: 'http://www.spsr.ru/ru/system/ajax'},
@@ -249,16 +259,7 @@ const targets = [
   },
 
 
-  {
-    id: 'ups',
-    name: 'UPS',
-    country: 'ru',
-    calcUrl: {method: 'POST', uri: 'https://wwwapps.ups.com/ctc/results'},
-    countriesUrl: {method: 'GET', uri: 'https://wwwapps.ups.com/calTimeCost?loc=ru_RU&WT.svl=PNRO_L1'},
-    citiesUrl: {method: 'GET', uri: 'https://wwwapps.ups.com/rifservice/CityValue.json?'},
-    newsUrl: {method: 'GET', uri: 'https://www.pressroom.ups.com/pressroom/news-assets/pagination/fetchbyconcept.page?ConceptType=PressReleases&language=ru&start='},
-    baseUrl: 'https://www.pressroom.ups.com'
-  },
+
   {
     id: 'baikalsr',
     name: 'Baikalsr',
