@@ -80,12 +80,12 @@ require('./api/tariff')(
     headers: {},
     query: {
       data: Buffer.from(pako.deflate(JSON.stringify({
-        deliveries: ['ups'],
+        deliveries: ['baikalsr'],
         cities: [
           // {from: 'Москва', to: 'Новолуговое, Новосибирская обл', countryFrom: ''},
           // {from: 'Челябинск', to: 'Владивосток', countryFrom: ''},
-          // {from: 'Яхрома, Дмитровский район, Московская обл.', to: 'Новосибирск', countryFrom: ''},
-          {from: 'Москва', to: 'Новосибирск', postcodeFrom: "109012", postcodeTo: "630064", countryFromEngShort: 'RU', countryToEngShort: 'RU'},
+          {from: 'Яхрома, Дмитровский район, Московская обл.', to: 'Новосибирск', countryFrom: ''},
+          // {from: 'Москва', to: 'Новосибирск', postcodeFrom: "109012", postcodeTo: "630064", countryFromEngShort: 'RU', countryToEngShort: 'RU'},
           // {from: 'Яхрома, Дмитровский район, Московская обл.', to: 'Новосибирск', countryFrom: ''},
           // {from: 'Москва', to: 'Сидней', countryTo: 'Австралия', postcodeFrom: "109012", postcodeTo: "2000", countryFromEngShort: 'RU', countryToEngShort: 'AU', fromEngName: "Moscow", toEngName: "Sydney NSW"},
         ],

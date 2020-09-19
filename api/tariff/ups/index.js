@@ -387,6 +387,7 @@ const getCalcResults = async ({ request, delivery, req }) => {
   } catch(e) {
     request.error = getTariffErrorMessage('Изменилось API сайта');
   }
+  request.req = {};
   if (!body) {
     return request;
   }
@@ -425,8 +426,6 @@ const getCalcResults = async ({ request, delivery, req }) => {
   if (!request.tariffs.length && !request.error) {
     request.error = getNoResultError();
   }
-  console.log(request.tariffs)
-  request.req = {};
   return request;
 };
 

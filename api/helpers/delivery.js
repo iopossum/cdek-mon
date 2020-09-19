@@ -214,6 +214,15 @@ const targets = [
     newsUrl: {method: 'GET', uri: 'https://www.pressroom.ups.com/pressroom/news-assets/pagination/fetchbyconcept.page?ConceptType=PressReleases&language=ru&start='},
     baseUrl: 'https://www.pressroom.ups.com'
   },
+  {
+    id: 'baikalsr',
+    name: 'Baikalsr',
+    country: 'ru',
+    calcUrl: {method: 'POST', uri: 'https://www.baikalsr.ru/json/api_calculator.json'},
+    citiesUrl: {method: 'GET', uri: 'https://www.baikalsr.ru/json/api_fias_cities.json?text='},
+    newsUrl: {method: 'GET', uri: 'https://www.baikalsr.ru/json/news.json?'},
+    baseUrl: 'https://www.baikalsr.ru'
+  },
   /*{
     id: 'spsr',
     calcUrl: {method: 'POST', uri: 'http://www.spsr.ru/ru/system/ajax'},
@@ -256,26 +265,6 @@ const targets = [
     citiesUrl: {method: 'GET', uri: 'https://mytnt.tnt.com/service/address-search-v2/location?limit=30&locale=ru_RU&q='},
     newsUrl: {method: 'GET', uri: 'https://www.tnt.com/express/ru_ru/site/home/the-company/press/press_releases.html'},
     baseUrl: 'https://www.tnt.com'
-  },
-
-
-
-  {
-    id: 'baikalsr',
-    name: 'Baikalsr',
-    country: 'ru',
-    calcUrl: {method: 'POST', uri: 'https://www.baikalsr.ru/json/api_calculator.json'},
-    citiesUrl: {method: 'GET', uri: 'https://www.baikalsr.ru/json/api_fias_cities.json?text='},
-    newsUrl: {method: 'GET', uri: 'https://www.baikalsr.ru/json/news.json?'},
-    baseUrl: 'https://www.baikalsr.ru'
-  },
-  {
-    id: 'pochta',
-    name: 'Pochta',
-    country: 'ru',
-    calcUrl: {method: 'POST', uri: 'https://www.pochta.ru/portal-portlet/delegate/calculator/v1/api/delivery.time.cost.get'},
-    citiesUrl: {method: 'GET', uri: 'https://www.pochta.ru/nsi/v1/countries/by.name/'},
-    baseUrl: 'https://www.pochta.ru'
   },*/
   {
     id: 'dpdby',
