@@ -76,10 +76,12 @@ export const randomTimeout = (from = 0, to = 0) => {
   });
 };
 
-export const wrapTryCatch = async () => {
-  try {
-
-  } catch(e) {
-
-  }
+export const parseFormData = async (str) => {
+  const splits = str.split('&');
+  const obj = {};
+  splits.forEach(v => {
+    const s = v.split('=');
+    obj[s[0]] = decodeURIComponent(s[1]).replace(/\+/g, ' ');
+  });
+  console.log(JSON.stringify(obj, null, 2))
 };
