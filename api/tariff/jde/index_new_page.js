@@ -143,7 +143,6 @@ const getTariff = async ({ delivery, page, service, wait }) => {
   if (wait) {
     await waitForResponse({page, url: delivery.calcUrl.uri, message: UNABLETOGETTARIFF});
   }
-  await printPDF(page, service)
   await page.waitForTimeout(100);
   let cost = await page.evaluate((tariffSelector) => document.querySelector(tariffSelector) && document.querySelector(tariffSelector).innerText, selectors.tariff);
 

@@ -223,6 +223,16 @@ const targets = [
     newsUrl: {method: 'GET', uri: 'https://www.baikalsr.ru/json/news.json?'},
     baseUrl: 'https://www.baikalsr.ru'
   },
+
+  {
+    id: 'globel24by',
+    name: 'Globel24',
+    country: 'by',
+    calcUrl: {method: 'POST', uri: 'https://globel24.by/local/templates/html_dev/components/db.calc.fiz.new/globel_calc/main/ajax/ajax.php'},
+    citiesUrl: {method: 'GET', uri: 'https://globel24.by/calculator/'},
+    newsUrl: {method: 'GET', uri: 'http://globel24.by/about/news/'},
+    baseUrl: 'http://globel24.by'
+  },
   /*{
     id: 'spsr',
     calcUrl: {method: 'POST', uri: 'http://www.spsr.ru/ru/system/ajax'},
@@ -265,7 +275,7 @@ const targets = [
     citiesUrl: {method: 'GET', uri: 'https://mytnt.tnt.com/service/address-search-v2/location?limit=30&locale=ru_RU&q='},
     newsUrl: {method: 'GET', uri: 'https://www.tnt.com/express/ru_ru/site/home/the-company/press/press_releases.html'},
     baseUrl: 'https://www.tnt.com'
-  },*/
+  },
   {
     id: 'dpdby',
     name: 'DPD',
@@ -286,15 +296,7 @@ const targets = [
     citiesUrl: {method: 'GET', uri: 'https://nashapochta.by/ajax/cities.php'},
     baseUrl: 'https://nashapochta.by'
   },
-  {
-    id: 'globel24by',
-    name: 'Globel24',
-    country: 'by',
-    calcUrl: {method: 'POST', uri: 'http://globel24.by/local/components/db.calc/globel_calc/templates/.default/ajax/ajax.php'},
-    citiesUrl: {method: 'GET', uri: 'http://globel24.by/rates/calculator/'},
-    newsUrl: {method: 'GET', uri: 'http://globel24.by/about/news/'},
-    baseUrl: 'http://globel24.by'
-  },
+
   {
     id: 'autolightby',
     name: 'Autolight',
@@ -453,6 +455,7 @@ const targets = [
     citiesUrl: {method: 'GET', uri: 'http://kzh.tech-dimex.ru/calculator/autocompletecity?'},
     countriesUrl: {method: 'POST', uri: 'http://kzh.tech-dimex.ru/calculator/getajaxForm'}
   }
+  */
 ];
 
 const targetObj = _.keyBy(targets, 'id');
