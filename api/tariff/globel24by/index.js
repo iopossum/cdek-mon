@@ -203,11 +203,14 @@ const getCalcResults = async ({ request, delivery, req }) => {
 
     try {
       const $ = cheerio.load(body);
-      request.tariffs.push(createTariff(
-        `${service.title}`,
-        $('.sum').text().trim().replace(COSTREGDOT, '').replace(/\.$/, ''),
-        ''
-      ));
+      const sum = $('.sum');
+      if (sum.length) {
+        request.tariffs.push(createTariff(
+          `${service.title}`,
+          sum.text().trim().replace(COSTREGDOT, '').replace(/\.$/, ''),
+          ''
+        ));
+      }
     } catch(e) {
       errors.push(e.message);
     }
@@ -215,7 +218,6 @@ const getCalcResults = async ({ request, delivery, req }) => {
   if (!request.tariffs.length) {
     request.error = errors.length ? errors[0] : getNoResultError();
   }
-  console.log(request.tariffs)
   request.req = {};
   return request;
 };
