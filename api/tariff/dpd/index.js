@@ -169,25 +169,28 @@ const _getCity = async ({ city, country, isInternational, cookie, delivery, req 
   if (country) {
     json.geonames = findInArray(json.geonames, country, 'countryName', false)
   }
-  if (!json.geonames.length) {
+  const region = getRegionName(city);
+  const district = getDistrictName(city);
+  let founds = [];
+  if (region) {
+    founds = findInArray(json.geonames, region, 'reg');
+    if (!founds.length) {
+      result.error = getCityNoResultError(city);
+      return result;
+    }
+  }
+  if (district) {
+    founds = findInArray(founds.length ? founds : json.geonames, district, 'dist');
+    if (!founds.length) {
+      result.error = getCityNoResultError(city);
+      return result;
+    }
+  }
+  if (!json.geonames.length && !founds.length) {
     result.error = getCityNoResultError(trim);
-  } else if (json.geonames.length === 1) {
-    result.items = json.geonames;
-    result.success = true;
   } else {
-    const region = getRegionName(city);
-    let founds = [];
-    if (region) {
-      founds = findInArray(json.geonames, region, 'reg');
-    }
-    if (founds.length > 1) {
-      let filtered = founds.filter(v => ['г', 'п'].indexOf(v.abbr) > -1);
-      if (filtered.length && filtered.length < founds.length) {
-        founds = filtered;
-      }
-    }
-    result.items = founds.length ? founds : [json.geonames[0]];
     result.success = true;
+    result.items = founds.length ? founds.slice(0, 2) : json.geonames.slice(0, 1);
   }
   return result;
 };

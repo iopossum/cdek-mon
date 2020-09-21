@@ -233,6 +233,15 @@ const targets = [
     newsUrl: {method: 'GET', uri: 'http://globel24.by/about/news/'},
     baseUrl: 'http://globel24.by'
   },
+  {
+    id: 'autolightby',
+    name: 'Autolight',
+    country: 'by',
+    calcUrl: {method: 'POST', uri: 'http://autolight.by/user-account/make_order/getAvailableServices.php'},
+    citiesUrl: {method: 'GET', uri: 'http://autolight.by/ajax/get_cities_autocomplete.php?term='},
+    newsUrl: {method: 'GET', uri: 'http://autolight.by/autolight_express/infocentr/newscompany/'},
+    baseUrl: 'http://autolight.by'
+  },
   /*{
     id: 'spsr',
     calcUrl: {method: 'POST', uri: 'http://www.spsr.ru/ru/system/ajax'},
@@ -297,15 +306,6 @@ const targets = [
     baseUrl: 'https://nashapochta.by'
   },
 
-  {
-    id: 'autolightby',
-    name: 'Autolight',
-    country: 'by',
-    calcUrl: {method: 'POST', uri: 'http://autolight.by/m/my_calc/calculate.php'},
-    citiesUrl: {method: 'GET', uri: 'http://autolight.by/m/my_calc/cities_ajax.php?'},
-    newsUrl: {method: 'GET', uri: 'http://autolight.by/autolight_express/infocentr/newscompany/'},
-    baseUrl: 'http://autolight.by'
-  },
   {
     id: 'vozimby',
     name: 'Vozim',
