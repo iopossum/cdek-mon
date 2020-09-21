@@ -37,7 +37,8 @@ import {
   getTariffErrorMessage,
   getContentChangedMessage,
   SNG, CITYTOREQUIRED, BY,
-  CITIESBY
+  CITIESBY,
+  isBy
 } from '../../helpers/tariff';
 import {
   getBrowser,
@@ -105,11 +106,11 @@ const getCities = async ({cities, initialCities}) => {
         city.error = CITYTOREQUIRED;
         return callback(null, city);
       }
-      if (item.countryFrom && BY.indexOf(item.countryFrom.toLowerCase()) === -1 || !item.countryFrom) {
+      if (!isBy(item.countryFrom)) {
         city.error = CITIESBY;
         return callback(null, city);
       }
-      if (item.countryTo && BY.indexOf(item.countryTo.toLowerCase()) === -1 || !item.countryTo) {
+      if (!isBy(item.countryTo)) {
         item.error = CITIESBY;
         return callback(null, city);
       }

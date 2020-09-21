@@ -177,3 +177,7 @@ export const allResultsError = ({ cities, ...props }) => {
   });
   return array;
 };
+
+export const isBy = (country) => {
+  return country && BY.indexOf(country.toLowerCase()) > -1;
+};
