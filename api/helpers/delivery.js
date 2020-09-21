@@ -262,6 +262,21 @@ const targets = [
     citiesUrl: {method: 'GET', uri: 'https://api.vozim.by//?r=aping/location'},
     baseUrl: 'http://vozim.by'
   },
+  {
+    id: 'dimexby',
+    name: 'Dimex',
+    country: 'by',
+    calcUrl: {method: 'GET', uri: 'http://bel.tech-dimex.ru/calculator/calcestnew?'},
+    citiesUrl: {method: 'GET', uri: 'http://bel.tech-dimex.ru/calculator/autocompletecity?'},
+    countriesUrl: {method: 'POST', uri: 'http://bel.tech-dimex.ru/calculator/getajaxForm'}
+  },
+  {
+    id: 'belpostby',
+    name: 'Belpost',
+    country: 'by',
+    calcUrl: {method: 'GET', uri: 'http://tarifikator.belpost.by/forms/internal/ems.php'},
+    calcInternationalUrl: {method: 'GET', uri: 'http://tarifikator.belpost.by/forms/international/ems.php'}
+  },
   /*{
     id: 'spsr',
     calcUrl: {method: 'POST', uri: 'http://www.spsr.ru/ru/system/ajax'},
@@ -315,22 +330,6 @@ const targets = [
     baseUrl: 'https://nashapochta.by'
   },
 
-
-  {
-    id: 'dimexby',
-    name: 'Dimex',
-    country: 'by',
-    calcUrl: {method: 'GET', uri: 'http://bel.tech-dimex.ru/calculator/calcestnew?'},
-    citiesUrl: {method: 'GET', uri: 'http://bel.tech-dimex.ru/calculator/autocompletecity?'},
-    countriesUrl: {method: 'POST', uri: 'http://bel.tech-dimex.ru/calculator/getajaxForm'}
-  },
-  {
-    id: 'belpostby',
-    name: 'Belpost',
-    country: 'by',
-    calcUrl: {method: 'GET', uri: 'http://tarifikator.belpost.by/forms/internal/ems.php'},
-    calcInternationalUrl: {method: 'GET', uri: 'http://tarifikator.belpost.by/forms/international/ems.php'}
-  },
   {
     id: 'korexby',
     name: 'Korex',

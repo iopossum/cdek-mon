@@ -69,10 +69,10 @@ const getReq = (from, to) => {
   return {
     endselcat: 0,
     LANG: 'rus',
-    city: from.text,
-    cityo: from.id,
-    citypp: to.text,
-    cityp: to.id,
+    city: from.value,
+    cityo: from.data,
+    citypp: to.value,
+    cityp: to.data,
     f_length: '',
     f_width: '',
     f_height: '',
@@ -88,11 +88,11 @@ const getInternationalReq = (from, countryTo, to) => {
   return {
     endselcat: 0,
     LANG: 'rus',
-    city: from.text,
-    cityo: from.id,
+    city: from.value,
+    cityo: from.data,
     countryp: countryTo.id,
-    citypp: to ? to.text : '',
-    cityp: to ? to.id : '',
+    citypp: to ? to.value : '',
+    cityp: to ? to.data : '',
     f_length: '',
     f_width: '',
     f_height: '',
@@ -132,29 +132,38 @@ const _getCity = async ({ city, country, dest, delivery, req }) => {
     result.error = getCityJsonError('Изменился запрос', city);
     return result;
   }
-  if (!json.results) {
-    result.error = getCityJsonError("Отсутствует results в ответе", trim);
+  if (!json.suggestions) {
+    result.error = getCityJsonError("Отсутствует suggestions в ответе", trim);
     return result;
   }
-  if (!Array.isArray(json.results)) {
-    result.error = getCityJsonError("Неверный тип results в ответе", trim);
+  if (!Array.isArray(json.suggestions)) {
+    result.error = getCityJsonError("Неверный тип suggestions в ответе", trim);
     return result;
   }
-  json.results = findInArray(json.results, trim, 'text', true);
-  if (!json.results.length) {
-    result.error = getCityNoResultError(trim);
-  } else if (json.results.length === 1) {
-    result.items = json.results;
-    result.success = true;
-  } else {
-    const region = getRegionName(city);
-    let founds = [];
-    if (region) {
-      founds = findInArray(json.results, region, 'text');
+  result.hasCountry = !!country;
+  json.suggestions = findInArray(json.suggestions, trim, 'value', true);
+  const region = getRegionName(city);
+  const district = getDistrictName(city);
+  let founds = [];
+  if (region) {
+    founds = findInArray(json.suggestions, region, 'value');
+    if (!founds.length) {
+      result.error = getCityNoResultError(city);
+      return result;
     }
-    result.items = founds.length ? founds.slice(0, 2) : json.results.slice(0, 2);
+  }
+  if (district) {
+    founds = findInArray(founds.length ? founds : json.suggestions, district, 'value');
+    if (!founds.length) {
+      result.error = getCityNoResultError(city);
+      return result;
+    }
+  }
+  if (!json.suggestions.length && !founds.length) {
+    result.error = getCityNoResultError(trim);
+  } else {
     result.success = true;
-    result.hasCountry = !!country;
+    result.items = founds.length ? founds.slice(0, 2) : json.suggestions.slice(0, 2);
   }
   return result;
 };
@@ -186,7 +195,7 @@ const getCities = async ({cities, delivery, req, countries}) => {
         return callback(null, city);
       }
       if (city.countryTo && !countries.length) {
-        city.error = getCountriesError('Изменился запрос');
+        city.error = getCountriesError('Изменился контент сайта');
         return callback(null, city);
       }
       if (city.countryTo && !countryObj[city.countryTo.toUpperCase()]) {
@@ -247,7 +256,7 @@ const getRequests = ({ deliveryKey, cities, weights }) => {
               ...item,
               fromJSON: undefined,
               toJSON: undefined,
-              from: fromCity.text,
+              from: fromCity.value,
               to: item.countryTo,
             },
             req: getInternationalReq(fromCity, item.toJSON),
@@ -261,8 +270,8 @@ const getRequests = ({ deliveryKey, cities, weights }) => {
                   ...item,
                   fromJSON: undefined,
                   toJSON: undefined,
-                  from: fromCity.text,
-                  to: toCity.text,
+                  from: fromCity.value,
+                  to: toCity.value,
                 },
                 req: getInternationalReq(fromCity, item.toJSON, toCity),
                 delivery: deliveryKey,
@@ -273,8 +282,8 @@ const getRequests = ({ deliveryKey, cities, weights }) => {
                   ...item,
                   fromJSON: undefined,
                   toJSON: undefined,
-                  from: fromCity.text,
-                  to: toCity.text,
+                  from: fromCity.value,
+                  to: toCity.value,
                 },
                 req: getReq(fromCity, toCity),
                 delivery: deliveryKey,
