@@ -1,16 +1,71 @@
-var responseHelper = require('../../helpers/response');
-var deliveryHelper = require('../../helpers/delivery');
-var commonHelper = require('../../helpers/common');
-var async = require('async');
-var request = commonHelper.request;
-var cheerio = require('cheerio');
-var config = require('../../../conf');
-var _ = require('underscore');
-var logger = require('../../helpers/logger');
-var moment = require('moment');
-var delivery = 'vozimby';
+import { getOne, dimexCountryChanger, DIMEXCOUNTRIES } from '../../helpers/delivery';
+import {
+  shouldAbort,
+  findInArray,
+  randomTimeout
+} from '../../helpers/common';
+import {
+  CITIESREQUIRED,
+  CITYORCOUNTRYFROMREQUIRED,
+  COUNTRYFROMNOTFOUND,
+  CITYFROMORTORU,
+  CITYFROMNOTFOUND,
+  CITYTONOTFOUND,
+  CITYFROMREQUIRED,
+  DELIVERYTIMEREG,
+  COUNTRYFROMRUSSIA,
+  COUNTRYRUSSIA,
+  CITYORCOUNTRYTOREQUIRED,
+  CITYORCOUNTRYTONOTFOUND,
+  UNABLETOGETTARIFF,
+  COUNTRYTONOTFOUND,
+  COSTREG,
+  COSTREGDOT,
+  getCity,
+  allResultsError,
+  getResponseError,
+  getResponseErrorArray,
+  getCountriesError,
+  getCountryNoResultError,
+  createTariff,
+  getJSONChangedMessage,
+  getRegionName,
+  getNoResultError,
+  getCityJsonError,
+  getCityNoResultError,
+  getDistrictName,
+  getTariffErrorMessage,
+  getContentChangedMessage,
+  SNG, CITYTOREQUIRED, BY,
+  CITIESBY,
+  isBy
+} from '../../helpers/tariff';
+import {
+  getBrowser,
+  newPage,
+  closeBrowser,
+  closePage,
+  refreshPage,
+  waitForWrapper,
+  waitForResponse,
+  printPDF,
+  requestWrapper
+} from '../../helpers/browser';
+const async = require('promise-async');
+const cheerio = require('cheerio');
+const logger = require('../../helpers/logger');
+const _  = require('lodash');
+const cfg = require('../../../conf');
+const moment = require('moment');
 
-var getReq = function (from, to) {
+const services = [
+  {title: 'Доставка', req: {}},
+  {title: 'Доставка до 18:00', req: {delivery18: 1}},
+];
+
+const getReq = (from, to) => {
+  from = from || {};
+  to = to || {};
   return {
     form: 'calculation',
     'client-type':0,
@@ -21,13 +76,140 @@ var getReq = function (from, to) {
     height:1,
     weight:0,
     'good-cost': '',
-    'locality-from': from,
-    'locality-to': to
-  };
+    'locality-from': from.name,
+    'locality-to': to.name,
+    fromstore: 1
+  }
 };
 
-var getService = function (type) {
-  var result = '';
+const _getCity = (cities, city) => {
+  const trim = getCity(city);
+  const result = {
+    cityTrim: trim,
+    success: false
+  };
+  const json = findInArray(cities, trim, 'name', true);
+  const region = getRegionName(city);
+  const district = getDistrictName(city);
+  let founds = [];
+  if (region) {
+    founds = findInArray(json, region, 'name');
+    if (!founds.length) {
+      result.error = getCityNoResultError(city);
+      return result;
+    }
+  }
+  if (district) {
+    founds = findInArray(founds.length ? founds : json, district, 'name');
+    if (!founds.length) {
+      result.error = getCityNoResultError(city);
+      return result;
+    }
+  }
+  if (!json.length && !founds.length) {
+    result.error = getCityNoResultError(trim);
+  } else {
+    result.success = true;
+    result.items = founds.length ? founds.slice(0, 2) : json.slice(0, 2);
+  }
+  return result;
+};
+
+const getCities = async ({ cities, initialCities }) => {
+  return await async.mapSeries(cities, (item, callback) => {
+    try {
+      const city = {
+        ...item,
+        initialCityFrom: item.from,
+        initialCityTo: item.to,
+        initialCountryFrom: item.countryFrom,
+        initialCountryTo: item.countryTo,
+      };
+      if (!city.from) {
+        city.error = CITYFROMREQUIRED;
+        return callback(null, city);
+      }
+      if (!city.to) {
+        city.error = CITYTOREQUIRED;
+        return callback(null, city);
+      }
+      if (item.countryFrom && !isBy(item.countryFrom)) {
+        city.error = CITIESBY;
+        return callback(null, city);
+      }
+      if (item.countryTo && !isBy(item.countryTo)) {
+        item.error = CITIESBY;
+        return callback(null, city);
+      }
+
+      city.fromJSON = _getCity(initialCities, item.from);
+      city.toJSON = _getCity(initialCities, item.to);
+
+      callback(null, city);
+    } catch(e) {
+      callback(e);
+    }
+  });
+};
+
+const getRequests = ({ deliveryKey, cities, weights }) => {
+  let requests = [];
+  let errors = [];
+  const tempRequests = [];
+  cities.forEach((item) => {
+    if (item.error) {
+      errors = errors.concat(getResponseErrorArray({ deliveryKey, weights, city: item, error: item.error }));
+    } else if (!item.fromJSON.success) {
+      errors = errors.concat(getResponseErrorArray({ deliveryKey, weights, city: item, error: item.fromJSON.error }));
+    } else if (!item.toJSON.success) {
+      errors = errors.concat(getResponseErrorArray({ deliveryKey, weights, city: item, error: item.toJSON.error }));
+    } else {
+      item.fromJSON.items.forEach((fromCity) => {
+        item.toJSON.items.forEach((toCity) => {
+          tempRequests.push({
+            city: {
+              ...item,
+              fromJSON: undefined,
+              toJSON: undefined,
+              from: fromCity.name,
+              to: toCity.name,
+            },
+            req: getReq(fromCity, toCity),
+            delivery: deliveryKey,
+          });
+        });
+      });
+    }
+  });
+  tempRequests.forEach((item) => {
+    weights.forEach((weight) => {
+      requests.push({
+        ...item,
+        city: {...item.city},
+        weight,
+        req: {...item.req, weight},
+        tariffs: []
+      });
+    });
+  });
+  return {requests, errors};
+};
+
+const getDeliveryTime = (days) => {
+  let result = '';
+  if (!days) {
+    return result;
+  }
+  const splits = days.split("-");
+  result = 1;
+  if (splits.length > 1) {
+    result = moment(splits[1], 'DD.MM.YYYY').diff(moment(splits[0], 'DD.MM.YYYY'), 'days') + 1;
+  }
+  return result;
+};
+
+const getService = (type) => {
+  let result = '';
   if (!type) {
     return result;
   }
@@ -45,162 +227,83 @@ var getService = function (type) {
   return result;
 };
 
-var getDeliveryTime = function (days) {
-  var result = '';
-  if (!days) {
-    return result;
+const getCalcResults = async ({ request, delivery, req }) => {
+  const errors = [];
+  for (let service of services) {
+    let body;
+    try {
+      const opts = {...delivery.calcUrl};
+      const reqCopy = {...request.req, ...service.req};
+      const formData = new URLSearchParams();
+      for (let key of Object.keys(reqCopy)) {
+        formData.append(key, reqCopy[key]);
+      }
+      opts.body = formData;
+      const res = await requestWrapper({ req, ...opts });
+      body = res.body;
+    } catch(e) {
+      errors.push(getTariffErrorMessage('Изменилось api'));
+    }
+    if (!body) {
+      continue;
+    }
+
+    try {
+      for (let key of Object.keys(body)) {
+        if (['custom', 'minimal'].indexOf(key) === -1 && body[key].enabled) {
+          request.tariffs.push(createTariff(
+            `${service.title} ${getService(key)}`,
+            body[key].cost,
+            getDeliveryTime(body[key].days)
+          ));
+        }
+      }
+    } catch(e) {
+      errors.push(e.message);
+    }
   }
-  var splits = days.split("-");
-  result = 1;
-  if (splits.length > 1) {
-    result = moment(splits[1], 'DD.MM.YYYY').diff(moment(splits[0], 'DD.MM.YYYY'), 'days') + 1;
+  if (!request.tariffs.length) {
+    request.error = errors.length ? errors[0] : getNoResultError();
   }
-  return result;
+  request.req = {};
+  return request;
 };
 
-var filterArray = function (array, value) {
-  array = array || [];
-  var reg = new RegExp("(^|-[^_0-9a-zA-Zа-яёА-ЯЁ])" + value + "([^_0-9a-zA-Zа-яёА-ЯЁ-]|$)", "i");
-  return array.filter(function (item) {
-    return item.match(reg);
-  });
+const getInitialCities = async ({ delivery, req }) => {
+  const opts = { ...delivery.citiesUrl };
+  try {
+    const { body } = await requestWrapper({ req, ...opts });
+    return body.map(v => ({ name: v }));
+  } catch (e) {
+    throw getResponseError('Не удалось получить города с сайта. Изменилось API');
+  }
 };
 
-module.exports = function (req, cities, callback) {
-  var deliveryData = deliveryHelper.get(delivery);
-  var requests = [];
-  var timestamp = callback ? new Date().getTime*2 : commonHelper.getReqStored(req, delivery);
-  async.auto({
-    getCities: function (callback) {
-      async.retry(config.retryOpts, function (callback) {
-        var opts = _.extend({}, deliveryData.citiesUrl);
-        request(opts, callback);
-      }, function (err, r, b) {
-        if (err) {
-          return callback(commonHelper.getCityJsonError(err));
-        }
-        var json = null;
-        try {
-          json = JSON.parse(b);
-        } catch (e) {}
+module.exports = async function ({ deliveryKey, weights, cities, req}) {
+  const delivery = getOne(deliveryKey);
+  let results = [];
 
-        if (!json) {
-          return callback(commonHelper.getCityJsonError(new Error("Неверный ответ от сервера, нет городов")));
-        }
-        callback(null, json);
-      });
-    },
-    parseCities: ['getCities', function (results, callback) {
-      var tempRequests = [];
-      cities.forEach(function (item) {
-        if (!item.from || !item.to) {
-          item.error = commonHelper.CITIESREQUIRED;
-          requests = requests.concat(commonHelper.getResponseArray(req.body.weights, item, delivery, item.error));
-        } else if (item.countryFrom && commonHelper.BY.indexOf(item.countryFrom.toLowerCase()) === -1 || !item.countryFrom) {
-          item.error = commonHelper.CITIESBY;
-          requests = requests.concat(commonHelper.getResponseArray(req.body.weights, item, delivery, item.error));
-        } else if (item.countryTo && commonHelper.BY.indexOf(item.countryTo.toLowerCase()) === -1 || !item.countryTo) {
-          item.error = commonHelper.CITIESBY;
-          requests = requests.concat(commonHelper.getResponseArray(req.body.weights, item, delivery, item.error));
-        } else {
-          var trimFrom = commonHelper.getCity(item.from);
-          var foundsFrom = filterArray(results.getCities, trimFrom);
-          foundsFrom.splice(4, foundsFrom.length);
-          var trimTo = commonHelper.getCity(item.to);
-          var foundsTo = filterArray(results.getCities, trimTo);
-          foundsTo.splice(4, foundsTo.length);
-          if (!foundsFrom.length) {
-            item.error = commonHelper.CITYFROMNOTFOUND;
-            requests = requests.concat(commonHelper.getResponseArray(req.body.weights, item, delivery, item.error));
-          } else if (!foundsTo.length) {
-            item.error = commonHelper.CITYTONOTFOUND;
-            requests = requests.concat(commonHelper.getResponseArray(req.body.weights, item, delivery, item.error));
-          } else {
-            foundsFrom.forEach(function (fromCity) {
-              foundsTo.forEach(function (toCity) {
-                tempRequests.push({
-                  city: {
-                    initialCityFrom: item.from,
-                    initialCityTo: item.to,
-                    from: fromCity,
-                    to: toCity,
-                    countryFrom: item.countryFrom,
-                    countryTo: item.countryTo
-                  },
-                  req: getReq(fromCity, toCity),
-                  delivery: delivery,
-                  tariffs: []
-                });
-              });
-            });
-          }
-        }
-      });
-      tempRequests.forEach(function (item) {
-        req.body.weights.forEach(function (weight) {
-          var obj = commonHelper.deepClone(item);
-          obj.weight = weight;
-          obj.req.weight = weight;
-          requests.push(obj);
-        });
-      });
-      callback(null);
-    }],
-    requests: ['parseCities', function (results, callback) {
-      async.mapLimit(requests, 1, function (item, callback) {
-        if (commonHelper.getReqStored(req, delivery) > timestamp) {
-          return callback({abort: true});
-        }
-        if (item.error) {
-          return async.nextTick(function () {
-            callback(null, item);
-          });
-        }
-        setTimeout(function () {
-          var deliveryData = deliveryHelper.get(delivery);
-          var opts = _.extend({}, deliveryData.calcUrl);
-          async.retry(config.retryOpts, function (callback) {
-            opts.form = item.req;
-            request(opts, callback)
-          }, function (err, r, b) {
-            if (err) {
-              item.error = commonHelper.getResponseError(err);
-              return callback(null, item);
-            }
-            var json = null;
-            try {
-              json = JSON.parse(b);
-            } catch (e) {
-              item.error = commonHelper.getResponseError(err);
-            }
+  try {
+    const initialCities = await getInitialCities({ delivery, req });
+    if (shouldAbort(req)) {
+      throw new Error('abort');
+    }
+    const citiesResults = await getCities({ cities, delivery, req, initialCities });
+    if (shouldAbort(req)) {
+      throw new Error('abort');
+    }
+    const {requests, errors} = getRequests({ deliveryKey, cities: citiesResults, weights });
+    results = results.concat(errors);
+    for (let request of requests) {
+      if (shouldAbort(req)) {
+        break;
+      }
+      results.push(await getCalcResults({ request, delivery, req }));
+    }
+  } catch(error) {
+    results = allResultsError({ deliveryKey, weights, cities, error });
+  }
 
-            if (!json) {
-              return callback(null, item);
-            }
-            for (var key in json) {
-              if (['custom', 'minimal'].indexOf(key) === -1 && json[key].enabled) {
-                item.tariffs.push({
-                  cost: json[key].cost,
-                  deliveryTime: getDeliveryTime(json[key].days),
-                  service: getService(key)
-                });
-              }
-            }
-            if (!item.tariffs.length) {
-              item.error = commonHelper.getNoResultError();
-            }
-            return callback(null, item);
-          });
-        }, commonHelper.randomInteger(500, 1000));
-      }, callback);
-    }]
-  }, function (err, results) {
-    commonHelper.saveResults(req, err, {
-      delivery: delivery,
-      timestamp: timestamp,
-      cities: cities,
-      items: results.requests || [],
-      callback: callback
-    });
-  });
+  return results;
+
 };

@@ -254,6 +254,14 @@ const targets = [
     newsUrl: {method: 'GET', uri: 'http://autolight.by/autolight_express/infocentr/newscompany/'},
     baseUrl: 'http://autolight.by'
   },
+  {
+    id: 'vozimby',
+    name: 'Vozim',
+    country: 'by',
+    calcUrl: {method: 'POST', uri: 'https://api.vozim.by/?r=aping/calculator'},
+    citiesUrl: {method: 'GET', uri: 'https://api.vozim.by//?r=aping/location'},
+    baseUrl: 'http://vozim.by'
+  },
   /*{
     id: 'spsr',
     calcUrl: {method: 'POST', uri: 'http://www.spsr.ru/ru/system/ajax'},
@@ -307,14 +315,7 @@ const targets = [
     baseUrl: 'https://nashapochta.by'
   },
 
-  {
-    id: 'vozimby',
-    name: 'Vozim',
-    country: 'by',
-    calcUrl: {method: 'POST', uri: 'http://api.vozim.by/calculator'},
-    citiesUrl: {method: 'GET', uri: 'http://api.vozim.by/location'},
-    baseUrl: 'http://vozim.by'
-  },
+
   {
     id: 'dimexby',
     name: 'Dimex',
