@@ -290,7 +290,6 @@ const getCalcResults = async ({ request, delivery, req }) => {
       errors.push(e.message);
     }
   }
-  console.log(request.tariffs)
   if (!request.tariffs.length) {
     request.error = errors.length ? errors[0] : getNoResultError();
   }

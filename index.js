@@ -80,7 +80,7 @@ require('./api/tariff')(
     headers: {},
     query: {
       data: Buffer.from(pako.deflate(JSON.stringify({
-        deliveries: ['autolightby'],
+        deliveries: ['dpdby'],
         cities: [
           // {from: 'Москва', to: 'Новолуговое, Новосибирская обл', countryFrom: ''},
           // {from: 'Челябинск', to: 'Владивосток', countryFrom: ''},
@@ -90,7 +90,7 @@ require('./api/tariff')(
           // {from: 'Яхрома, Дмитровский район, Московская обл.', to: 'Новосибирск', countryFrom: ''},
           // {from: 'Москва', to: 'Сидней', countryTo: 'Австралия', postcodeFrom: "109012", postcodeTo: "2000", countryFromEngShort: 'RU', countryToEngShort: 'AU', fromEngName: "Moscow", toEngName: "Sydney NSW"},
         ],
-        weights: [1]
+        weights: [1, 2]
       }))).toString('base64')
     },
     socket: {

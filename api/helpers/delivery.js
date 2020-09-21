@@ -225,6 +225,18 @@ const targets = [
   },
 
   {
+    id: 'dpdby',
+    name: 'DPD',
+    country: 'by',
+    calcUrl: {method: 'POST', uri: 'https://mydpd.dpd.by/ols/calc/calc.do2'},
+    calcInternationalUrl: {method: 'POST', uri: 'https://mydpd.dpd.by/ols/calcint/offire.do2'},
+    citiesUrl: {method: 'POST', uri: 'https://mydpd.dpd.by/ols/calc/cities.do2'},
+    citiesInternationalUrl: {method: 'POST', uri: 'https://mydpd.dpd.by/ols/calcint/city_ru.do2'},
+    countriesUrl: {method: 'GET', uri: 'https://mydpd.dpd.by/ols/calcint/show.do2'},
+    newsUrl: {method: 'GET', uri: 'https://mydpd.dpd.by/dpd/o-dpd/informacionnyj-centr/novosti.do2'},
+    baseUrl: 'https://mydpd.dpd.by'
+  },
+  {
     id: 'globel24by',
     name: 'Globel24',
     country: 'by',
@@ -285,18 +297,7 @@ const targets = [
     newsUrl: {method: 'GET', uri: 'https://www.tnt.com/express/ru_ru/site/home/the-company/press/press_releases.html'},
     baseUrl: 'https://www.tnt.com'
   },
-  {
-    id: 'dpdby',
-    name: 'DPD',
-    country: 'by',
-    calcUrl: {method: 'POST', uri: 'http://mydpd.dpd.by/ols/calc/calc.do2'},
-    calcInternationalUrl: {method: 'POST', uri: 'http://mydpd.dpd.by/ols/calcint/offire.do2'},
-    citiesUrl: {method: 'POST', uri: 'http://mydpd.dpd.by/ols/calc/cities.do2'},
-    citiesInternationalUrl: {method: 'POST', uri: 'http://mydpd.dpd.by/ols/calcint/city_ru.do2'},
-    countriesUrl: {method: 'GET', uri: 'http://mydpd.dpd.by/ols/calcint/show.do2'},
-    newsUrl: {method: 'GET', uri: 'http://mydpd.dpd.by/dpd/o-dpd/informacionnyj-centr/novosti.do2'},
-    baseUrl: 'http://mydpd.dpd.by'
-  },
+
   {
     id: 'nashapochtaby',
     name: 'Nashapochta',
