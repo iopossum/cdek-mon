@@ -279,6 +279,13 @@ const targets = [
     citiesUrl: {method: 'GET', uri: 'http://tarifikator.belpost.by/forms/internal/ems.php'},
     countriesUrl: {method: 'GET', uri: 'http://tarifikator.belpost.by/forms/international/ems.php'},
   },
+  {
+    id: 'korexby',
+    name: 'Korex',
+    country: 'by',
+    calcUrl: {method: 'POST', uri: 'http://korex.by/ajax/calc.php', json: true},
+    citiesUrl: {method: 'POST', uri: 'http://korex.by/ajax/search_address.php', json: true}
+  },
   /*{
     id: 'spsr',
     calcUrl: {method: 'POST', uri: 'http://www.spsr.ru/ru/system/ajax'},
@@ -332,13 +339,7 @@ const targets = [
     baseUrl: 'https://nashapochta.by'
   },
 
-  {
-    id: 'korexby',
-    name: 'Korex',
-    country: 'by',
-    calcUrl: {method: 'POST', uri: 'http://korex.by/ajax/calc.php', json: true},
-    citiesUrl: {method: 'POST', uri: 'http://korex.by/ajax/search_address.php', json: true}
-  },
+
   {
     id: 'ponyexpressby',
     name: 'Ponyexpress',
