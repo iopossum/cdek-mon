@@ -303,6 +303,16 @@ const targets = [
     countriesUrl: {method: 'POST', uri: 'http://www.alemtat.kz/calc/cis.php'},
     baseUrl: 'http://www.alemtat.kz'
   },
+  {
+    id: 'exlinekz',
+    name: 'Exline',
+    country: 'kz',
+    calcUrl: {method: 'GET', uri: 'https://api.exline.systems/public/v1/calculate?'},
+    deliveryUrl: {method: 'GET', uri: 'https://api.exline.systems/public/v1/trails?'},
+    citiesFromUrl: {method: 'GET', uri: 'https://api.exline.systems/public/v1/regions/origin?title='},
+    citiesToUrl: {method: 'GET', uri: 'https://api.exline.systems/public/v1/regions/destination?title='},
+    baseUrl: 'https://www.exline.kz'
+  },
   /*{
     id: 'spsr',
     calcUrl: {method: 'POST', uri: 'http://www.spsr.ru/ru/system/ajax'},
@@ -357,16 +367,7 @@ const targets = [
   },
 
 
-  {
-    id: 'exlinekz',
-    name: 'Exline',
-    country: 'kz',
-    calcUrl: {method: 'GET', uri: 'https://api.exline.systems/public/v1/calculate?'},
-    deliveryUrl: {method: 'GET', uri: 'https://api.exline.systems/public/v1/trails?'},
-    citiesFromUrl: {method: 'GET', uri: 'https://api.exline.systems/public/v1/regions/origin?title='},
-    citiesToUrl: {method: 'GET', uri: 'https://api.exline.systems/public/v1/regions/destination?title='},
-    baseUrl: 'https://www.exline.kz'
-  },
+
   {
     id: 'avislogisticskz',
     name: 'Avislogistics',
