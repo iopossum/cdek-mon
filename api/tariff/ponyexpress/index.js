@@ -107,19 +107,33 @@ const _getCity = async ({ city, country, delivery, req }) => {
     result.error = getCityJsonError("Неверный тип ответа", trim);
     return result;
   }
+  json = json.map(v => ({name: v}));
   if (!json.length || !json[0]) { // [null]
     result.error = isCountry ? getCountryNoResultError(trim) : getCityNoResultError(trim);
-  } else if (json.length === 1) {
-    result.items = json;
-    result.success = true;
   } else {
     const region = getRegionName(city);
+    const district = getDistrictName(city);
     let founds = [];
     if (region) {
-      founds = json.filter(v => new RegExp(region, 'gi').test(v));
+      founds = findInArray(json, region, 'name');
+      if (!founds.length) {
+        result.error = getCityNoResultError(city);
+        return result;
+      }
     }
-    result.items = founds.length ? founds.slice(0, 2) : json.slice(0, 2);
-    result.success = true;
+    if (district) {
+      founds = findInArray(founds.length ? founds : json, district, 'name');
+      if (!founds.length) {
+        result.error = getCityNoResultError(city);
+        return result;
+      }
+    }
+    if (!json.length && !founds.length) {
+      result.error = getCityNoResultError(trim);
+    } else {
+      result.success = true;
+      result.items = founds.length ? founds.map(v => v.name).slice(0, 2) : json.map(v => v.name).slice(0, 1);
+    }
   }
   return result;
 };
@@ -279,6 +293,9 @@ const getCalcResults = async ({ request, delivery, req }) => {
   } catch(e) {
     request.error = getTariffErrorMessage('Изменился запрос. Неверный формат result');
     return request;
+  }
+  if (!request.tariffs.length) {
+    request.error = getNoResultError();
   }
   return request;
 };

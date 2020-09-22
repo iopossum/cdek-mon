@@ -286,6 +286,14 @@ const targets = [
     calcUrl: {method: 'POST', uri: 'http://korex.by/ajax/calc.php', json: true},
     citiesUrl: {method: 'POST', uri: 'http://korex.by/ajax/search_address.php', json: true}
   },
+  {
+    id: 'ponyexpressby',
+    name: 'Ponyexpress',
+    country: 'by',
+    calcUrl: {method: 'POST', uri: 'http://ponyexpress.by/local/ajax/courier.php', json: true},
+    citiesUrl: {method: 'GET', uri: 'http://ponyexpress.by/autocomplete/city?term=', json: true},
+    countriesUrl: {method: 'GET', uri: 'http://ponyexpress.by/autocomplete/country?term='}
+  },
   /*{
     id: 'spsr',
     calcUrl: {method: 'POST', uri: 'http://www.spsr.ru/ru/system/ajax'},
@@ -340,13 +348,7 @@ const targets = [
   },
 
 
-  {
-    id: 'ponyexpressby',
-    name: 'Ponyexpress',
-    country: 'by',
-    calcUrl: {method: 'POST', uri: 'http://ponyexpress.by/local/ajax/courier.php', json: true},
-    citiesUrl: {method: 'GET', uri: 'http://ponyexpress.by/autocomplete/city?term=', json: true}
-  },
+
   {
     id: 'alemtatkz',
     name: 'Alemtat',
