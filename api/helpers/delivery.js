@@ -274,8 +274,10 @@ const targets = [
     id: 'belpostby',
     name: 'Belpost',
     country: 'by',
-    calcUrl: {method: 'GET', uri: 'http://tarifikator.belpost.by/forms/internal/ems.php'},
-    calcInternationalUrl: {method: 'GET', uri: 'http://tarifikator.belpost.by/forms/international/ems.php'}
+    calcUrl: {method: 'POST', uri: 'http://tarifikator.belpost.by/forms/internal/ems.php'},
+    calcInternationalUrl: {method: 'POST', uri: 'http://tarifikator.belpost.by/forms/international/ems.php'},
+    citiesUrl: {method: 'GET', uri: 'http://tarifikator.belpost.by/forms/internal/ems.php'},
+    countriesUrl: {method: 'GET', uri: 'http://tarifikator.belpost.by/forms/international/ems.php'},
   },
   /*{
     id: 'spsr',

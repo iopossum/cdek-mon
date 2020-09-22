@@ -80,7 +80,7 @@ require('./api/tariff')(
     headers: {},
     query: {
       data: Buffer.from(pako.deflate(JSON.stringify({
-        deliveries: ['dimexby'],
+        deliveries: ['belpostby'],
         cities: [
           // {from: 'Москва', to: 'Новолуговое, Новосибирская обл', countryFrom: ''},
           // {from: 'Челябинск', to: 'Владивосток', countryFrom: ''},
