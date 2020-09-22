@@ -181,3 +181,7 @@ export const allResultsError = ({ cities, ...props }) => {
 export const isBy = (country) => {
   return country && BY.indexOf(country.toLowerCase()) > -1;
 };
+
+export const isKz = (country) => {
+  return country && country.toLowerCase() === 'казахстан';
+};

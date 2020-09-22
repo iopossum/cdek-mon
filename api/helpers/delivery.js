@@ -294,6 +294,15 @@ const targets = [
     citiesUrl: {method: 'GET', uri: 'http://ponyexpress.by/autocomplete/city?term=', json: true},
     countriesUrl: {method: 'GET', uri: 'http://ponyexpress.by/autocomplete/country?term='}
   },
+  {
+    id: 'alemtatkz',
+    name: 'Alemtat',
+    country: 'kz',
+    calcUrl: {method: 'POST', uri: 'http://www.alemtat.kz/api.php'},
+    citiesUrl: {method: 'POST', uri: 'http://www.alemtat.kz/api.php'},
+    countriesUrl: {method: 'POST', uri: 'http://www.alemtat.kz/calc/cis.php'},
+    baseUrl: 'http://www.alemtat.kz'
+  },
   /*{
     id: 'spsr',
     calcUrl: {method: 'POST', uri: 'http://www.spsr.ru/ru/system/ajax'},
@@ -348,15 +357,6 @@ const targets = [
   },
 
 
-
-  {
-    id: 'alemtatkz',
-    name: 'Alemtat',
-    country: 'kz',
-    apiUrl: {method: 'POST', uri: 'http://www.alemtat.kz/api.php'},
-    countriesUrl: {method: 'POST', uri: 'http://www.alemtat.kz/calc/cis.php'},
-    baseUrl: 'http://www.alemtat.kz'
-  },
   {
     id: 'exlinekz',
     name: 'Exline',
