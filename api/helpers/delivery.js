@@ -350,6 +350,14 @@ const targets = [
     calcUrl: {method: 'POST', uri: 'https://mydhl.express.dhl/api/rates/products/wcc',},
     citiesUrl: {method: 'GET', uri: 'https://mydhl.express.dhl/api/addressbook/search?city='}
   },
+  {
+    id: 'dimexkz',
+    name: 'Dimex',
+    country: 'kz',
+    calcUrl: {method: 'GET', uri: 'http://kzh.tech-dimex.ru/calculator/calcestnew?'},
+    citiesUrl: {method: 'GET', uri: 'http://kzh.tech-dimex.ru/calculator/autocompletecity?'},
+    countriesUrl: {method: 'POST', uri: 'http://kzh.tech-dimex.ru/calculator/getajaxForm'}
+  }
   /*{
     id: 'spsr',
     calcUrl: {method: 'POST', uri: 'http://www.spsr.ru/ru/system/ajax'},
@@ -454,14 +462,7 @@ const targets = [
     baseUrl: 'https://post.kz'
   },
 
-  {
-    id: 'dimexkz',
-    name: 'Dimex',
-    country: 'kz',
-    calcUrl: {method: 'GET', uri: 'http://kzh.tech-dimex.ru/calculator/calcestnew?'},
-    citiesUrl: {method: 'GET', uri: 'http://kzh.tech-dimex.ru/calculator/autocompletecity?'},
-    countriesUrl: {method: 'POST', uri: 'http://kzh.tech-dimex.ru/calculator/getajaxForm'}
-  }
+
   */
 ];
 

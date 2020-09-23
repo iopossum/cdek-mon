@@ -195,7 +195,7 @@ const getCities = async ({cities, delivery, req, countries}) => {
         city.error = getCountriesError('Изменился контент сайта');
         return callback(null, city);
       }
-      if (!city.toBy && !countryObj[countryTo.toUpperCase()]) {
+      if (!isFromBy && !countryObj[countryTo.toUpperCase()]) {
         city.error = getCountryNoResultError(city.countryTo);
         return callback(null, city);
       }
