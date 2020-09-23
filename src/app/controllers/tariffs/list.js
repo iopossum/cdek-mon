@@ -260,7 +260,7 @@ class TariffsCtrl {
       }
     ], (err, cities) => {
       obj.cities = cities[1];
-      return console.log(obj)
+      console.log(obj)
       const encoded = btoa(pako.deflate(JSON.stringify(obj), { to: 'string' }));
       console.log(encoded)
       const es1 = new EventSource(`http://localhost:5000/api/tariff/request?data=${encoded}&sessionID=${that.sessionID}`);

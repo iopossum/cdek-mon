@@ -352,6 +352,16 @@ const targets = [
     baseUrl: 'http://postexpress.kz'
   },
   {
+    id: 'rikakz',
+    name: 'Rika',
+    country: 'kz',
+    calcUrl: {method: 'POST', uri: 'http://rika.kz/calc/'},
+    calcInternationalUrl: {method: 'POST', uri: 'http://rika.kz/calc/?type=world'},
+    citiesUrl: {method: 'GET', uri: 'http://rika.kz/calc/?type=kz'},
+    countriesUrl: {method: 'GET', uri: 'http://rika.kz/calc'},
+    baseUrl: 'http://rika.kz'
+  },
+  {
     id: 'dhlkz',
     name: 'DHL',
     country: 'kz',
@@ -365,7 +375,8 @@ const targets = [
     calcUrl: {method: 'GET', uri: 'http://kzh.tech-dimex.ru/calculator/calcestnew?'},
     citiesUrl: {method: 'GET', uri: 'http://kzh.tech-dimex.ru/calculator/autocompletecity?'},
     countriesUrl: {method: 'POST', uri: 'http://kzh.tech-dimex.ru/calculator/getajaxForm'}
-  }
+  },
+
   /*{
     id: 'spsr',
     calcUrl: {method: 'POST', uri: 'http://www.spsr.ru/ru/system/ajax'},
@@ -428,16 +439,7 @@ const targets = [
     apiUrl: {method: 'POST', uri: 'http://vivipost.kz/bitrix/templates/innet_corp2_6/components/dev/empty/calculator2/ajax.php'},
     baseUrl: 'http://vivipost.kz'
   },
-  {
-    id: 'rikakz',
-    name: 'Rika',
-    country: 'kz',
-    calcUrl: {method: 'POST', uri: 'http://rika.kz/calc/?type=kz'},
-    calcInternationalUrl: {method: 'POST', uri: 'http://rika.kz/calc/?type=world'},
-    citiesUrl: {method: 'GET', uri: 'http://rika.kz/calc/?type=kz'},
-    countriesUrl: {method: 'GET', uri: 'http://rika.kz/calc/?type=world'},
-    baseUrl: 'http://rika.kz'
-  },
+
   {
     id: 'spdexkz',
     name: 'Spdex',

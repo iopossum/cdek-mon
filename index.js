@@ -80,7 +80,7 @@ require('./api/tariff')(
     headers: {},
     query: {
       data: Buffer.from(pako.deflate(JSON.stringify({
-        deliveries: ['postexpresskz'],
+        deliveries: ['rikakz'],
         cities: [
           // {from: 'Москва', to: 'Новолуговое, Новосибирская обл', countryFrom: ''},
           // {from: 'Челябинск', to: 'Владивосток', countryFrom: ''},
@@ -88,8 +88,8 @@ require('./api/tariff')(
           // {from: 'Минск', postcodeFrom: '119002', to: 'Гомель', countryFrom: 'Беларусь', countryTo: 'Беларусь'}
           // {from: 'Минск', postcodeFrom: '119002', to: 'Москва', countryFrom: 'Беларусь', countryTo: ''}
           // {from: 'Алматы', to: 'Нур-Султан', countryFrom: 'Казахстан', countryTo: 'Казахстан'},
-          {from: 'Алматы', to: 'Атырау', countryFrom: 'Казахстан', countryTo: 'Казахстан'},
-          // {from: 'Алматы', to: 'Сидней', countryFrom: 'Казахстан', countryTo: 'Австралия'},
+          // {from: 'Алматы', to: 'Атырау', countryFrom: 'Казахстан', countryTo: 'Казахстан'},
+          {from: 'Алматы', to: 'Сидней', countryFrom: 'Казахстан', countryTo: 'Австралия'},
           // {from: 'Алматы', to: 'Москва', fromEngName: "Almaty", toEngName: 'Moscow', countryFrom: 'Казахстан', countryTo: '', countryFromEngShort: "KZ", countryToEngShort: "RU"},
           // {from: 'Сидней', postcodeFrom: '119002', to: 'Минск', countryFrom: 'Австралия', countryTo: 'Беларусь'},
           // {from: 'Минск', postcodeFrom: '119002', to: 'Сидней', countryFrom: 'Беларусь', countryTo: 'Австралия'},

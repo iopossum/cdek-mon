@@ -1,25 +1,86 @@
-var responseHelper = require('../../helpers/response');
-var deliveryHelper = require('../../helpers/delivery');
-var commonHelper = require('../../helpers/common');
-var async = require('async');
-var request = commonHelper.request;
-var cheerio = require('cheerio');
-var config = require('../../../conf');
-var _ = require('underscore');
-var logger = require('../../helpers/logger');
-var iconv = require("iconv-lite");
-var delivery = 'rikakz';
+import { getOne, dimexCountryChanger, DIMEXCOUNTRIES } from '../../helpers/delivery';
+import {
+  shouldAbort,
+  findInArray,
+  randomTimeout
+} from '../../helpers/common';
+import {
+  CITIESREQUIRED,
+  CITYORCOUNTRYFROMREQUIRED,
+  COUNTRYFROMNOTFOUND,
+  CITYFROMORTORU,
+  CITYFROMNOTFOUND,
+  CITYTONOTFOUND,
+  CITYFROMREQUIRED,
+  DELIVERYTIMEREG,
+  COUNTRYFROMRUSSIA,
+  COUNTRYRUSSIA,
+  CITYORCOUNTRYTOREQUIRED,
+  CITYORCOUNTRYTONOTFOUND,
+  UNABLETOGETTARIFF,
+  COUNTRYTONOTFOUND,
+  COSTREG,
+  COSTREGDOT,
+  getCity,
+  allResultsError,
+  getResponseError,
+  getResponseErrorArray,
+  getCountriesError,
+  getCountryNoResultError,
+  createTariff,
+  getJSONChangedMessage,
+  getRegionName,
+  getNoResultError,
+  getCityJsonError,
+  getCityNoResultError,
+  getDistrictName,
+  getTariffErrorMessage,
+  getContentChangedMessage,
+  SNG, CITYTOREQUIRED, BY,
+  CITIESBY,
+  isKz,
+  CITYFROMKZ,
+} from '../../helpers/tariff';
+import {
+  getBrowser,
+  newPage,
+  closeBrowser,
+  closePage,
+  refreshPage,
+  waitForWrapper,
+  waitForResponse,
+  printPDF,
+  requestWrapper
+} from '../../helpers/browser';
+const async = require('promise-async');
+const cheerio = require('cheerio');
+const logger = require('../../helpers/logger');
+const _  = require('lodash');
+const cfg = require('../../../conf');
+const moment = require('moment');
 
-var getReq = function (from, to, session, isInternational) {
+const selectors = {
+  countryFromOption: '#city_from_resul .asd_si_result_item',
+  countryToOption: '#city_to_resul .asd_si_result_item',
+  tariffs: '.center_content form + h3'
+};
+
+const services = [
+  {title: 'документы', req: {world_type: 'doc'}},
+  {title: 'посылка', req: {world_type: 'post'}},
+];
+
+const getReq = (from, to, token) => {
   from = from || {};
   to = to || {};
-  var query = {
+  return {
     go: 'yes',
-    sessid: session,
+    sessid: token,
     city_from_input: from.name,
     city_from: from.id,
     city_to_input: to.name,
     city_to: to.id,
+    world_type: 'post',
     massa: 1,
     size_1: '',
     size_2: '',
@@ -27,184 +88,197 @@ var getReq = function (from, to, session, isInternational) {
     vmassa2: 0,
     submit: 'Расчитать стоимость доставки'
   };
-  if (isInternational) {
-    query.world_type = 'post';
-  }
-  return query;
 };
 
-var getCities = function (isCountry, callback) {
-  var deliveryData = deliveryHelper.get(delivery);
-  var opts = Object.assign({}, isCountry ? deliveryData.countriesUrl : deliveryData.citiesUrl);
-  opts.followAllRedirects = true;
-  async.retry(config.retryOpts, function (callback) {
-    request(opts, callback)
-  }, function (err, r, b) {
-    var result = {
-      from: [],
-      to: []
-    };
-    if (err) {
-      return callback(commonHelper.getCityJsonError(err));
+const _getCity = ({ country, entities }) => {
+  const trim = getCity(country);
+  const result = {
+    success: false
+  };
+  const json = findInArray(entities, trim, 'name');
+  if (!json.length) {
+    result.error = getCountryNoResultError(trim);
+  } else {
+    result.success = true;
+    result.items = json.slice(0, 1);
+  }
+  return result;
+};
+
+const getCities = async ({ cities, countriesFrom, countriesTo }) => {
+  return await async.mapSeries(cities, (item, callback) => {
+    try {
+      const city = {
+        ...item,
+        countryFrom: item.countryFrom || 'Россия',
+        countryTo: item.countryTo || 'Россия',
+        initialCityFrom: item.from,
+        initialCityTo: item.to,
+        initialCountryFrom: item.countryFrom,
+        initialCountryTo: item.countryTo,
+      };
+      city.fromJSON = _getCity({ country: city.countryFrom, entities: countriesFrom });
+      city.toJSON = _getCity({ country: city.countryTo, entities: countriesTo });
+      callback(null, city);
+    } catch(e) {
+      callback(e);
     }
-    var $ = cheerio.load(b);
-    $('#city_from_resul').find('.asd_si_result_item').each(function (index, item) {
-      result.from.push({id: $(item).attr('id').replace(/[^0-9]/g, ""), name: $(item).text().trim()});
-    });
-    $('#city_to_resul').find('.asd_si_result_item').each(function (index, item) {
-      result.to.push({id: $(item).attr('id').replace(/[^0-9]/g, ""), name: $(item).text().trim()});
-    });
-    result.session = $('#sessid').val();
-    callback(null, result);
   });
 };
 
-var filterCity = function (city, array) {
-  var trim = commonHelper.getCity(city);
-  var region = commonHelper.getRegionName(city);
-  var founds = commonHelper.findInArray(array, trim, 'name', true);
-  var foundsWithRegion = [];
-  if (region) {
-    foundsWithRegion = commonHelper.findInArray(founds.length ? founds : array, region, 'name');
-  }
-  return foundsWithRegion.length ? foundsWithRegion.splice(0, 3) : founds.splice(0, 3);
-};
-
-module.exports = function (req, cities, callback) {
-  var deliveryData = deliveryHelper.get(delivery);
-  var requests = [];
-  var timestamp = callback ? new Date().getTime*2 : commonHelper.getReqStored(req, delivery);
-  cities.forEach(function (item) {
-    item.countryFrom = item.countryFrom || 'Россия';
-    item.countryTo = item.countryTo || 'Россия';
-    if (item.countryFrom.toLowerCase() === 'казахстан') {
-      item.fromKz = true;
-    }
-    if (item.countryTo.toLowerCase() === 'казахстан') {
-      item.toKz = true;
+const getRequests = ({ deliveryKey, cities, weights, token }) => {
+  let requests = [];
+  let errors = [];
+  const tempRequests = [];
+  cities.forEach((item) => {
+    if (item.error) {
+      errors = errors.concat(getResponseErrorArray({ deliveryKey, weights, city: item, error: item.error }));
+    } else if (!item.fromJSON.success) {
+      errors = errors.concat(getResponseErrorArray({ deliveryKey, weights, city: item, error: item.fromJSON.error }));
+    } else if (!item.toJSON.success) {
+      errors = errors.concat(getResponseErrorArray({ deliveryKey, weights, city: item, error: item.toJSON.error }));
+    } else {
+      item.fromJSON.items.forEach((fromCity) => {
+        item.toJSON.items.forEach((toCity) => {
+          tempRequests.push({
+            city: {
+              ...item,
+              fromJSON: undefined,
+              toJSON: undefined,
+              from: fromCity.name,
+              to: toCity.name,
+            },
+            req: getReq(fromCity, toCity, token),
+            delivery: deliveryKey,
+          });
+        });
+      });
     }
   });
-  async.auto({
-    getCities: function (callback) {
-      getCities(false, callback);
-    },
-    getCountries: function (callback) {
-      getCities(true, callback);
-    },
-    parseCities: ['getCities', 'getCountries', function (results, callback) {
-      for (var i=0; i<cities.length; i++) {
-        if (!cities[i].fromKz) {
-          cities[i].error = commonHelper.CITYFROMKZ;
-          requests = requests.concat(commonHelper.getResponseArray(req.body.weights, cities[i], delivery, cities[i].error));
-          continue;
-        }
-        var foundsFrom = [];
-        var foundsTo = [];
-        if (cities[i].toKz) {
-          foundsFrom = filterCity(cities[i].from, results.getCities.from);
-          foundsTo = filterCity(cities[i].to, results.getCities.to);
-        } else {
-          foundsFrom = filterCity(cities[i].countryFrom, results.getCountries.from);
-          foundsTo = filterCity(cities[i].countryTo, results.getCountries.to);
-        }
+  tempRequests.forEach((item) => {
+    weights.forEach((weight) => {
+      requests.push({
+        ...item,
+        city: {...item.city},
+        weight,
+        req: {...item.req, massa: weight},
+        tariffs: []
+      });
+    });
+  });
+  return {requests, errors};
+};
 
-        if (!foundsFrom.length) {
-          cities[i].error = commonHelper.CITYFROMNOTFOUND;
-          requests = requests.concat(commonHelper.getResponseArray(req.body.weights, cities[i], delivery, cities[i].error));
-          continue;
-        }
-
-        if (!foundsTo.length) {
-          cities[i].error = cities[i].toKz ? commonHelper.CITYTONOTFOUND : commonHelper.COUNTRYNOTFOUND;
-          requests = requests.concat(commonHelper.getResponseArray(req.body.weights, cities[i], delivery, cities[i].error));
-          continue;
-        }
-
-        var tempRequests = [];
-        foundsFrom.forEach(function (fromCity) {
-          foundsTo.forEach(function (toCity) {
-            tempRequests.push({
-              city: {
-                initialCityFrom: cities[i].from,
-                initialCityTo: cities[i].to,
-                from: fromCity.name,
-                to: toCity.name,
-                countryFrom: cities[i].countryFrom,
-                countryTo: cities[i].countryTo
-              },
-              isInternational: !cities[i].toKz,
-              req: getReq(fromCity, toCity, results.getCities.session, !cities[i].toKz),
-              delivery: delivery,
-              tariffs: []
-            });
-          });
-        });
-
-        tempRequests.forEach(function (item) {
-          req.body.weights.forEach(function (weight) {
-            var obj = commonHelper.deepClone(item);
-            obj.weight = weight;
-            obj.req['massa'] = weight;
-            requests.push(obj);
-          });
-        });
+const getCalcResults = async ({ request, delivery, req }) => {
+  const errors = [];
+  for (let service of services) {
+    let body;
+    const opts = {...delivery.calcUrl};
+    const reqCopy = {...request.req, ...service.req };
+    try {
+      const formData = new URLSearchParams();
+      for (let key of Object.keys(reqCopy)) {
+        formData.append(key, reqCopy[key]);
       }
-
-      callback(null);
-    }],
-    requests: ['parseCities', function (results, callback) {
-      async.mapLimit(requests, 2, function (item, callback) {
-        if (commonHelper.getReqStored(req, delivery) > timestamp) {
-          return callback({abort: true});
+      opts.headers = {
+        ...opts.headers,
+        Host: 'rika.kz',
+        Origin: 'http://rika.kz',
+        Referer: 'http://rika.kz/calc/',
+      };
+      opts.body = formData;
+      const res = await requestWrapper({format: 'text', req, ...opts});
+      body = res.body;
+    } catch (e) {
+      errors.push(getTariffErrorMessage('Изменился контент сайта'));
+    }
+    if (!body) {
+      continue;
+    }
+    try {
+      const $ = cheerio.load(body);
+      if ($(selectors.tariffs).length) {
+        const text = $(selectors.tariffs).text().trim();
+        if (/стоимость/gi.test(text)) {
+          const price = text.replace(COSTREG, '');
+          if (price) {
+            request.tariffs.push(createTariff(
+              service.title,
+              price,
+              ''
+            ));
+          }
         }
-        if (item.error) {
-          return async.nextTick(function () {
-            callback(null, item);
-          });
-        }
-        var opts = _.extend({}, item.isInternational ? deliveryData.calcInternationalUrl : deliveryData.calcUrl);
-        opts.form = item.req;
-        setTimeout(function () {
-          async.retry(config.retryOpts, function (callback) {
-            request(opts, callback)
-          }, function (err, r, b) {
-            if (err) {
-              item.error = commonHelper.getResponseError(err);
-              return callback(null, item);
-            }
-            var $ = cheerio.load(b);
-            var contentContainer = $('.center_content');
-            contentContainer.find('h2').remove();
-            contentContainer.find('table').remove();
-            contentContainer.find('form').remove();
-            contentContainer.find('p').remove();
-            var str = contentContainer.html().replace(/\s/g, "");
-            var splits = str.split('<br>');
-            var cost = 0;
-            if (splits[1]) {
-              cost = cheerio.load(splits[1]).text().replace(commonHelper.COSTREG, "")
-            }
-            item.tariffs.push({
-              service: splits[0],
-              cost: cost,
-              deliveryTime: ''
-            });
+      }
+    } catch (e) {
+      errors.push(e.message);
+    }
+  }
+  if (!request.tariffs.length) {
+    request.error = errors.length ? errors[0] : getNoResultError();
+  }
+  request.req = {};
+  return request;
+};
 
-            if (!item.tariffs.length) {
-              item.error = commonHelper.getNoResultError();
-            }
-            return callback(null, item);
-          });
-        }, commonHelper.randomInteger(500, 1000));
-      }, callback);
-    }]
-  }, function (err, results) {
-    commonHelper.saveResults(req, err, {
-      delivery: delivery,
-      timestamp: timestamp,
-      cities: cities,
-      items: results.requests || [],
-      callback: callback
+const getToken = async ({ delivery, req }) => {
+  const opts = {...delivery.countriesUrl};
+  const { response, body } = await requestWrapper({format: 'text', req, ...opts});
+  const result = {
+    countriesFrom: [],
+    countriesTo: []
+  };
+  const $ = cheerio.load(body);
+  try {
+    const from = $(selectors.countryFromOption);
+    from.each((index, item) => {
+      result.countriesFrom.push({id: $(item).attr('id').replace('city_from_res', ''), name: $(item).text().trim().toUpperCase()});
     });
-  });
+    const to = $(selectors.countryToOption);
+    to.each((index, item) => {
+      result.countriesTo.push({id: $(item).attr('id').replace('city_to_res', ''), name: $(item).text().trim().toUpperCase()});
+    });
+    const reg = /bitrix_sessid':'([^']*)'/;
+    const match = body.match(reg);
+    result.token = match[1];
+  } catch(e) {}
+  if (!result.token) {
+    throw new Error(getResponseError('Не удалось получить token.'));
+  }
+  if (!result.countriesFrom.length) {
+    throw new Error(getCountriesError(`Контент сайта изменился. Искали ${selectors.countryFromOption}`));
+  }
+  if (!result.countriesTo.length) {
+    throw new Error(getCountriesError(`Контент сайта изменился. Искали ${selectors.countryToOption}`));
+  }
+  return result;
+};
+
+module.exports = async function ({ deliveryKey, weights, cities, req}) {
+  const delivery = getOne(deliveryKey);
+  let results = [];
+
+  try {
+    const initialData = await getToken({ delivery, req });
+    if (shouldAbort(req)) {
+      throw new Error('abort');
+    }
+    const citiesResults = await getCities({ cities, delivery, req, ...initialData });
+    if (shouldAbort(req)) {
+      throw new Error('abort');
+    }
+    const {requests, errors} = getRequests({ deliveryKey, cities: citiesResults, weights, ...initialData });
+    results = results.concat(errors);
+    for (let request of requests) {
+      if (shouldAbort(req)) {
+        break;
+      }
+      results.push(await getCalcResults({ request, delivery, req }));
+    }
+  } catch(error) {
+    results = allResultsError({ deliveryKey, weights, cities, error });
+  }
+
+  return results;
+
 };
