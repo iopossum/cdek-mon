@@ -79,20 +79,19 @@ const getReq = (from, to) => {
     'form.cityDeliveryNameFull': to.name,
     'form.cityPickupNameTotal': from.name,
     'form.cityDeliveryNameTotal': to.name,
-    'serverCountryCode': 'ru',
+    'serverCountryCode': 'kz',
     'form.cityPickupName': from.name,
     'form.cityPickupType': 0,
     'form.cityDeliveryName': to.name,
     'form.cityDeliveryType': 0,
     'form.weightStr': 1,
-    'form.volumeStr': '',
+    'form.volumeStr': '0.01',
     'form.parcelLimits.maxLength': 350,
     'form.parcelLimits.maxWidth': 160,
     'form.parcelLimits.maxHeight': 180,
     'form.parcelLimits.maxWeight': 1000,
     'form.declaredCostStr': '',
     'form.maxDeclaredCost': 30000000,
-    'form.deliveryPeriodId': 191696130
   };
 };
 
@@ -302,6 +301,7 @@ const getCalcResults = async ({ request, delivery, cookie, req }) => {
     }
   }
   request.tariffs = tariffs;
+  console.log(tariffs)
   if (!request.tariffs.length) {
     request.error = errors.length ? errors[0] : getNoResultError();
   }
@@ -314,7 +314,9 @@ const getCookie = async ({ delivery, req }) => {
   const { response, body } = await requestWrapper({format: 'text', req, ...opts});
   let cookie;
   try {
-    cookie = response.headers.get('set-cookie').split(';')[0];
+    const reg = /(MYDPDSessionID=[^;]*);.*(cookiesession1=[^;]*);/;
+    const match = response.headers.get('set-cookie').match(reg);
+    cookie = `${match[1]}; ${match[2]};`;
   } catch (e) {}
   if (!cookie) {
     throw new Error(getResponseError('Не удалось получить cookie.'));
@@ -331,8 +333,6 @@ module.exports = async function ({ deliveryKey, weights, cities, req}) {
     if (shouldAbort(req)) {
       throw new Error('abort');
     }
-    console.log(cookie);
-    throw 1;
     const citiesResults = await getCities({ cities, delivery, req, cookie });
     if (shouldAbort(req)) {
       throw new Error('abort');
