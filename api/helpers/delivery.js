@@ -313,6 +313,15 @@ const targets = [
     citiesToUrl: {method: 'GET', uri: 'https://api.exline.systems/public/v1/regions/destination?title='},
     baseUrl: 'https://www.exline.kz'
   },
+  {
+    id: 'avislogisticskz',
+    name: 'Avislogistics',
+    country: 'kz',
+    calcUrl: {method: 'POST', uri: 'https://avislogistics.kz/TariffCalculator/IndexStepThree'},
+    citiesUrl: {method: 'POST', uri: 'https://avislogistics.kz/TariffCalculator/GetListsCitiesInCountry'},
+    countriesUrl: {method: 'POST', uri: 'https://avislogistics.kz/TariffCalculator/GetListsCountries'},
+    baseUrl: 'http://avislogistics.kz'
+  },
   /*{
     id: 'spsr',
     calcUrl: {method: 'POST', uri: 'http://www.spsr.ru/ru/system/ajax'},
@@ -368,14 +377,7 @@ const targets = [
 
 
 
-  {
-    id: 'avislogisticskz',
-    name: 'Avislogistics',
-    country: 'kz',
-    calcUrl: {method: 'POST', uri: 'http://avislogistics.kz/system/sendcalc.html'},
-    citiesUrl: {method: 'GET', uri: 'http://avislogistics.kz/ru/calc.html'},
-    baseUrl: 'http://avislogistics.kz'
-  },
+
   {
     id: 'dpdkz',
     name: 'DPD',
