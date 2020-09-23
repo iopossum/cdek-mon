@@ -344,6 +344,14 @@ const targets = [
     baseUrl: 'http://ponyexpress.kz'
   },
   {
+    id: 'postexpresskz',
+    name: 'Postexpress',
+    country: 'kz',
+    calcUrl: {method: 'POST', uri: 'http://postexpress.baseinform.com/API/index.php/calc/'},
+    citiesUrl: {method: 'GET', uri: 'http://postexpress.baseinform.com/API/index.php/towns/get_towns'},
+    baseUrl: 'http://postexpress.kz'
+  },
+  {
     id: 'dhlkz',
     name: 'DHL',
     country: 'kz',
@@ -412,14 +420,7 @@ const targets = [
   },
 
 
-  {
-    id: 'postexpresskz',
-    name: 'Postexpress',
-    country: 'kz',
-    calcUrl: {method: 'POST', uri: 'http://postexpress.baseinform.com/API/index.php/calc/'},
-    citiesUrl: {method: 'GET', uri: 'http://postexpress.baseinform.com/API/index.php/towns/get_towns'},
-    baseUrl: 'http://postexpress.kz'
-  },
+
   {
     id: 'vivipostkz',
     name: 'Vivipost',
