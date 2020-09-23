@@ -334,6 +334,15 @@ const targets = [
     newsUrl: {method: 'GET', uri: 'http://mydpd.dpd.kz/dpd/o-dpd/informacionnyj-centr/novosti.do2'},
     baseUrl: 'http://mydpd.dpd.kz'
   },
+  {
+    id: 'ponyexpresskz',
+    name: 'Ponyexpress',
+    country: 'kz',
+    calcUrl: {method: 'POST', uri: 'http://ponyexpress.kz/local/ajax/tariff.php'},
+    citiesUrl: {method: 'GET', uri: 'https://www.ponyexpress.ru/autocomplete/city?term='},
+    countriesUrl: {method: 'GET', uri: 'https//www.ponyexpress.ru/autocomplete/country?term='},
+    baseUrl: 'http://ponyexpress.kz'
+  },
   /*{
     id: 'spsr',
     calcUrl: {method: 'POST', uri: 'http://www.spsr.ru/ru/system/ajax'},
@@ -388,19 +397,6 @@ const targets = [
   },
 
 
-
-
-
-  {
-    id: 'ponyexpresskz',
-    name: 'Ponyexpress',
-    country: 'kz',
-    calcUrl: {method: 'POST', uri: 'http://ponyexpress.kz/local/ajax/tariff.php'},
-    citiesUrl: {method: 'GET', uri: 'http://ponyexpress.kz/autocomplete/city?term='},
-    countriesUrl: {method: 'GET', uri: 'http//ponyexpress.kz/autocomplete/country?term='},
-    newsUrl: {method: 'GET', uri: 'http://ponyexpress.kz/about/press-center/news/'},
-    baseUrl: 'http://ponyexpress.kz'
-  },
   {
     id: 'postexpresskz',
     name: 'Postexpress',
@@ -564,4 +560,4 @@ export const ponyCountryChanger = (country) => {
 };
 
 export const DIMEXCOUNTRIES = ['Абхазия', 'Азербайджан', 'Армения', 'Афганистан', 'Беларусь', 'Грузия', 'Казахстан', 'Кыргызстан', 'Латвия', 'Молдова', 'Эстония'];
-export const PONYCOUNTRIES = ['азербайджан', 'армения', 'беларусь', 'казахстан', 'кыргызстан', 'молдавия', 'молдова', 'таджикистан', 'туркменистан', 'турция', 'узбекистан', 'украина', 'латвия', 'литва', 'эстония', 'грузия'];
+export const PONYCOUNTRIES = ['азербайджан', 'армения', 'беларусь', 'казахстан', 'кыргызстан', 'молдавия', 'молдова', 'таджикистан', 'туркменистан', 'турция', 'узбекистан', 'украина', 'латвия', 'литва', 'эстония', 'грузия', 'россия'];

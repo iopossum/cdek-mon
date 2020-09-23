@@ -301,7 +301,6 @@ const getCalcResults = async ({ request, delivery, cookie, req }) => {
     }
   }
   request.tariffs = tariffs;
-  console.log(tariffs)
   if (!request.tariffs.length) {
     request.error = errors.length ? errors[0] : getNoResultError();
   }
