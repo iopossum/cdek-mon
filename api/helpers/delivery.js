@@ -322,6 +322,18 @@ const targets = [
     countriesUrl: {method: 'POST', uri: 'https://avislogistics.kz/TariffCalculator/GetListsCountries'},
     baseUrl: 'http://avislogistics.kz'
   },
+  {
+    id: 'dpdkz',
+    name: 'DPD',
+    country: 'kz',
+    calcUrl: {method: 'POST', uri: 'https://mydpd.dpd.kz/ols/calc/calc.do2'},
+    calcInternationalUrl: {method: 'POST', uri: 'https://mydpd.dpd.kz/ols/calcint/offire.do2'},
+    citiesUrl: {method: 'POST', uri: 'https://mydpd.dpd.kz/ols/calc/cities.do2'},
+    citiesInternationalUrl: {method: 'POST', uri: 'https://mydpd.dpd.kz/ols/calcint/city_ru.do2'},
+    countriesUrl: {method: 'GET', uri: 'http://mydpd.dpd.kz/ols/calc/'},
+    newsUrl: {method: 'GET', uri: 'https://mydpd.dpd.kz/dpd/o-dpd/informacionnyj-centr/novosti.do2'},
+    baseUrl: 'https://mydpd.dpd.kz'
+  },
   /*{
     id: 'spsr',
     calcUrl: {method: 'POST', uri: 'http://www.spsr.ru/ru/system/ajax'},
@@ -378,18 +390,7 @@ const targets = [
 
 
 
-  {
-    id: 'dpdkz',
-    name: 'DPD',
-    country: 'kz',
-    calcUrl: {method: 'POST', uri: 'http://mydpd.dpd.kz/ols/calc/calc.do2'},
-    calcInternationalUrl: {method: 'POST', uri: 'http://mydpd.dpd.kz/ols/calcint/offire.do2'},
-    citiesUrl: {method: 'POST', uri: 'http://mydpd.dpd.kz/ols/calc/cities.do2'},
-    citiesInternationalUrl: {method: 'POST', uri: 'http://mydpd.dpd.kz/ols/calcint/city_ru.do2'},
-    countriesUrl: {method: 'GET', uri: 'http://mydpd.dpd.kz/ols/calcint/show.do2'},
-    newsUrl: {method: 'GET', uri: 'http://mydpd.dpd.kz/dpd/o-dpd/informacionnyj-centr/novosti.do2'},
-    baseUrl: 'http://mydpd.dpd.kz'
-  },
+
   {
     id: 'ponyexpresskz',
     name: 'Ponyexpress',

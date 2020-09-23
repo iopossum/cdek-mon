@@ -33,7 +33,7 @@ import {
   getDistrictName,
   getTariffErrorMessage,
   getContentChangedMessage,
-  SNG
+  SNG, isBy, CITYFROMORTOBY
 } from '../../helpers/tariff';
 import {
   getBrowser,
@@ -51,6 +51,8 @@ const cheerio = require('cheerio');
 const logger = require('../../helpers/logger');
 const _  = require('lodash');
 const cfg = require('../../../conf');
+
+const directCountries = SNG.concat(['Россия']);
 
 const selectors = {
   countryOption: '.pseudo_selector .pseudo_selections a',
@@ -96,7 +98,43 @@ const getReq = (from, to) => {
   };
 };
 
-const _getCity = async ({ city, country = 'Россия', cookie, delivery, req }) => {
+const getInternationalReq = (from, to, isCountryFrom, isCountryTo) => {
+  from = from || {};
+  to = to || {};
+  return {
+    'countryOrigName': isCountryFrom ? from.name : 'Беларусь',
+    'countryDestName': isCountryTo ? to.name : 'Беларусь',
+    'cityOrigId': isCountryFrom ? '' : from.id,
+    cityDestId: isCountryTo ? '' : from.id,
+    cityPickupCountryCode: isCountryFrom ? from.id : 'BY',
+    cityDeliveryCountryCode: isCountryTo ? to.id : 'BY',
+    cityPickupNameFull: isCountryFrom ? '' : from.name,
+    cityPickupNameTotal: isCountryFrom ? '' : from.name,
+    cityDeliveryNameFull: isCountryTo ? '' : from.name,
+    cityDeliveryNameTotal: isCountryTo ? '' : from.name,
+    costRUB: 1,
+    costEUR: '0.00',
+    payWeight: 1,
+    euro: 89.4771,
+    koeffDPE: 250.0,
+    koeffDPI: 250.0,
+    siteCountryCode: 'BY',
+    siteCurrencyCode: 'BYN',
+    countryOrig: isCountryFrom ? from.id : 'BY',
+    cityOrig:  isCountryFrom ? '' : from.name,
+    pickupCityType: 'Д',
+    countryDest: isCountryTo ? to.id : 'BY',
+    deliveryCityType: 'Д',
+    weight: 1,
+    length: '',
+    width: '',
+    height: '',
+    cost: 1,
+    currency: 'byn'
+  }
+};
+
+const _getCity = async ({ city, country, isInternational, cookie, delivery, req }) => {
   const trim = getCity(city);
   const result = {
     cityTrim: trim,
@@ -104,7 +142,7 @@ const _getCity = async ({ city, country = 'Россия', cookie, delivery, req 
   };
   let json;
   try {
-    const opts = { ...delivery.citiesUrl };
+    const opts = Object.assign({}, isInternational ? delivery.citiesInternationalUrl : delivery.citiesUrl);
     const formData = new URLSearchParams();
     formData.append('name_startsWith', trim.toLowerCase());
     formData.append('country', 'RU');
@@ -156,8 +194,10 @@ const _getCity = async ({ city, country = 'Россия', cookie, delivery, req 
   return result;
 };
 
-const getCities = async ({ cities, delivery, req, cookie }) => {
+const getCities = async ({ cities, delivery, req, cookie, countries }) => {
   const cityObj = {};
+  const cityIntObj = {};
+  const countryObj = _.keyBy(countries, 'name');
   return await async.mapSeries(cities, async (item, callback) => {
     try {
       const city = {
@@ -169,26 +209,82 @@ const getCities = async ({ cities, delivery, req, cookie }) => {
         initialCountryFrom: item.countryFrom,
         initialCountryTo: item.countryTo,
       };
-      if (!city.from || !city.to) {
+      const isFromBy = isBy(item.countryFrom);
+      const isToBy = isBy(item.countryTo);
+      const countryFrom = city.countryFrom || 'Россия';
+      const countryTo = city.countryTo || 'Россия';
+      if (!city.from && !city.to) {
         city.error = CITIESREQUIRED;
+        return callback(null, city);
+      }
+      if (!city.from && !city.countryFrom) {
+        city.error = CITYORCOUNTRYFROMREQUIRED;
+        return callback(null, city);
+      }
+      if (!city.to && !city.countryTo) {
+        city.error = CITYORCOUNTRYTOREQUIRED;
+        return callback(null, city);
+      }
+      if (SNG.indexOf(countryFrom.toLowerCase()) > -1) {
+        city.countryFromTemp = countryFrom;
+        city.countryFrom = '';
+      }
+      if (SNG.indexOf(countryTo.toLowerCase()) > -1) {
+        city.countryToTemp = countryTo;
+        city.countryTo = '';
+      }
+      if (city.countryFrom && !countryObj[city.countryFrom.toUpperCase()]) {
+        city.error = COUNTRYFROMNOTFOUND;
+        return callback(null, city);
+      }
+      if (city.countryTo && !countryObj[city.countryTo.toUpperCase()]) {
+        city.error = COUNTRYTONOTFOUND;
+        return callback(null, city);
+      }
+      if (city.countryFrom && city.countryTo) {
+        city.error = CITYFROMORTOBY;
         return callback(null, city);
       }
       const fromKey = city.from + city.countryFrom;
       const toKey = city.to + city.countryTo;
-      if (cityObj[fromKey]) {
-        city.fromJSON = { ...cityObj[fromKey] };
+      if (city.countryFrom || city.countryTo) {
+        if (isFromBy) {
+          if (cityIntObj[fromKey]) {
+            city.fromJSON = { ...cityIntObj[fromKey] };
+          } else {
+            const result = await _getCity({city: city.from, delivery, req, isInternational: true, cookie});
+            cityIntObj[fromKey] = result;
+            city.fromJSON = result;
+          }
+          city.toJSON = {isCountry: true, success: true, items: [countryObj[city.countryTo.toUpperCase()]]};
+        } else {
+          city.fromJSON = {isCountry: true, success: true, items: [countryObj[city.countryFrom.toUpperCase()]]};
+          if (cityIntObj[toKey]) {
+            city.toJSON = { ...cityIntObj[toKey] };
+          } else {
+            const result = await _getCity({city: city.to, delivery, req, isInternational: true, cookie});
+            cityIntObj[toKey] = result;
+            city.toJSON = result;
+          }
+        }
       } else {
-        const result = await _getCity({city: city.from, country: city.countryFrom, delivery, req, cookie});
-        cityObj[fromKey] = result;
-        city.fromJSON = result;
+        if (cityObj[fromKey]) {
+          city.fromJSON = { ...cityObj[fromKey] };
+        } else {
+          const result = await _getCity({city: city.from, country: city.countryFromTemp, delivery, req, cookie});
+          cityObj[fromKey] = result;
+          city.fromJSON = result;
+        }
+        if (cityObj[toKey]) {
+          city.toJSON = { ...cityObj[toKey] };
+        } else {
+          const result = await _getCity({city: city.to, country: city.countryToTemp, delivery, req, cookie});
+          cityObj[toKey] = result;
+          city.toJSON = result;
+        }
       }
-      if (cityObj[toKey]) {
-        city.toJSON = { ...cityObj[toKey] };
-      } else {
-        const result = await _getCity({city: city.to, country: city.countryTo, delivery, req, cookie});
-        cityObj[toKey] = result;
-        city.toJSON = result;
-      }
+      delete city.countryFromTemp;
+      delete city.countryToTemp;
       callback(null, city);
     } catch(e) {
       callback(e);
@@ -216,7 +312,9 @@ const getCityName = (city) => {
 const getRequests = ({ deliveryKey, cities, weights }) => {
   let requests = [];
   let errors = [];
+  const internationalRequests = [];
   const tempRequests = [];
+  const tempIntRequests = [];
   cities.forEach((item) => {
     if (item.error) {
       errors = errors.concat(getResponseErrorArray({ deliveryKey, weights, city: item, error: item.error }));
@@ -227,17 +325,31 @@ const getRequests = ({ deliveryKey, cities, weights }) => {
     } else {
       item.fromJSON.items.forEach((fromCity) => {
         item.toJSON.items.forEach((toCity) => {
-          tempRequests.push({
-            city: {
-              ...item,
-              fromJSON: undefined,
-              toJSON: undefined,
-              from: getCityName(fromCity),
-              to: getCityName(toCity),
-            },
-            req: getReq(fromCity, toCity),
-            delivery: deliveryKey,
-          });
+          if (item.fromJSON.isCountry || item.toJSON.isCountry) {
+            tempIntRequests.push({
+              city: {
+                ...item,
+                fromJSON: undefined,
+                toJSON: undefined,
+                from: fromCity.name,
+                to: toCity.name,
+              },
+              req: getInternationalReq(fromCity, toCity, item.fromJSON.isCountry, item.toJSON.isCountry),
+              delivery: deliveryKey,
+            });
+          } else {
+            tempRequests.push({
+              city: {
+                ...item,
+                fromJSON: undefined,
+                toJSON: undefined,
+                from: getCityName(fromCity),
+                to: getCityName(toCity),
+              },
+              req: getReq(fromCity, toCity),
+              delivery: deliveryKey,
+            });
+          }
         });
       });
     }
@@ -253,7 +365,18 @@ const getRequests = ({ deliveryKey, cities, weights }) => {
       });
     });
   });
-  return {requests, errors};
+  tempIntRequests.forEach((item) => {
+    weights.forEach((weight) => {
+      internationalRequests.push({
+        ...item,
+        city: {...item.city},
+        weight,
+        req: {...item.req, payWeight: weight, weight},
+        tariffs: []
+      });
+    });
+  });
+  return {internationalRequests, requests, errors};
 };
 
 const getCalcResults = async ({ request, delivery, cookie, req }) => {
@@ -309,17 +432,87 @@ const getCalcResults = async ({ request, delivery, cookie, req }) => {
   return request;
 };
 
+const getIntCalcResult = async ({ request, delivery, cookie, req }) => {
+  let tariffs = [];
+  const errors = [];
+  let intServices = services.slice(0, 1);
+  if (isBy(request.city.countryFrom)) {
+    intServices = intServices.concat(services.slice(1, 2));
+  } else {
+    intServices = intServices.concat(services.slice(3, 4));
+  }
+  for (let service of intServices) {
+    let body;
+    try {
+      const opts = delivery.calcInternationalUrl;
+      const formData = new URLSearchParams();
+      const reqCopy = {...request.req, ...service.intReq};
+      for (let key of Object.keys(reqCopy)) {
+        formData.append(key, reqCopy[key]);
+      }
+      opts.body = formData;
+      opts.headers = {
+        ...opts.headers,
+        'Cookie': cookie
+      };
+      const res = await requestWrapper({ req, ...opts, format: 'text' });
+      body = res.body;
+    } catch(e) {}
+    if (!body) {
+      continue;
+    }
+    try {
+      const $ = cheerio.load(body);
+      if ($(selectors.tariffNoResults).length && $(selectors.tariffNoResults).css('display') !== 'none') {
+        continue;
+      }
+      const trs = $(selectors.tariffResults);
+      trs.each(function (index, tr) {
+        if (index !== 0) {
+          const tds = $(tr).find('td');
+          if (tds.length) {
+            tariffs.push({
+              service: `${service.title} ${$(tr).find('input[name="serviceName"]').val()}`,
+              cost: $(tr).find('input[name="serviceCost"]').val(),
+              deliveryTime: $(tr).find('input[name="serviceDays"]').val()
+            });
+          }
+        }
+      });
+    } catch(e) {
+      errors.push(e.message);
+    }
+  }
+  request.tariffs = tariffs;
+  if (!request.tariffs.length) {
+    request.error = errors.length ? errors[0] : getNoResultError();
+  }
+  request.req = {};
+  return request;
+};
+
 const getCookie = async ({ delivery, req }) => {
   const opts = {...delivery.countriesUrl};
   const { response, body } = await requestWrapper({format: 'text', req, ...opts});
   let cookie;
+  let countries = [];
   try {
     cookie = response.headers.get('set-cookie').split(';')[0];
   } catch (e) {}
   if (!cookie) {
     throw new Error(getResponseError('Не удалось получить cookie.'));
   }
-  return cookie;
+  const $ = cheerio.load(body);
+  try {
+    const items = $(selectors.countryOption);
+    items.each((index, item) => {
+      countries.push({id: $(item).attr('value'), name: $(item).text().toUpperCase()});
+    });
+  } catch(e) {}
+  if (!countries.length) {
+    throw new Error(getCountriesError(`Контент сайта изменился. Искали ${selectors.countryOption}`));
+  }
+  return {cookie, countries};
 };
 
 module.exports = async function ({ deliveryKey, weights, cities, req}) {
@@ -327,21 +520,27 @@ module.exports = async function ({ deliveryKey, weights, cities, req}) {
   let results = [];
 
   try {
-    const cookie = await getCookie({ delivery, req });
+    const {cookie, countries} = await getCookie({ delivery, req });
     if (shouldAbort(req)) {
       throw new Error('abort');
     }
-    const citiesResults = await getCities({ cities, delivery, req, cookie });
+    const citiesResults = await getCities({ cities, delivery, req, cookie, countries });
     if (shouldAbort(req)) {
       throw new Error('abort');
     }
-    const {requests, errors} = getRequests({ deliveryKey, cities: citiesResults, weights });
+    const {internationalRequests, requests, errors} = getRequests({ deliveryKey, cities: citiesResults, weights });
     results = results.concat(errors);
     for (let request of requests) {
       if (shouldAbort(req)) {
         break;
       }
       results.push(await getCalcResults({ request, cookie, delivery, req }));
+    }
+    for (let request of internationalRequests) {
+      if (shouldAbort(req)) {
+        break;
+      }
+      results.push(await getIntCalcResult({ request, cookie, delivery, req }));
     }
   } catch(error) {
     results = allResultsError({ deliveryKey, weights, cities, error });

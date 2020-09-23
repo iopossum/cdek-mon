@@ -80,7 +80,7 @@ require('./api/tariff')(
     headers: {},
     query: {
       data: Buffer.from(pako.deflate(JSON.stringify({
-        deliveries: ['avislogisticskz'],
+        deliveries: ['dpdby'],
         cities: [
           // {from: 'Москва', to: 'Новолуговое, Новосибирская обл', countryFrom: ''},
           // {from: 'Челябинск', to: 'Владивосток', countryFrom: ''},
@@ -89,7 +89,8 @@ require('./api/tariff')(
           // {from: 'Минск', postcodeFrom: '119002', to: 'Москва', countryFrom: 'Беларусь', countryTo: ''}
           // {from: 'Алматы', to: 'Атырау', countryFrom: 'Казахстан', countryTo: 'Казахстан'},
           // {from: 'Алматы', to: 'Москва', countryFrom: 'Казахстан', countryTo: ''},
-          {from: 'Минск', postcodeFrom: '119002', to: 'Сидней', countryFrom: 'Беларусь', countryTo: 'Австралия'}
+          // {from: 'Сидней', postcodeFrom: '119002', to: 'Минск', countryFrom: 'Австралия', countryTo: 'Беларусь'},
+          {from: 'Минск', postcodeFrom: '119002', to: 'Сидней', countryFrom: 'Беларусь', countryTo: 'Австралия'},
           // {from: 'Минск', postcodeFrom: '119002', to: '', countryFrom: 'Беларусь', countryTo: 'Австралия'}
           // {from: 'Москва', to: 'Новосибирск', postcodeFrom: "109012", postcodeTo: "630064", countryFromEngShort: 'RU', countryToEngShort: 'RU'},
           // {from: 'Яхрома, Дмитровский район, Московская обл.', to: 'Новосибирск', countryFrom: ''},
