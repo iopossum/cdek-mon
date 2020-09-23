@@ -249,7 +249,7 @@ class TariffsCtrl {
     this.errors = [];
     async.series([
       function (callback) {
-        var intersection = _.intersection(obj.deliveries, ['tnt', 'fedex', 'ups', 'avislogisticskz', 'dhlkz']);
+        var intersection = _.intersection(obj.deliveries, ['tnt', 'fedex', 'ups', 'dhlkz']);
         if (intersection && intersection.length) {
           return that.getGoogleIds(callback);
         }
@@ -260,7 +260,7 @@ class TariffsCtrl {
       }
     ], (err, cities) => {
       obj.cities = cities[1];
-      console.log(obj)
+      return console.log(obj)
       const encoded = btoa(pako.deflate(JSON.stringify(obj), { to: 'string' }));
       console.log(encoded)
       const es1 = new EventSource(`http://localhost:5000/api/tariff/request?data=${encoded}&sessionID=${that.sessionID}`);

@@ -343,6 +343,13 @@ const targets = [
     countriesUrl: {method: 'GET', uri: 'https//www.ponyexpress.ru/autocomplete/country?term='},
     baseUrl: 'http://ponyexpress.kz'
   },
+  {
+    id: 'dhlkz',
+    name: 'DHL',
+    country: 'kz',
+    calcUrl: {method: 'POST', uri: 'https://mydhl.express.dhl/api/rates/products/wcc',},
+    citiesUrl: {method: 'GET', uri: 'https://mydhl.express.dhl/api/addressbook/search?city='}
+  },
   /*{
     id: 'spsr',
     calcUrl: {method: 'POST', uri: 'http://www.spsr.ru/ru/system/ajax'},
@@ -446,13 +453,7 @@ const targets = [
     calcUrl: {method: 'GET', uri: 'https://post.kz/mail/calc'},
     baseUrl: 'https://post.kz'
   },
-  {
-    id: 'dhlkz',
-    name: 'DHL',
-    country: 'kz',
-    calcUrl: {method: 'GET', uri: 'http://dct.dhl.com/data/quotation/?', json: true},
-    citiesUrl: {method: 'GET', uri: 'http://dct.dhl.com/data/postLoc?', json: true}
-  },
+
   {
     id: 'dimexkz',
     name: 'Dimex',
