@@ -54,9 +54,6 @@ const logger = require('../../helpers/logger');
 const _  = require('lodash');
 const cfg = require('../../../conf');
 
-const selectors = {
-  tariffResults: '#TariffsTable tbody tr'
-};
 
 const services = [
   {title: 'Экспресс', req: {service: 'express'}},
@@ -249,6 +246,11 @@ const getRequests = ({ deliveryKey, cities, weights }) => {
 const getDeliveryTime = (json) => {
   let result = '';
   if (!json.min && !json.max) {
+    return result;
+  }
+  const intMin = parseInt(json.min);
+  const intMax = parseInt(json.max);
+  if (isNaN(intMin) && isNaN(intMax)) {
     return result;
   }
   if (json.min && json.max && json.min != json.max) {

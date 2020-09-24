@@ -38,22 +38,24 @@ export const getCity = (city) => {
   return city.split(',')[0].trim();
 };
 
-export const getDistrictName = (city) => {
+export const getDistrictName = (city, reverse) => {
   let region = null;
   const splits = city.split(',');
+  const index = reverse ? 1 : 2;
   if (splits.length >= 3) {
-    region = splits[2].split(' ')[1] || splits[2].split(' ')[0];
+    region = splits[index].split(' ')[1] || splits[index].split(' ')[0];
   }
   return region;
 };
 
-export const getRegionName = (city) => {
+export const getRegionName = (city, reverse) => {
   let region = null;
   const splits = city.split(',');
+  const index = reverse ? 1 : 2;
   if (splits.length === 2) {
     region = splits[1].split(' ')[1] || splits[1].split(' ')[0];
   } else if (splits.length >= 3) {
-    region = splits[2].split(' ')[1] || splits[2].split(' ')[0];
+    region = splits[index].split(' ')[1] || splits[index].split(' ')[0];
   }
   return region;
 };

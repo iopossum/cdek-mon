@@ -93,7 +93,10 @@ const getReq = (from, to) => {
 };
 
 const _getCity = async ({ city, country, delivery, req }) => {
-  const trim = getCity(city);
+  let trim = getCity(city);
+  trim = trim.replace(/[0-9]*/g, '').trim();
+  const splits = trim.split(' ');
+  trim = splits[0];
   const result = {
     success: false
   };

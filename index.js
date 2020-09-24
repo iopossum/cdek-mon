@@ -80,14 +80,15 @@ require('./api/tariff')(
     headers: {},
     query: {
       data: Buffer.from(pako.deflate(JSON.stringify({
-        deliveries: ['blitspostkz'],
+        deliveries: ['ponyexpressby'],
         cities: [
           // {from: 'Москва', to: 'Новолуговое, Новосибирская обл', countryFrom: ''},
           // {from: 'Челябинск', to: 'Владивосток', countryFrom: ''},
           // {from: 'Яхрома, Дмитровский район, Московская обл.', to: 'Новосибирск', countryFrom: ''},
-          // {from: 'Минск', postcodeFrom: '119002', to: 'Гомель', countryFrom: 'Беларусь', countryTo: 'Беларусь'}
+          // {from: 'Минск', to: 'Гомель', countryFrom: 'Беларусь', countryTo: 'Беларусь'}
+          {from: 'Пинск', to: 'Мозырь', countryFrom: 'Беларусь', countryTo: 'Беларусь'}
           // {from: 'Минск', postcodeFrom: '119002', to: 'Москва', countryFrom: 'Беларусь', countryTo: ''}
-          {from: 'Алматы', to: 'Нур-Султан', countryFrom: 'Казахстан', countryTo: 'Казахстан'},
+          // {from: 'Алматы', to: 'Нур-Султан', countryFrom: 'Казахстан', countryTo: 'Казахстан', countryFromEngShort: "KZ", countryToEngShort: "KZ", fromEngName: "Almaty", toEngName: 'Nur-Sultan 020000'},
           // {from: 'Алматы', to: 'Атырау', countryFrom: 'Казахстан', countryTo: 'Казахстан'},
           // {from: 'Алматы', to: 'Сидней', countryFrom: 'Казахстан', countryTo: 'Австралия'},
           // {from: 'Алматы', to: 'Москва', fromEngName: "Almaty", toEngName: 'Moscow', countryFrom: 'Казахстан', countryTo: '', countryFromEngShort: "KZ", countryToEngShort: "RU"},

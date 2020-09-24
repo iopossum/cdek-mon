@@ -64,9 +64,9 @@ const getReq = (from, to, fromCountry, toCountry) => {
     'order[currency_code]': 'BYN',
     'default_country': 'Беларусь',
     'order[mode]': 'Calculation',
-    'order[sender][region]': getRegionName(from) || '',
+    'order[sender][region]': getRegionName(from, true) || '',
     'order[sender][district]': getDistrictName(from) || '',
-    'order[recipient][region]':  getRegionName(to) || '',
+    'order[recipient][region]':  getRegionName(to, true) || '',
     'order[recipient][district]': getDistrictName(to) || '',
     'order[cargo][0][weight]': 0,
     'order[cargo][0][description]': '',
@@ -160,7 +160,7 @@ const _getCity = async ({ city, delivery, req }) => {
       result.error = getCityNoResultError(trim);
     } else {
       result.success = true;
-      result.items = founds.length ? founds.map(v => v.name).slice(0, 2) : json.map(v => v.name).slice(0, 1);
+      result.items = founds.length ? founds.map(v => v.name).slice(0, 2) : json.map(v => v.name).slice(0, 2);
     }
   }
   return result;
@@ -357,17 +357,19 @@ const getCalcResults = async ({ request, delivery, req }) => {
     request.error = getTariffErrorMessage('Изменился запрос. Отсутствует параметр result');
     return request;
   }
-  if (body.result.DeliveryRateSet === 'undefined') {
+  if (typeof body.result.DeliveryRateSet === 'undefined') {
     request.error = getTariffErrorMessage('Изменился запрос. Отсутствует параметр result.DeliveryRateSet');
     return request;
   }
   try {
-    for (let key of Object.keys(body.result.DeliveryRateSet)) {
-      request.tariffs.push({
-        service: body.result.DeliveryRateSet[key].Description,
-        cost: body.result.DeliveryRateSet[key].Sum,
-        deliveryTime: getDeliveryTime(body.result.DeliveryRateSet[key])
-      });
+    if (body.result.DeliveryRateSet) {
+      for (let key of Object.keys(body.result.DeliveryRateSet)) {
+        request.tariffs.push({
+          service: body.result.DeliveryRateSet[key].Description,
+          cost: body.result.DeliveryRateSet[key].Sum,
+          deliveryTime: getDeliveryTime(body.result.DeliveryRateSet[key])
+        });
+      }
     }
   } catch(e) {
     request.error = getTariffErrorMessage('Изменился запрос. Неверный формат result');
