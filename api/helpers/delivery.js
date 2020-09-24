@@ -82,7 +82,7 @@ const targets = [
     country: 'ru',
     calcPageUrl: {method: 'GET', uri: 'https://www.cse.ru/ovb/order/'},
     calcUrl: {method: 'GET', uri: 'https://lk.cse.ru/api/calc?'},
-    citiesUrl: {method: 'GET', uri: 'https://lk.cse.ru/api/settlements?country_guid='},
+    citiesUrl: {method: 'GET', uri: 'https://lk.cse.ru/api/settlements?'},
     newsUrl: {method: 'GET', uri: 'http://cse.ru/sitecontent/city-mosrus/lang-rus/news/#'}
   },
   {

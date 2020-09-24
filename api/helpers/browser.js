@@ -84,9 +84,7 @@ export const refreshPage = async (page) => {
   if (page) {
     try {
       await page.reload();
-    } catch (e) {
-      console.log(e)
-    }
+    } catch (e) {}
   }
 };
 

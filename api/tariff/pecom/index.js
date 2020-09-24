@@ -66,7 +66,7 @@ const setWeight = async ({ page, weight }) => {
   await page.keyboard.press('KeyA');
   await page.keyboard.up('Control');
   await page.keyboard.press('Backspace');
-  await page.waitFor(100);
+  await page.waitForTimeout(100);
   await weightInput.focus();
   await page.keyboard.type(weight.toString());
 
@@ -85,7 +85,7 @@ const setCity = ({ page, city, isCountry, country, notFoundMessage, delivery, is
       await page.keyboard.press('KeyA');
       await page.keyboard.up('Control');
       await page.keyboard.press('Backspace');
-      await page.waitFor(100);
+      await page.waitForTimeout(100);
       await cityInput.focus();
       await page.keyboard.type(city);
 
@@ -165,7 +165,7 @@ const getTariffs = async ({ delivery, page, date, service }) => {
   let tariffs = [];
   try {
     await waitForResponse({ page, url: delivery.calcUrl.uri, checkFn: (response) => response.request().postData().indexOf('Order.Request.Update') > -1, message: UNABLETOGETTARIFF});
-    await page.waitFor(100);
+    await page.waitForTimeout(100);
     const items = await page.evaluate((fastSelector, tariffSelector, deliverySelector) => {
       let results = [];
       document.querySelectorAll(fastSelector).forEach(e => {
@@ -348,7 +348,7 @@ const getResult = async ({ deliveryKey, city, page, weights }) => {
         await setWeight({ weight: weights[i], page });
         await fromServices[0].click();
         await toServices[0].click();
-        await page.waitFor(500);
+        await page.waitForTimeout(500);
         fromServices = await page.$$(selectors.fromServices);
         toServices = await page.$$(selectors.toServices);
         await setTariffs({ page, delivery, fromServices, toServices, date, result });

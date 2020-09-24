@@ -132,21 +132,9 @@ const _getCity = async ({ city, country, countryCode, isCountry, delivery, req, 
     result.error = notFoundFn(trim);
   } else {
     const region = getRegionName(city);
-    const district = getDistrictName(city);
     let founds = [];
     if (region) {
       founds = findInArray(json.success, region, 'CommonAlias');
-      if (!founds.length) {
-        result.error = notFoundFn(city);
-        return result;
-      }
-    }
-    if (district) {
-      founds = findInArray(founds.length ? founds : json.success, district, 'CommonAlias');
-      if (!founds.length) {
-        result.error = notFoundFn(city);
-        return result;
-      }
     }
     result.success = true;
     result.items = founds.length ? founds.slice(0, 2) : json.success.slice(0, 1);

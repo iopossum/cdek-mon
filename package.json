@@ -3,8 +3,8 @@
   "version": "0.0.1",
   "main": "index.js",
   "scripts": {
-    "start": "babel-node index.js",
-    "prod": "xvfb-run --auto-servernum --server-num=1 node --harmony index.js",
+    "start": "cross-env NODE_ENV=development babel-node index.js",
+    "prod": "cross-env NODE_ENV=production babel-node index.js",
     "build": "rimraf dist && webpack --bail --progress --profile",
     "server": "webpack-dev-server --history-api-fallback --inline --progress",
     "test": "karma start",
@@ -27,6 +27,7 @@
     "connect-timeout": "1.8.0",
     "cookie-parser": "1.4.3",
     "cors": "2.8.1",
+    "cross-env": "^7.0.2",
     "cross-fetch": "^3.0.5",
     "debug": "2.6.3",
     "event-source-polyfill": "1.0.16",

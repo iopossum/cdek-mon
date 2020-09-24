@@ -83,5 +83,5 @@ export const parseFormData = async (str) => {
     const s = v.split('=');
     obj[s[0]] = decodeURIComponent(s[1]).replace(/\+/g, ' ');
   });
-  console.log(JSON.stringify(obj, null, 2))
+  //console.log(JSON.stringify(obj, null, 2))
 };

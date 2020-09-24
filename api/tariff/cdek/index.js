@@ -56,7 +56,7 @@ const selectors = {
 const setCity = async (page, cityInput, city, country, notFoundMessage) => {
   const trim = getCity(city);
   await cityInput.type(trim);
-  await page.waitFor(1000);
+  await page.waitForTimeout(1000);
   await waitForWrapper(page, selectors.dropdownOption, {timeout: 10000});
   let optionsHandlers = await page.$$(selectors.dropdownOption);
   if (!optionsHandlers.length) {

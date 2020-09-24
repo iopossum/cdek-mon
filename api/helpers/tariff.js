@@ -41,7 +41,7 @@ export const getCity = (city) => {
 export const getDistrictName = (city, reverse) => {
   let region = null;
   const splits = city.split(',');
-  const index = reverse ? 1 : 2;
+  const index = reverse ? 2 : 1;
   if (splits.length >= 3) {
     region = splits[index].split(' ')[1] || splits[index].split(' ')[0];
   }

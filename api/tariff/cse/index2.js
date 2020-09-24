@@ -78,15 +78,17 @@ const getReq = (from, to) => {
 };
 
 const _getCity = async ({ city, country, delivery, req }) => {
-  country = country || 'Россия';
   const trim = getCity(city);
   const result = {
+    city: city,
+    cityTrim: trim,
     success: false
   };
   let json;
   try {
     const opts = {...delivery.citiesUrl};
-    opts.uri += `prefix=${encodeURIComponent(trim)}`;
+    opts.uri += country.guid;
+    opts.uri += `&prefix=${encodeURIComponent(trim)}`;
     const res = await requestWrapper({ req, ...opts });
     json = res.body;
   } catch(e) {}
@@ -105,36 +107,26 @@ const _getCity = async ({ city, country, delivery, req }) => {
   let values = findInArray(Object.values(json), trim, 'name', true);
   let filteredByCity = values.filter(v => v.is_city);
   values = filteredByCity.length ? filteredByCity : values;
-  const countryTrim = getCity(country).split(' ')[0].trim();
-  values = values.filter(v => v.country_name.match(new RegExp(countryTrim, 'gi')));
   const region = getRegionName(city);
-  const district = getDistrictName(city);
-  let founds = [];
   if (region) {
-    founds = findInArray(values, region, 'region');
-    if (!founds.length) {
-      result.error = getCityNoResultError(city);
-      return result;
-    }
+    values = findInArray(values, region, 'region');
   }
-  if (district && country === 'Россия') {
-    founds = findInArray(founds.length ? founds : values, district, 'area');
-    if (!founds.length) {
-      result.error = getCityNoResultError(city);
-      return result;
-    }
-  }
-  if (!values.length && !founds.length) {
+  if (!values.length) {
     result.error = getCityNoResultError(city);
   } else {
-    result.items = founds.length ? founds.slice(0, 2) : values.slice(0, 2);
+    result.items = values.slice(0, 2);
     result.success = true;
   }
   return result;
 };
 
-const getCities = async ({cities, delivery, req }) => {
+const getCities = async ({cities, delivery, req, countries}) => {
   const cityObj = {};
+  const countryObj = _.keyBy(countries, 'name');
+  const russiaObj = countryObj['РОССИЯ'];
+  if (!russiaObj) {
+    throw new Error('Контент сайта изменился');
+  }
   return await async.mapSeries(cities, async (item, callback) => {
     try {
       const city = {
@@ -148,19 +140,27 @@ const getCities = async ({cities, delivery, req }) => {
         city.error = CITIESREQUIRED;
         return callback(null, city);
       }
+      if (city.countryFrom && !countryObj[city.countryFrom.toUpperCase()]) {
+        city.error = COUNTRYFROMNOTFOUND;
+        return callback(null, city);
+      }
+      if (city.countryTo && !countryObj[city.countryTo.toUpperCase()]) {
+        city.error = COUNTRYTONOTFOUND;
+        return callback(null, city);
+      }
       const fromKey = city.from + city.countryFrom;
       const toKey = city.to + city.countryTo;
       if (cityObj[fromKey]) {
         city.fromJSON = { ...cityObj[fromKey] };
       } else {
-        const result = await _getCity({city: city.from, country: city.countryFrom, delivery, req});
+        const result = await _getCity({city: city.from, country: city.countryFrom ? countryObj[city.countryFrom.toUpperCase()] : russiaObj, delivery, req});
         cityObj[fromKey] = result;
         city.fromJSON = result;
       }
       if (cityObj[toKey]) {
         city.toJSON = { ...cityObj[toKey] };
       } else {
-        const result = await _getCity({city: city.to, country: city.countryTo, delivery, req});
+        const result = await _getCity({city: city.to, country: city.countryTo ? countryObj[city.countryTo.toUpperCase()] : russiaObj, delivery, req});
         cityObj[toKey] = result;
         city.toJSON = result;
       }
@@ -287,7 +287,11 @@ module.exports = async function ({ deliveryKey, weights, cities, req}) {
   let results = [];
 
   try {
-    const citiesResults = await getCities({ cities, delivery, req });
+    const countries = await getCountries({ delivery, req });
+    if (shouldAbort(req)) {
+      throw new Error('abort');
+    }
+    const citiesResults = await getCities({ cities, delivery, req, countries });
     if (shouldAbort(req)) {
       throw new Error('abort');
     }

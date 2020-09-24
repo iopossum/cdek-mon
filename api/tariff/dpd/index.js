@@ -165,6 +165,7 @@ const _getCity = async ({ city, country, isInternational, cookie, delivery, req 
     result.error = getCityJsonError("Неверный тип geonames в ответе", trim);
     return result;
   }
+  json.geonames = json.geonames.filter(v => ['с', 'д'].indexOf(v.abbr) === -1);
   json.geonames = findInArray(json.geonames, trim, 'name', true);
   if (country) {
     json.geonames = findInArray(json.geonames, country, 'countryName', false)

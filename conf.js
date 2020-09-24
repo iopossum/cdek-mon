@@ -1,18 +1,18 @@
 module.exports = {
   browser: {
     delay: {
-      min: 500,
-      max: 1000
+      min: 1000,
+      max: 2000
     },
   },
   request: {
     delay: {
-      min: 1000,
-      max: 2000
+      min: 1500,
+      max: 2500
     },
     retryOpts: {
       times: 2,
-      interval: 1000
+      interval: 1500
     },
   },
   rootFolder: __dirname,

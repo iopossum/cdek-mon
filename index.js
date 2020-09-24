@@ -75,47 +75,49 @@ app.post('/api/beacon', cors(), (req, res) => {
   res.end();
 });
 
-require('./api/tariff')(
-  {
-    headers: {},
-    query: {
-      data: Buffer.from(pako.deflate(JSON.stringify({
-        deliveries: ['ponyexpressby'],
-        cities: [
-          // {from: 'Москва', to: 'Новолуговое, Новосибирская обл', countryFrom: ''},
-          // {from: 'Челябинск', to: 'Владивосток', countryFrom: ''},
-          // {from: 'Яхрома, Дмитровский район, Московская обл.', to: 'Новосибирск', countryFrom: ''},
-          // {from: 'Минск', to: 'Гомель', countryFrom: 'Беларусь', countryTo: 'Беларусь'}
-          {from: 'Пинск', to: 'Мозырь', countryFrom: 'Беларусь', countryTo: 'Беларусь'}
-          // {from: 'Минск', postcodeFrom: '119002', to: 'Москва', countryFrom: 'Беларусь', countryTo: ''}
-          // {from: 'Алматы', to: 'Нур-Султан', countryFrom: 'Казахстан', countryTo: 'Казахстан', countryFromEngShort: "KZ", countryToEngShort: "KZ", fromEngName: "Almaty", toEngName: 'Nur-Sultan 020000'},
-          // {from: 'Алматы', to: 'Атырау', countryFrom: 'Казахстан', countryTo: 'Казахстан'},
-          // {from: 'Алматы', to: 'Сидней', countryFrom: 'Казахстан', countryTo: 'Австралия'},
-          // {from: 'Алматы', to: 'Москва', fromEngName: "Almaty", toEngName: 'Moscow', countryFrom: 'Казахстан', countryTo: '', countryFromEngShort: "KZ", countryToEngShort: "RU"},
-          // {from: 'Сидней', postcodeFrom: '119002', to: 'Минск', countryFrom: 'Австралия', countryTo: 'Беларусь'},
-          // {from: 'Минск', postcodeFrom: '119002', to: 'Сидней', countryFrom: 'Беларусь', countryTo: 'Австралия'},
-          // {from: 'Минск', postcodeFrom: '119002', to: '', countryFrom: 'Беларусь', countryTo: 'Австралия'}
-          // {from: 'Москва', to: 'Новосибирск', postcodeFrom: "109012", postcodeTo: "630064", countryFromEngShort: 'RU', countryToEngShort: 'RU'},
-          // {from: 'Яхрома, Дмитровский район, Московская обл.', to: 'Новосибирск', countryFrom: ''},
-          // {from: 'Москва', to: 'Сидней', countryTo: 'Австралия', postcodeFrom: "109012", postcodeTo: "2000", countryFromEngShort: 'RU', countryToEngShort: 'AU', fromEngName: "Moscow", toEngName: "Sydney NSW"},
-        ],
-        weights: [1]
-      }))).toString('base64')
+if (process.env.NODE_ENV === 'development') {
+  require('./api/tariff')(
+    {
+      headers: {},
+      query: {
+        data: Buffer.from(pako.deflate(JSON.stringify({
+          deliveries: ['dpd'],
+          cities: [
+            {from: 'Яхрома, Дмитровский район, Московская обл.', to: 'Новосибирск', countryFrom: ''},
+            // {from: 'Челябинск', to: 'Владивосток', countryFrom: ''},
+            // {from: 'Яхрома, Дмитровский район, Московская обл.', to: 'Новосибирск', countryFrom: ''},
+            // {from: 'Минск', to: 'Гомель', countryFrom: 'Беларусь', countryTo: 'Беларусь'}
+            // {from: 'Пинск', to: 'Мозырь', countryFrom: 'Беларусь', countryTo: 'Беларусь'}
+            // {from: 'Минск', postcodeFrom: '119002', to: 'Москва', countryFrom: 'Беларусь', countryTo: ''}
+            // {from: 'Алматы', to: 'Нур-Султан', countryFrom: 'Казахстан', countryTo: 'Казахстан', countryFromEngShort: "KZ", countryToEngShort: "KZ", fromEngName: "Almaty", toEngName: 'Nur-Sultan 020000'},
+            // {from: 'Алматы', to: 'Атырау', countryFrom: 'Казахстан', countryTo: 'Казахстан'},
+            // {from: 'Алматы', to: 'Сидней', countryFrom: 'Казахстан', countryTo: 'Австралия'},
+            // {from: 'Алматы', to: 'Москва', fromEngName: "Almaty", toEngName: 'Moscow', countryFrom: 'Казахстан', countryTo: '', countryFromEngShort: "KZ", countryToEngShort: "RU"},
+            // {from: 'Сидней', postcodeFrom: '119002', to: 'Минск', countryFrom: 'Австралия', countryTo: 'Беларусь'},
+            // {from: 'Минск', postcodeFrom: '119002', to: 'Сидней', countryFrom: 'Беларусь', countryTo: 'Австралия'},
+            // {from: 'Минск', postcodeFrom: '119002', to: '', countryFrom: 'Беларусь', countryTo: 'Австралия'}
+            // {from: 'Москва', to: 'Новосибирск', postcodeFrom: "109012", postcodeTo: "630064", countryFromEngShort: 'RU', countryToEngShort: 'RU'},
+            // {from: 'Яхрома, Дмитровский район, Московская обл.', to: 'Новосибирск', countryFrom: ''},
+            // {from: 'Москва', to: 'Сидней', countryTo: 'Австралия', postcodeFrom: "109012", postcodeTo: "2000", countryFromEngShort: 'RU', countryToEngShort: 'AU', fromEngName: "Moscow", toEngName: "Sydney NSW"},
+          ],
+          weights: [1]
+        }))).toString('base64')
+      },
+      socket: {
+        setTimeout: function () {},
+      },
     },
-    socket: {
-      setTimeout: function () {},
-    },
-  },
-  {
-    end: function () {},
-    set: function () {},
-    write: (v) => {
+    {
+      end: function () {},
+      set: function () {},
+      write: (v) => {
 
+      },
+      on: function () {},
+      flushHeaders: function () {},
     },
-    on: function () {},
-    flushHeaders: function () {},
-  },
-);
+  );
+}
 
 /*require('./api/tariff')(
   {session: {delivery: {}}, body: {

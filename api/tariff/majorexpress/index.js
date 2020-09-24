@@ -78,7 +78,7 @@ const setCity = async ({ page, city, notFoundMessage, delivery, isFrom }) => {
     await cityInput.focus();
     await cityInput.click({clickCount: 2});
     await page.keyboard.press('Backspace');
-    await page.waitFor(100);
+    await page.waitForTimeout(100);
     await cityInput.focus();
     await page.keyboard.type(trim);
 
@@ -165,7 +165,7 @@ const setCountry = async ({ page, country, notFoundMessage, delivery, isFrom }) 
     const countryInput = await page.$(selector);
     await countryInput.click({ clickCount: 2 });
     await page.keyboard.press('Backspace');
-    await page.waitFor(100);
+    await page.waitForTimeout(100);
     await countryInput.focus();
     await page.keyboard.type(trim);
 

@@ -60,7 +60,7 @@ const services = [
 ];
 
 const setWeight = async ({ page, weight }) => {
-  // await page.waitFor(1000);
+  // await page.waitForTimeout(1000);
   const weightInput = await page.$(selectors.weightInput);
   await weightInput.click({ clickCount: 2 });
   await page.keyboard.press('Backspace');
@@ -94,10 +94,10 @@ const setCity = async ({ page, selector, city, isCountry, country, notFoundMessa
   await cityInput.focus();
   await cityInput.click({ clickCount: 2 });
   await page.keyboard.press('Backspace');
-  await page.waitFor(100);
+  await page.waitForTimeout(100);
   await cityInput.focus();
   await page.keyboard.type(trimSliced);
-  await page.waitFor(1000);
+  await page.waitForTimeout(1000);
   await page.keyboard.type(lastLetter);
   let json = await waitForResponse({page, url: delivery.citiesUrl.uri, message: getCityJsonError(null, trim)});
 
@@ -203,6 +203,7 @@ const getResult = async ({ deliveryKey, city, page, weights }) => {
   try {
     await page.goto(delivery.pageUrl.uri);
 
+    await page.waitForTimeout(1000);
     await waitForWrapper(page, selectors.cityFromInput);
     await waitForWrapper(page, selectors.cityToInput);
 

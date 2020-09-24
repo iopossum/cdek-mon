@@ -32,7 +32,6 @@ module.exports = asyncMiddleware(async (req, res) => {
     let uncompressed = pako.inflate(b, { to: 'string' });
     data = JSON.parse(uncompressed);
   } catch(e) {
-    console.log(e)
     eventError(res, new Error('Неверные данные запроса.'));
   }
 
