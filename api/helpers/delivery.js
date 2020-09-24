@@ -362,6 +362,15 @@ const targets = [
     baseUrl: 'http://rika.kz'
   },
   {
+    id: 'blitspostkz',
+    name: 'Blitspost',
+    country: 'kz',
+    citiesFromUrl: {method: 'GET', uri: 'http://api.blitspost.work/public/v1/regions/origin?title='},
+    citiesToUrl: {method: 'GET', uri: 'http://api.blitspost.work/public/v1/regions/destination?title='},
+    calcUrl: {method: 'GET', uri: 'http://api.blitspost.work/public/v1/calculate?'},
+    baseUrl: 'http://blitspost.kz'
+  },
+  {
     id: 'dhlkz',
     name: 'DHL',
     country: 'kz',
@@ -448,14 +457,7 @@ const targets = [
     calcUrl: {method: 'GET', uri: 'http://mypost.spdex.kz/RateCalc.html'},
     baseUrl: 'http://spdex.kz'
   },
-  {
-    id: 'blitspostkz',
-    name: 'Blitspost',
-    country: 'kz',
-    citiesUrl: {method: 'GET', uri: 'http://api.blitspost.work/public/v1/regions/origin?title=', json: true},
-    calcUrl: {method: 'GET', uri: 'http://api.blitspost.work/public/v1/calculate?', json: true},
-    baseUrl: 'http://blitspost.kz'
-  },
+
   {
     id: 'postkz',
     name: 'Post.kz',

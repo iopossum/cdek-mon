@@ -162,6 +162,7 @@ const getCities = async ({cities, delivery, req}) => {
         city.fromJSON = { ...cityObj[fromKey] };
       } else {
         let result = await _getCity({city: city.from, country: city.countryFrom, delivery, req, isFrom: true, isKz: isFromKz});
+        cityObj[fromKey] = result;
         if (!result.success && city.from && city.countryFrom && !isFromKz) {
           if (countryObj[city.countryFrom]) {
             result = { ...countryObj[city.countryFrom] };
@@ -170,13 +171,13 @@ const getCities = async ({cities, delivery, req}) => {
             countryObj[city.countryFrom] = result;
           }
         }
-        cityObj[fromKey] = result;
         city.fromJSON = result;
       }
       if (cityObj[toKey]) {
         city.toJSON = { ...cityObj[toKey] };
       } else {
         let result = await _getCity({city: city.to, country: city.countryTo, delivery, req, isKz: isToKz});
+        cityObj[toKey] = result;
         if (!result.success && city.to && city.countryTo && !isToKz) {
           if (countryObj[city.countryTo]) {
             result = { ...countryObj[city.countryTo] };
@@ -185,7 +186,6 @@ const getCities = async ({cities, delivery, req}) => {
             countryObj[city.countryTo] = result;
           }
         }
-        cityObj[toKey] = result;
         city.toJSON = result;
       }
       callback(null, city);
@@ -304,7 +304,6 @@ const getCalcResults = async ({ request, delivery, req }) => {
   if (!request.tariffs.length) {
     request.error = errors.length ? errors[0] : getNoResultError();
   }
-  console.log(request.tariffs)
   request.req = {};
   return request;
 };
