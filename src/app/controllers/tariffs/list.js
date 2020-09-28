@@ -263,7 +263,7 @@ class TariffsCtrl {
       console.log(obj)
       const encoded = btoa(pako.deflate(JSON.stringify(obj), { to: 'string' }));
       console.log(encoded)
-      const es1 = new EventSource(`http://localhost:5000/api/tariff/request?data=${encoded}&sessionID=${that.sessionID}`);
+      const es1 = new EventSource(`${this.tariffService.hostName}/api/tariff/request?data=${encoded}&sessionID=${that.sessionID}`);
       this.esl = es1;
       es1.addEventListener("message", ({ data }) => {
         const decoded = pako.inflate(new Buffer(data, 'base64'), { to: 'string' });
